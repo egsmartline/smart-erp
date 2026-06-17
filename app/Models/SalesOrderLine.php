@@ -6,17 +6,17 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class PurchaseOrderLine extends Model
+class SalesOrderLine extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'tenant_id',
-        'purchase_order_id',
+        'sales_order_id',
         'item_id',
         'description',
         'quantity',
-        'received_qty',
+        'delivered_qty',
         'unit_price',
         'discount_percent',
         'discount_amount',
@@ -31,7 +31,7 @@ class PurchaseOrderLine extends Model
     {
         return [
             'quantity' => 'decimal:2',
-            'received_qty' => 'decimal:2',
+            'delivered_qty' => 'decimal:2',
             'unit_price' => 'decimal:2',
             'discount_percent' => 'decimal:2',
             'discount_amount' => 'decimal:2',
@@ -42,9 +42,9 @@ class PurchaseOrderLine extends Model
         ];
     }
 
-    public function purchaseOrder(): BelongsTo
+    public function salesOrder(): BelongsTo
     {
-        return $this->belongsTo(PurchaseOrder::class);
+        return $this->belongsTo(SalesOrder::class);
     }
 
     public function item(): BelongsTo

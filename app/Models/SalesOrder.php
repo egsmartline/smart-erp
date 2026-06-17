@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class PurchaseOrder extends Model
+class SalesOrder extends Model
 {
     use HasFactory, SoftDeletes;
 
@@ -16,8 +16,8 @@ class PurchaseOrder extends Model
         'tenant_id',
         'order_number',
         'date',
-        'expected_date',
-        'supplier_id',
+        'required_date',
+        'customer_id',
         'warehouse_id',
         'user_id',
         'subtotal',
@@ -26,17 +26,16 @@ class PurchaseOrder extends Model
         'tax_percent',
         'tax_amount',
         'total',
-        'shipping_cost',
         'currency_id',
         'exchange_rate',
         'payment_term_id',
         'status',
-        'receipt_status',
+        'delivery_status',
         'invoice_status',
-        'supplier_invoice_number',
         'notes',
         'terms',
         'reference',
+        'customer_reference',
         'cancelled_at',
         'cancelled_reason',
     ];
@@ -45,7 +44,7 @@ class PurchaseOrder extends Model
     {
         return [
             'date' => 'date',
-            'expected_date' => 'date',
+            'required_date' => 'date',
             'cancelled_at' => 'date',
             'subtotal' => 'decimal:2',
             'discount_percent' => 'decimal:2',
@@ -53,7 +52,6 @@ class PurchaseOrder extends Model
             'tax_percent' => 'decimal:2',
             'tax_amount' => 'decimal:2',
             'total' => 'decimal:2',
-            'shipping_cost' => 'decimal:2',
             'exchange_rate' => 'decimal:6',
         ];
     }
@@ -68,9 +66,9 @@ class PurchaseOrder extends Model
         return $this->belongsTo(Tenant::class);
     }
 
-    public function supplier(): BelongsTo
+    public function customer(): BelongsTo
     {
-        return $this->belongsTo(Supplier::class);
+        return $this->belongsTo(Customer::class);
     }
 
     public function warehouse(): BelongsTo
@@ -95,12 +93,24 @@ class PurchaseOrder extends Model
 
     public function lines(): HasMany
     {
-        return $this->hasMany(PurchaseOrderLine::class);
+        return $this->hasMany(SalesOrderLine::class);
     }
 
     public function invoices(): HasMany
     {
-        return $this->hasMany(PurchaseInvoice::class);
+        return $this->hasMany(SalesInvoice::class);
+    }
+
+    public function getOrderStatusBadgeAttribute(): string
+    {
+        return match ($this->status) {
+            'draft' => 'badge-gray',
+            'confirmed' => 'badge-blue',
+            'delivered' => 'badge-green',
+            'invoiced' => 'badge-purple',
+            'cancelled' => 'badge-red',
+            default => 'badge-gray',
+        };
     }
 
     public function canConfirm(): bool
@@ -108,13 +118,13 @@ class PurchaseOrder extends Model
         return $this->status === 'draft';
     }
 
-    public function canReceive(): bool
+    public function canDeliver(): bool
     {
         return $this->status === 'confirmed';
     }
 
     public function canInvoice(): bool
     {
-        return in_array($this->status, ['confirmed', 'received']);
+        return in_array($this->status, ['confirmed', 'delivered']);
     }
 }

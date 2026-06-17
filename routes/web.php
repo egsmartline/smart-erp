@@ -16,6 +16,8 @@ use App\Http\Controllers\PurchaseInvoiceController;
 use App\Http\Controllers\SalesReturnController;
 use App\Http\Controllers\PurchaseReturnController;
 use App\Http\Controllers\QuotationController;
+use App\Http\Controllers\SalesOrderController;
+use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\CashTreasuryController;
 use App\Http\Controllers\BankAccountController;
@@ -57,6 +59,20 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::resource('item-categories', ItemCategoryController::class);
     Route::resource('item-units', ItemUnitController::class);
     Route::resource('warehouses', WarehouseController::class);
+
+    // Sales Orders
+    Route::resource('sales-orders', SalesOrderController::class);
+    Route::post('sales-orders/{salesOrder}/confirm', [SalesOrderController::class, 'confirm'])->name('sales-orders.confirm');
+    Route::post('sales-orders/{salesOrder}/deliver', [SalesOrderController::class, 'deliver'])->name('sales-orders.deliver');
+    Route::post('sales-orders/{salesOrder}/invoice', [SalesOrderController::class, 'invoice'])->name('sales-orders.invoice');
+    Route::post('sales-orders/{salesOrder}/cancel', [SalesOrderController::class, 'cancel'])->name('sales-orders.cancel');
+
+    // Purchase Orders
+    Route::resource('purchase-orders', PurchaseOrderController::class);
+    Route::post('purchase-orders/{purchaseOrder}/confirm', [PurchaseOrderController::class, 'confirm'])->name('purchase-orders.confirm');
+    Route::post('purchase-orders/{purchaseOrder}/receive', [PurchaseOrderController::class, 'receive'])->name('purchase-orders.receive');
+    Route::post('purchase-orders/{purchaseOrder}/invoice', [PurchaseOrderController::class, 'invoice'])->name('purchase-orders.invoice');
+    Route::post('purchase-orders/{purchaseOrder}/cancel', [PurchaseOrderController::class, 'cancel'])->name('purchase-orders.cancel');
 
     // Sales Invoices
     Route::resource('sales-invoices', SalesInvoiceController::class);
