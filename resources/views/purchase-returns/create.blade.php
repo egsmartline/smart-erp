@@ -118,13 +118,19 @@
         </div>
     </form>
 
+    @php
+        $selectedInvoiceLines = $selectedInvoice
+            ? $selectedInvoice->lines->map(fn($l) => ['item_id' => $l->item_id, 'quantity' => $l->quantity, 'unit_cost' => $l->unit_cost, 'tax_rate' => $l->tax_rate ?? 15])->toArray()
+            : [['item_id' => '', 'quantity' => 1, 'unit_cost' => 0, 'tax_rate' => 15]];
+    @endphp
+
     @push('scripts')
     <script>
         function purchaseReturnForm() {
             return {
                 supplierId: '{{ $selectedInvoice->supplier_id ?? '' }}',
                 invoiceId: '{{ $selectedInvoice->id ?? '' }}',
-                lines: @json($selectedInvoice ? $selectedInvoice->lines->map(fn($l) => ['item_id' => $l->item_id, 'quantity' => $l->quantity, 'unit_cost' => $l->unit_cost, 'tax_rate' => $l->tax_rate ?? 15])->toArray() : [['item_id' => '', 'quantity' => 1, 'unit_cost' => 0, 'tax_rate' => 15]]),
+                lines: @json($selectedInvoiceLines),
                 addLine() {
                     this.lines.push({ item_id: '', quantity: 1, unit_cost: 0, tax_rate: 15 });
                 },

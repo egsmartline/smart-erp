@@ -292,7 +292,7 @@ class PurchaseInvoiceController extends TenantAwareController
 
         try {
             $purchaseInvoice->update([
-                'status' => 'approved',
+                'status' => 'posted',
                 'payment_status' => $purchaseInvoice->paid_amount > 0 ? 'partial' : 'unpaid',
             ]);
 
@@ -337,7 +337,7 @@ class PurchaseInvoiceController extends TenantAwareController
 
     public function void(PurchaseInvoice $purchaseInvoice)
     {
-        if ($purchaseInvoice->status !== 'approved') {
+        if ($purchaseInvoice->status !== 'posted') {
             return back()->with('error', 'لا يمكن إلغاء فاتورة غير مرحلة');
         }
 
@@ -370,7 +370,7 @@ class PurchaseInvoiceController extends TenantAwareController
                 ]);
             }
 
-            $purchaseInvoice->update(['status' => 'cancelled']);
+            $purchaseInvoice->update(['status' => 'voided']);
 
             DB::commit();
 

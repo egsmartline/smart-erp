@@ -15,7 +15,7 @@ class PurchaseReturn extends Model
     protected $fillable = [
         'tenant_id',
         'supplier_id',
-        'purchase_invoice_id',
+        'original_invoice_id',
         'warehouse_id',
         'return_number',
         'date',
@@ -25,7 +25,7 @@ class PurchaseReturn extends Model
         'reason',
         'status',
         'notes',
-        'created_by',
+        'user_id',
     ];
 
     protected function casts(): array
@@ -55,7 +55,7 @@ class PurchaseReturn extends Model
 
     public function purchaseInvoice(): BelongsTo
     {
-        return $this->belongsTo(PurchaseInvoice::class);
+        return $this->belongsTo(PurchaseInvoice::class, 'original_invoice_id');
     }
 
     public function warehouse(): BelongsTo
@@ -65,7 +65,7 @@ class PurchaseReturn extends Model
 
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function lines(): HasMany

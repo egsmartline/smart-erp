@@ -32,7 +32,7 @@ class QuotationController extends TenantAwareController
             $query->where('status', $request->status);
         }
         if ($request->filled('search')) {
-            $query->where('quotation_number', 'like', '%' . $request->search . '%');
+            $query->where('quote_number', 'like', '%' . $request->search . '%');
         }
 
         $quotations = $query->latest()->paginate(15);
@@ -108,7 +108,7 @@ class QuotationController extends TenantAwareController
             $quotation = Quotation::create([
                 'tenant_id' => $this->getTenantId(),
                 'customer_id' => $validated['customer_id'],
-                'quotation_number' => $this->generateQuotationNumber(),
+                'quote_number' => $this->generateQuotationNumber(),
                 'date' => $validated['date'],
                 'valid_until' => $validated['valid_until'],
                 'subtotal' => $subtotal,
@@ -300,7 +300,7 @@ class QuotationController extends TenantAwareController
                 'exchange_rate' => 1,
                 'status' => 'draft',
                 'payment_status' => 'unpaid',
-                'notes' => 'تحويل من عرض أسعار رقم: ' . $quotation->quotation_number,
+                'notes' => 'تحويل من عرض أسعار رقم: ' . $quotation->quote_number,
                 'reference_type' => Quotation::class,
                 'reference_id' => $quotation->id,
             ]);
@@ -376,7 +376,7 @@ class QuotationController extends TenantAwareController
         $year = date('Y');
         $lastQuotation = $this->tenantQuery(Quotation::class)
             ->whereYear('date', $year)
-            ->max('quotation_number');
+            ->max('quote_number');
 
         if ($lastQuotation) {
             $lastSequence = (int) substr($lastQuotation, -4);

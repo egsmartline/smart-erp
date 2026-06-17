@@ -21,8 +21,8 @@ class DashboardController extends TenantAwareController
             'customers_count' => Customer::where('tenant_id', $tenantId)->count(),
             'suppliers_count' => Supplier::where('tenant_id', $tenantId)->count(),
             'items_count' => Item::where('tenant_id', $tenantId)->count(),
-            'pending_invoices' => SalesInvoice::where('tenant_id', $tenantId)->where('status', 'pending')->count(),
-            'pending_purchases' => PurchaseInvoice::where('tenant_id', $tenantId)->where('status', 'pending')->count(),
+            'pending_invoices' => SalesInvoice::where('tenant_id', $tenantId)->where('status', 'draft')->count(),
+            'pending_purchases' => PurchaseInvoice::where('tenant_id', $tenantId)->where('status', 'draft')->count(),
         ];
 
         $recentSales = SalesInvoice::where('tenant_id', $tenantId)

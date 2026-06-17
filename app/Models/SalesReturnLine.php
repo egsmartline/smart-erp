@@ -12,13 +12,14 @@ class SalesReturnLine extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'tenant_id',
         'sales_return_id',
         'item_id',
         'quantity',
         'unit_price',
-        'tax_rate',
+        'tax_percent',
         'tax_amount',
-        'subtotal',
+        'total',
         'total',
         'reason',
     ];
@@ -28,7 +29,7 @@ class SalesReturnLine extends Model
         return [
             'quantity' => 'decimal:2',
             'unit_price' => 'decimal:2',
-            'tax_rate' => 'decimal:2',
+            'tax_percent' => 'decimal:2',
             'tax_amount' => 'decimal:2',
             'subtotal' => 'decimal:2',
             'total' => 'decimal:2',

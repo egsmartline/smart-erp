@@ -17,9 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \App\Http\Middleware\CheckPermission::class,
         ]);
 
-        $middleware->appendToGroup('web', [
-            \App\Http\Middleware\EnsureTenant::class,
-        ]);
+
 
         $middleware->redirectGuestsTo(function ($request) {
             if ($request->expectsJson()) {

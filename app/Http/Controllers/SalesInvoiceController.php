@@ -290,7 +290,7 @@ class SalesInvoiceController extends TenantAwareController
 
         try {
             $salesInvoice->update([
-                'status' => 'approved',
+                'status' => 'posted',
                 'payment_status' => $salesInvoice->paid_amount > 0 ? 'partial' : 'unpaid',
             ]);
 
@@ -331,7 +331,7 @@ class SalesInvoiceController extends TenantAwareController
 
     public function void(SalesInvoice $salesInvoice)
     {
-        if ($salesInvoice->status !== 'approved') {
+        if ($salesInvoice->status !== 'posted') {
             return back()->with('error', 'لا يمكن إلغاء فاتورة غير مرحلة');
         }
 
@@ -364,7 +364,7 @@ class SalesInvoiceController extends TenantAwareController
                 ]);
             }
 
-            $salesInvoice->update(['status' => 'cancelled']);
+            $salesInvoice->update(['status' => 'voided']);
 
             DB::commit();
 

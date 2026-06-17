@@ -14,14 +14,14 @@ class AuditLog extends Model
     protected $fillable = [
         'tenant_id',
         'user_id',
-        'event',
-        'auditable_type',
-        'auditable_id',
+        'action',
+        'model',
+        'model_id',
         'old_values',
         'new_values',
         'ip_address',
         'user_agent',
-        'tags',
+        'description',
     ];
 
     protected function casts(): array
@@ -29,7 +29,6 @@ class AuditLog extends Model
         return [
             'old_values' => 'array',
             'new_values' => 'array',
-            'tags' => 'array',
         ];
     }
 
@@ -46,10 +45,5 @@ class AuditLog extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function auditable(): \Illuminate\Database\Eloquent\Relations\MorphTo
-    {
-        return $this->morphTo();
     }
 }

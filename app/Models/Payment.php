@@ -14,50 +14,39 @@ class Payment extends Model
     protected $fillable = [
         'tenant_id',
         'payment_number',
-        'type',
         'date',
-        'amount',
-        'currency_code',
-        'exchange_rate',
-        'amount_local',
-        'payment_method',
-        'reference_number',
-        'cheque_number',
+        'type',
         'customer_id',
         'supplier_id',
         'treasury_id',
         'bank_account_id',
-        'paymentable_type',
-        'paymentable_id',
+        'amount',
+        'payment_method',
+        'currency_id',
+        'exchange_rate',
+        'amount_in_currency',
+        'reference',
+        'check_number',
+        'check_date',
         'notes',
         'status',
-        'received_by',
-        'created_by',
+        'user_id',
     ];
 
     protected function casts(): array
     {
         return [
             'date' => 'date',
+            'check_date' => 'date',
             'amount' => 'decimal:2',
             'exchange_rate' => 'decimal:6',
-            'amount_local' => 'decimal:2',
+            'amount_in_currency' => 'decimal:2',
         ];
     }
 
     public function scopeForTenant($query, ?int $tenantId = null)
     {
         return $query->where('tenant_id', $tenantId ?? tenant('id'));
-    }
-
-    public function scopeReceipts($query)
-    {
-        return $query->where('type', 'receipt');
-    }
-
-    public function scopePayments($query)
-    {
-        return $query->where('type', 'payment');
     }
 
     public function tenant(): BelongsTo
@@ -85,18 +74,8 @@ class Payment extends Model
         return $this->belongsTo(BankAccount::class);
     }
 
-    public function receiver(): BelongsTo
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'received_by');
-    }
-
-    public function creator(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'created_by');
-    }
-
-    public function paymentable(): \Illuminate\Database\Eloquent\Relations\MorphTo
-    {
-        return $this->morphTo();
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

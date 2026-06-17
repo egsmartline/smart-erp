@@ -29,9 +29,9 @@ class BackupController extends TenantAwareController
             BackupLog::create([
                 'tenant_id' => $this->getTenantId(),
                 'filename' => $filename,
-                'file_path' => $fullPath,
+                'path' => $fullPath,
                 'status' => 'completed',
-                'created_by' => auth()->id(),
+                'user_id' => auth()->id(),
                 'size' => 0,
             ]);
 
@@ -52,8 +52,8 @@ class BackupController extends TenantAwareController
     {
         $this->authorizeTenant($backupLog);
 
-        if (file_exists($backupLog->file_path)) {
-            unlink($backupLog->file_path);
+        if (file_exists($backupLog->path)) {
+            unlink($backupLog->path);
         }
 
         $backupLog->delete();

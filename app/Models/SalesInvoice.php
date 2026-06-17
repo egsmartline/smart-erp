@@ -19,40 +19,36 @@ class SalesInvoice extends Model
         'cashier_id',
         'invoice_number',
         'date',
-        'due_date',
         'subtotal',
-        'discount_amount',
         'discount_percent',
+        'discount_amount',
+        'tax_percent',
         'tax_amount',
-        'shipping_amount',
         'total',
         'paid_amount',
         'due_amount',
-        'currency_code',
-        'exchange_rate',
         'status',
         'payment_status',
+        'currency_id',
+        'exchange_rate',
         'notes',
-        'reference_type',
-        'reference_id',
-        'is_returned',
+        'terms',
+        'reference',
     ];
 
     protected function casts(): array
     {
         return [
             'date' => 'date',
-            'due_date' => 'date',
             'subtotal' => 'decimal:2',
-            'discount_amount' => 'decimal:2',
             'discount_percent' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
+            'tax_percent' => 'decimal:2',
             'tax_amount' => 'decimal:2',
-            'shipping_amount' => 'decimal:2',
             'total' => 'decimal:2',
             'paid_amount' => 'decimal:2',
             'due_amount' => 'decimal:2',
             'exchange_rate' => 'decimal:6',
-            'is_returned' => 'boolean',
         ];
     }
 
@@ -64,11 +60,6 @@ class SalesInvoice extends Model
     public function scopeDraft($query)
     {
         return $query->where('status', 'draft');
-    }
-
-    public function scopeApproved($query)
-    {
-        return $query->where('status', 'approved');
     }
 
     public function tenant(): BelongsTo
@@ -98,11 +89,11 @@ class SalesInvoice extends Model
 
     public function returns(): HasMany
     {
-        return $this->hasMany(SalesReturn::class);
+        return $this->hasMany(SalesReturn::class, 'original_invoice_id');
     }
 
     public function payments(): HasMany
     {
-        return $this->morphMany(Payment::class, 'paymentable');
+        return $this->hasMany(Payment::class);
     }
 }

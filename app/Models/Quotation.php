@@ -15,7 +15,7 @@ class Quotation extends Model
     protected $fillable = [
         'tenant_id',
         'customer_id',
-        'quotation_number',
+        'quote_number',
         'date',
         'valid_until',
         'subtotal',

@@ -47,7 +47,7 @@ class SalesReturnController extends TenantAwareController
         $customers = $this->tenantQuery(Customer::class)->where('is_active', true)->get();
         $warehouses = $this->tenantQuery(Warehouse::class)->where('is_active', true)->get();
         $invoices = $this->tenantQuery(SalesInvoice::class)
-            ->where('status', 'approved')
+            ->where('status', 'posted')
             ->with('customer')
             ->latest()
             ->get();
@@ -77,7 +77,7 @@ class SalesReturnController extends TenantAwareController
             'lines.*.item_id' => 'required|exists:items,id',
             'lines.*.quantity' => 'required|numeric|min:0.01',
             'lines.*.unit_price' => 'required|numeric|min:0',
-            'lines.*.tax_rate' => 'nullable|numeric|min:0|max:100',
+            'lines.*.tax_percent' => 'nullable|numeric|min:0|max:100',
             'lines.*.reason' => 'nullable|string',
         ]);
 
@@ -90,7 +90,7 @@ class SalesReturnController extends TenantAwareController
             $lineData = [];
             foreach ($validated['lines'] as $line) {
                 $lineSubtotal = $line['quantity'] * $line['unit_price'];
-                $lineTax = $lineSubtotal * (($line['tax_rate'] ?? 0) / 100);
+                $lineTax = $lineSubtotal * (($line['tax_percent'] ?? 0) / 100);
 
                 $subtotal += $lineSubtotal;
                 $totalTax += $lineTax;
@@ -99,7 +99,7 @@ class SalesReturnController extends TenantAwareController
                     'item_id' => $line['item_id'],
                     'quantity' => $line['quantity'],
                     'unit_price' => $line['unit_price'],
-                    'tax_rate' => $line['tax_rate'] ?? 0,
+                    'tax_percent' => $line['tax_percent'] ?? 0,
                     'tax_amount' => $lineTax,
                     'subtotal' => $lineSubtotal,
                     'total' => $lineSubtotal + $lineTax,
@@ -112,7 +112,7 @@ class SalesReturnController extends TenantAwareController
             $return = SalesReturn::create([
                 'tenant_id' => $this->getTenantId(),
                 'customer_id' => $validated['customer_id'],
-                'sales_invoice_id' => $validated['sales_invoice_id'],
+                'original_invoice_id' => $validated['sales_invoice_id'],
                 'warehouse_id' => $validated['warehouse_id'],
                 'return_number' => $this->generateReturnNumber(),
                 'date' => $validated['date'],
@@ -122,7 +122,7 @@ class SalesReturnController extends TenantAwareController
                 'reason' => $validated['reason'] ?? null,
                 'status' => 'draft',
                 'notes' => $validated['notes'] ?? null,
-                'created_by' => auth()->id(),
+                'user_id' => auth()->id(),
             ]);
 
             foreach ($lineData as $data) {
@@ -155,7 +155,7 @@ class SalesReturnController extends TenantAwareController
         DB::beginTransaction();
 
         try {
-            $salesReturn->update(['status' => 'approved']);
+            $salesReturn->update(['status' => 'posted']);
 
             foreach ($salesReturn->lines as $line) {
                 $itemWarehouse = ItemWarehouse::where('item_id', $line->item_id)

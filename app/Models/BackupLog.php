@@ -18,16 +18,14 @@ class BackupLog extends Model
         'size',
         'type',
         'status',
-        'performed_by',
-        'notes',
-        'completed_at',
+        'error_message',
+        'user_id',
     ];
 
     protected function casts(): array
     {
         return [
             'size' => 'integer',
-            'completed_at' => 'datetime',
         ];
     }
 
@@ -43,6 +41,6 @@ class BackupLog extends Model
 
     public function performer(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'performed_by');
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

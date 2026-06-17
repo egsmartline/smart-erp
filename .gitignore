@@ -25,3 +25,11 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+cookie_jar.txt
+
+bootstrap/cache/*
+
+storage/logs/*
+
+storage/framework/*

@@ -25,7 +25,7 @@ class ReportController extends TenantAwareController
             ->map(function ($account) use ($dateTo) {
                 $lines = JournalEntryLine::where('tenant_id', $this->getTenantId())
                     ->where('account_id', $account->id)
-                    ->whereHas('journalEntry', fn($q) => $q->where('status', 'posted')->where('date', '<=', $dateTo))
+                    ->whereHas('journalEntry', fn($q) => $q->where('is_posted', true)->where('date', '<=', $dateTo))
                     ->get();
 
                 $account->total_debit = $lines->sum('debit');
@@ -49,7 +49,7 @@ class ReportController extends TenantAwareController
         $dateTo = $request->date_to ?? now()->toDateString();
 
         $query = JournalEntryLine::where('tenant_id', $this->getTenantId())
-            ->whereHas('journalEntry', fn($q) => $q->where('status', 'posted'));
+            ->whereHas('journalEntry', fn($q) => $q->where('is_posted', true));
 
         if ($accountId) {
             $query->where('account_id', $accountId);
@@ -107,7 +107,7 @@ class ReportController extends TenantAwareController
         if ($customerId) {
             $invoices = SalesInvoice::where('tenant_id', $this->getTenantId())
                 ->where('customer_id', $customerId)
-                ->whereBetween('invoice_date', [$dateFrom, $dateTo])
+                ->whereBetween('date', [$dateFrom, $dateTo])
                 ->with('customer')
                 ->get();
         }
@@ -127,7 +127,7 @@ class ReportController extends TenantAwareController
         if ($supplierId) {
             $invoices = PurchaseInvoice::where('tenant_id', $this->getTenantId())
                 ->where('supplier_id', $supplierId)
-                ->whereBetween('invoice_date', [$dateFrom, $dateTo])
+                ->whereBetween('date', [$dateFrom, $dateTo])
                 ->with('supplier')
                 ->get();
         }
@@ -142,12 +142,12 @@ class ReportController extends TenantAwareController
 
         $salesTax = SalesInvoice::where('tenant_id', $this->getTenantId())
             ->where('status', 'posted')
-            ->whereBetween('invoice_date', [$dateFrom, $dateTo])
+            ->whereBetween('date', [$dateFrom, $dateTo])
             ->sum('tax_amount');
 
         $purchaseTax = PurchaseInvoice::where('tenant_id', $this->getTenantId())
             ->where('status', 'posted')
-            ->whereBetween('invoice_date', [$dateFrom, $dateTo])
+            ->whereBetween('date', [$dateFrom, $dateTo])
             ->sum('tax_amount');
 
         $netVat = $salesTax - $purchaseTax;
@@ -162,7 +162,7 @@ class ReportController extends TenantAwareController
 
         $invoices = SalesInvoice::where('tenant_id', $this->getTenantId())
             ->where('status', 'posted')
-            ->whereBetween('invoice_date', [$dateFrom, $dateTo])
+            ->whereBetween('date', [$dateFrom, $dateTo])
             ->with('customer')
             ->get();
 
@@ -179,7 +179,7 @@ class ReportController extends TenantAwareController
 
         $invoices = PurchaseInvoice::where('tenant_id', $this->getTenantId())
             ->where('status', 'posted')
-            ->whereBetween('invoice_date', [$dateFrom, $dateTo])
+            ->whereBetween('date', [$dateFrom, $dateTo])
             ->with('supplier')
             ->get();
 
@@ -209,12 +209,12 @@ class ReportController extends TenantAwareController
         $receipts = $this->tenantQuery(\App\Models\Payment::class)
             ->where('type', 'receipt')
             ->whereBetween('date', [$dateFrom, $dateTo])
-            ->sum('amount_in_base_currency');
+            ->sum('amount_in_currency');
 
         $payments = $this->tenantQuery(\App\Models\Payment::class)
             ->where('type', 'payment')
             ->whereBetween('date', [$dateFrom, $dateTo])
-            ->sum('amount_in_base_currency');
+            ->sum('amount_in_currency');
 
         $netCashFlow = $receipts - $payments;
 
@@ -223,7 +223,34 @@ class ReportController extends TenantAwareController
 
     public function dashboard(Request $request)
     {
-        return $this->index();
+        $totalItems = $this->tenantQuery(Item::class)->count();
+        $totalCustomers = $this->tenantQuery(Customer::class)->where('is_active', true)->count();
+        $totalSuppliers = $this->tenantQuery(Supplier::class)->where('is_active', true)->count();
+
+        $totalSales = SalesInvoice::where('tenant_id', $this->getTenantId())
+            ->where('status', 'posted')
+            ->whereMonth('date', now()->month)
+            ->whereYear('date', now()->year)
+            ->sum('total');
+
+        $totalPurchases = PurchaseInvoice::where('tenant_id', $this->getTenantId())
+            ->where('status', 'posted')
+            ->whereMonth('date', now()->month)
+            ->whereYear('date', now()->year)
+            ->sum('total');
+
+        $totalReceivable = SalesInvoice::where('tenant_id', $this->getTenantId())
+            ->where('status', 'posted')
+            ->sum('total');
+
+        $totalPayable = PurchaseInvoice::where('tenant_id', $this->getTenantId())
+            ->where('status', 'posted')
+            ->sum('total');
+
+        return view('reports.dashboard', compact(
+            'totalItems', 'totalCustomers', 'totalSuppliers',
+            'totalSales', 'totalPurchases', 'totalReceivable', 'totalPayable'
+        ));
     }
 
     private function getAccountBalances($type, $dateFrom = null, $dateTo)
@@ -237,7 +264,7 @@ class ReportController extends TenantAwareController
             ->map(function ($account) use ($dateFrom, $dateTo) {
                 $query = JournalEntryLine::where('tenant_id', $this->getTenantId())
                     ->where('account_id', $account->id)
-                    ->whereHas('journalEntry', fn($q) => $q->where('status', 'posted'));
+                    ->whereHas('journalEntry', fn($q) => $q->where('is_posted', true));
 
                 if ($dateFrom) {
                     $query->whereHas('journalEntry', fn($q) => $q->where('date', '>=', $dateFrom));

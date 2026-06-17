@@ -15,7 +15,7 @@ class SalesReturn extends Model
     protected $fillable = [
         'tenant_id',
         'customer_id',
-        'sales_invoice_id',
+        'original_invoice_id',
         'warehouse_id',
         'return_number',
         'date',
@@ -25,7 +25,7 @@ class SalesReturn extends Model
         'reason',
         'status',
         'notes',
-        'created_by',
+        'user_id',
     ];
 
     protected function casts(): array
@@ -55,7 +55,7 @@ class SalesReturn extends Model
 
     public function salesInvoice(): BelongsTo
     {
-        return $this->belongsTo(SalesInvoice::class);
+        return $this->belongsTo(SalesInvoice::class, 'original_invoice_id');
     }
 
     public function warehouse(): BelongsTo
@@ -65,7 +65,7 @@ class SalesReturn extends Model
 
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function lines(): HasMany

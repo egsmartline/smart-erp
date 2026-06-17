@@ -42,13 +42,13 @@ class PaymentController extends TenantAwareController
             'supplier_id' => 'required_if:type,payment|nullable|exists:suppliers,id',
             'bank_account_id' => 'required_if:payment_method,bank_transfer|nullable|exists:bank_accounts,id',
             'check_number' => 'required_if:payment_method,check|nullable|string|max:50',
-            'reference_number' => 'nullable|string|max:100',
+            'reference' => 'nullable|string|max:100',
             'notes' => 'nullable|string',
         ]);
 
         $validated['tenant_id'] = $this->getTenantId();
-        $validated['amount_in_base_currency'] = $validated['amount'] * $validated['exchange_rate'];
-        $validated['created_by'] = auth()->id();
+        $validated['amount_in_currency'] = $validated['amount'] * $validated['exchange_rate'];
+        $validated['user_id'] = auth()->id();
         $validated['status'] = 'completed';
 
         Payment::create($validated);

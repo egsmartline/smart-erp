@@ -28,16 +28,18 @@ class ItemController extends TenantAwareController
 
         $items = $query->latest()->paginate(20);
         $categories = $this->tenantQuery(ItemCategory::class)->get();
+        $units = $this->tenantQuery(ItemUnit::class)->get();
 
-        return view('items.index', compact('items', 'categories'));
+        return view('items.index', compact('items', 'categories', 'units'));
     }
 
     public function create()
     {
         $categories = $this->tenantQuery(ItemCategory::class)->get();
         $units = $this->tenantQuery(ItemUnit::class)->get();
+        $warehouses = $this->tenantQuery(\App\Models\Warehouse::class)->get();
 
-        return view('items.create', compact('categories', 'units'));
+        return view('items.create', compact('categories', 'units', 'warehouses'));
     }
 
     public function store(Request $request)
@@ -75,8 +77,9 @@ class ItemController extends TenantAwareController
     {
         $categories = $this->tenantQuery(ItemCategory::class)->get();
         $units = $this->tenantQuery(ItemUnit::class)->get();
+        $warehouses = $this->tenantQuery(\App\Models\Warehouse::class)->get();
 
-        return view('items.edit', compact('item', 'categories', 'units'));
+        return view('items.edit', compact('item', 'categories', 'units', 'warehouses'));
     }
 
     public function update(Request $request, Item $item)
