@@ -35,3 +35,7 @@ storage/logs/*
 storage/framework/*
 
 test_session.xml
+
+cookies.txt
+dashboard.html
+login_page.html

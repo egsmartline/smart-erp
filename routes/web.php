@@ -35,6 +35,17 @@ use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\InventoryCountController;
 use App\Http\Controllers\AnalyticalAccountController;
 use App\Http\Controllers\BudgetController;
+use App\Http\Controllers\InventoryAdjustmentController;
+use App\Http\Controllers\StockTransferController;
+use App\Http\Controllers\ReorderingRuleController;
+use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\JobPositionController;
+use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\LeaveController;
+use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\PayrollController;
+use App\Http\Controllers\LoanController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -153,4 +164,48 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::resource('budgets', BudgetController::class);
     Route::post('budgets/{budget}/confirm', [BudgetController::class, 'confirm'])->name('budgets.confirm');
     Route::post('budgets/{budget}/cancel', [BudgetController::class, 'cancel'])->name('budgets.cancel');
+
+    // Inventory Adjustments
+    Route::resource('inventory-adjustments', InventoryAdjustmentController::class);
+    Route::post('inventory-adjustments/{adj}/confirm', [InventoryAdjustmentController::class, 'confirm'])->name('inventory-adjustments.confirm');
+    Route::post('inventory-adjustments/{adj}/cancel', [InventoryAdjustmentController::class, 'cancel'])->name('inventory-adjustments.cancel');
+
+    // Stock Transfers
+    Route::resource('stock-transfers', StockTransferController::class);
+    Route::post('stock-transfers/{transfer}/confirm', [StockTransferController::class, 'confirm'])->name('stock-transfers.confirm');
+    Route::post('stock-transfers/{transfer}/done', [StockTransferController::class, 'done'])->name('stock-transfers.done');
+    Route::post('stock-transfers/{transfer}/cancel', [StockTransferController::class, 'cancel'])->name('stock-transfers.cancel');
+
+    // Reordering Rules
+    Route::resource('reordering-rules', ReorderingRuleController::class)->except(['show', 'edit', 'update']);
+
+    // HR - Employees
+    Route::resource('employees', EmployeeController::class);
+
+    // HR - Departments
+    Route::resource('departments', DepartmentController::class);
+
+    // HR - Job Positions
+    Route::resource('job-positions', JobPositionController::class);
+
+    // HR - Attendance
+    Route::resource('attendance', AttendanceController::class)->only(['index', 'create', 'store', 'show']);
+    Route::post('attendance/{att}/check-out', [AttendanceController::class, 'checkOut'])->name('attendance.check-out');
+
+    // HR - Leaves
+    Route::resource('leaves', LeaveController::class)->only(['index', 'create', 'store']);
+    Route::post('leaves/{leave}/approve', [LeaveController::class, 'approve'])->name('leaves.approve');
+    Route::post('leaves/{leave}/reject', [LeaveController::class, 'reject'])->name('leaves.reject');
+
+    // HR - Expenses
+    Route::resource('expenses', ExpenseController::class);
+    Route::post('expenses/{expense}/approve', [ExpenseController::class, 'approve'])->name('expenses.approve');
+    Route::post('expenses/{expense}/reject', [ExpenseController::class, 'reject'])->name('expenses.reject');
+
+    // HR - Payroll
+    Route::resource('payroll', PayrollController::class)->only(['index', 'create', 'store', 'show']);
+    Route::post('payroll/{payroll}/confirm', [PayrollController::class, 'confirm'])->name('payroll.confirm');
+
+    // HR - Loans
+    Route::resource('loans', LoanController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
 });
