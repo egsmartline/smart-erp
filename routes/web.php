@@ -25,6 +25,8 @@ use App\Http\Controllers\BackupController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\FiscalYearController;
+use App\Http\Controllers\StockMovementController;
+use App\Http\Controllers\InventoryCountController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -109,4 +111,10 @@ Route::middleware(['auth', 'tenant'])->group(function () {
 
     Route::resource('currencies', CurrencyController::class);
     Route::resource('fiscal-years', FiscalYearController::class);
+
+    // Stock Movements
+    Route::get('stock-movements', [StockMovementController::class, 'index'])->name('stock-movements.index');
+
+    // Inventory Count
+    Route::get('inventory-count', [InventoryCountController::class, 'index'])->name('inventory-count.index');
 });

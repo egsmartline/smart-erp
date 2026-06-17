@@ -33,3 +33,5 @@ bootstrap/cache/*
 storage/logs/*
 
 storage/framework/*
+
+test_session.xml

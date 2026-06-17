@@ -11,11 +11,11 @@ class ItemWarehouse extends Model
     use HasFactory;
 
     protected $fillable = [
+        'tenant_id',
         'item_id',
         'warehouse_id',
         'quantity',
         'reserved_quantity',
-        'available_quantity',
         'average_cost',
     ];
 
@@ -24,7 +24,6 @@ class ItemWarehouse extends Model
         return [
             'quantity' => 'decimal:2',
             'reserved_quantity' => 'decimal:2',
-            'available_quantity' => 'decimal:2',
             'average_cost' => 'decimal:2',
         ];
     }
