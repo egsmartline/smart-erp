@@ -1,0 +1,417 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\PurchaseInvoice;
+use App\Models\PurchaseInvoiceLine;
+use App\Models\Supplier;
+use App\Models\Item;
+use App\Models\Warehouse;
+use App\Models\ItemWarehouse;
+use App\Models\StockMovement;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class PurchaseInvoiceController extends TenantAwareController
+{
+    public function index(Request $request)
+    {
+        $query = $this->tenantQuery(PurchaseInvoice::class)
+            ->with('supplier');
+
+        if ($request->filled('date_from')) {
+            $query->where('date', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->where('date', '<=', $request->date_to);
+        }
+        if ($request->filled('supplier_id')) {
+            $query->where('supplier_id', $request->supplier_id);
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('search')) {
+            $query->where('invoice_number', 'like', '%' . $request->search . '%');
+        }
+
+        $invoices = $query->latest()->paginate(15);
+        $suppliers = $this->tenantQuery(Supplier::class)->where('is_active', true)->get();
+
+        return view('purchase-invoices.index', compact('invoices', 'suppliers'));
+    }
+
+    public function create()
+    {
+        $suppliers = $this->tenantQuery(Supplier::class)->where('is_active', true)->get();
+        $warehouses = $this->tenantQuery(Warehouse::class)->where('is_active', true)->get();
+        $invoiceNumber = $this->generateInvoiceNumber();
+
+        return view('purchase-invoices.create', compact('suppliers', 'warehouses', 'invoiceNumber'));
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'supplier_id' => 'required|exists:suppliers,id',
+            'warehouse_id' => 'required|exists:warehouses,id',
+            'date' => 'required|date',
+            'due_date' => 'required|date|after_or_equal:date',
+            'notes' => 'nullable|string',
+            'discount_amount' => 'nullable|numeric|min:0',
+            'tax_amount' => 'nullable|numeric|min:0',
+            'shipping_amount' => 'nullable|numeric|min:0',
+            'lines' => 'required|array|min:1',
+            'lines.*.item_id' => 'required|exists:items,id',
+            'lines.*.description' => 'nullable|string',
+            'lines.*.quantity' => 'required|numeric|min:0.01',
+            'lines.*.unit_cost' => 'required|numeric|min:0',
+            'lines.*.discount_percent' => 'nullable|numeric|min:0|max:100',
+            'lines.*.tax_rate' => 'nullable|numeric|min:0|max:100',
+            'lines.*.expiry_date' => 'nullable|date',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $subtotal = 0;
+            $totalTax = 0;
+            $totalDiscount = 0;
+
+            $lineData = [];
+            foreach ($validated['lines'] as $line) {
+                $lineSubtotal = $line['quantity'] * $line['unit_cost'];
+                $lineDiscount = $lineSubtotal * (($line['discount_percent'] ?? 0) / 100);
+                $lineAfterDiscount = $lineSubtotal - $lineDiscount;
+                $lineTax = $lineAfterDiscount * (($line['tax_rate'] ?? 0) / 100);
+                $lineTotal = $lineAfterDiscount + $lineTax;
+
+                $subtotal += $lineSubtotal;
+                $totalDiscount += $lineDiscount;
+                $totalTax += $lineTax;
+
+                $lineData[] = [
+                    'item_id' => $line['item_id'],
+                    'description' => $line['description'] ?? null,
+                    'quantity' => $line['quantity'],
+                    'unit_cost' => $line['unit_cost'],
+                    'discount_percent' => $line['discount_percent'] ?? 0,
+                    'discount_amount' => $lineDiscount,
+                    'tax_rate' => $line['tax_rate'] ?? 0,
+                    'tax_amount' => $lineTax,
+                    'subtotal' => $lineSubtotal,
+                    'total' => $lineTotal,
+                    'warehouse_id' => $validated['warehouse_id'],
+                    'expiry_date' => $line['expiry_date'] ?? null,
+                ];
+            }
+
+            $overallDiscount = $validated['discount_amount'] ?? 0;
+            $grandTotal = $subtotal - $totalDiscount - $overallDiscount + $totalTax + ($validated['shipping_amount'] ?? 0);
+
+            $invoice = PurchaseInvoice::create([
+                'tenant_id' => $this->getTenantId(),
+                'supplier_id' => $validated['supplier_id'],
+                'warehouse_id' => $validated['warehouse_id'],
+                'user_id' => auth()->id(),
+                'invoice_number' => $this->generateInvoiceNumber(),
+                'date' => $validated['date'],
+                'due_date' => $validated['due_date'],
+                'subtotal' => $subtotal,
+                'discount_amount' => $totalDiscount + $overallDiscount,
+                'discount_percent' => 0,
+                'tax_amount' => $totalTax,
+                'shipping_amount' => $validated['shipping_amount'] ?? 0,
+                'total' => $grandTotal,
+                'paid_amount' => 0,
+                'due_amount' => $grandTotal,
+                'currency_code' => 'SAR',
+                'exchange_rate' => 1,
+                'status' => 'draft',
+                'payment_status' => 'unpaid',
+                'notes' => $validated['notes'] ?? null,
+            ]);
+
+            foreach ($lineData as $data) {
+                $data['purchase_invoice_id'] = $invoice->id;
+                PurchaseInvoiceLine::create($data);
+            }
+
+            DB::commit();
+
+            return redirect()->route('purchase-invoices.show', $invoice)
+                ->with('success', 'تم إنشاء فاتورة المشتريات بنجاح');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()->with('error', 'حدث خطأ أثناء إنشاء الفاتورة: ' . $e->getMessage());
+        }
+    }
+
+    public function show(PurchaseInvoice $purchaseInvoice)
+    {
+        $purchaseInvoice->load(['supplier', 'warehouse', 'lines.item', 'user', 'returns']);
+        return view('purchase-invoices.show', compact('purchaseInvoice'));
+    }
+
+    public function edit(PurchaseInvoice $purchaseInvoice)
+    {
+        if ($purchaseInvoice->status !== 'draft') {
+            return back()->with('error', 'لا يمكن تعديل فاتورة غير مسودة');
+        }
+
+        $purchaseInvoice->load('lines.item');
+        $suppliers = $this->tenantQuery(Supplier::class)->where('is_active', true)->get();
+        $warehouses = $this->tenantQuery(Warehouse::class)->where('is_active', true)->get();
+
+        return view('purchase-invoices.edit', compact('purchaseInvoice', 'suppliers', 'warehouses'));
+    }
+
+    public function update(Request $request, PurchaseInvoice $purchaseInvoice)
+    {
+        if ($purchaseInvoice->status !== 'draft') {
+            return back()->with('error', 'لا يمكن تعديل فاتورة غير مسودة');
+        }
+
+        $validated = $request->validate([
+            'supplier_id' => 'required|exists:suppliers,id',
+            'warehouse_id' => 'required|exists:warehouses,id',
+            'date' => 'required|date',
+            'due_date' => 'required|date|after_or_equal:date',
+            'notes' => 'nullable|string',
+            'discount_amount' => 'nullable|numeric|min:0',
+            'tax_amount' => 'nullable|numeric|min:0',
+            'shipping_amount' => 'nullable|numeric|min:0',
+            'lines' => 'required|array|min:1',
+            'lines.*.item_id' => 'required|exists:items,id',
+            'lines.*.description' => 'nullable|string',
+            'lines.*.quantity' => 'required|numeric|min:0.01',
+            'lines.*.unit_cost' => 'required|numeric|min:0',
+            'lines.*.discount_percent' => 'nullable|numeric|min:0|max:100',
+            'lines.*.tax_rate' => 'nullable|numeric|min:0|max:100',
+            'lines.*.expiry_date' => 'nullable|date',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $subtotal = 0;
+            $totalTax = 0;
+            $totalDiscount = 0;
+
+            $lineData = [];
+            foreach ($validated['lines'] as $line) {
+                $lineSubtotal = $line['quantity'] * $line['unit_cost'];
+                $lineDiscount = $lineSubtotal * (($line['discount_percent'] ?? 0) / 100);
+                $lineAfterDiscount = $lineSubtotal - $lineDiscount;
+                $lineTax = $lineAfterDiscount * (($line['tax_rate'] ?? 0) / 100);
+                $lineTotal = $lineAfterDiscount + $lineTax;
+
+                $subtotal += $lineSubtotal;
+                $totalDiscount += $lineDiscount;
+                $totalTax += $lineTax;
+
+                $lineData[] = [
+                    'item_id' => $line['item_id'],
+                    'description' => $line['description'] ?? null,
+                    'quantity' => $line['quantity'],
+                    'unit_cost' => $line['unit_cost'],
+                    'discount_percent' => $line['discount_percent'] ?? 0,
+                    'discount_amount' => $lineDiscount,
+                    'tax_rate' => $line['tax_rate'] ?? 0,
+                    'tax_amount' => $lineTax,
+                    'subtotal' => $lineSubtotal,
+                    'total' => $lineTotal,
+                    'warehouse_id' => $validated['warehouse_id'],
+                    'expiry_date' => $line['expiry_date'] ?? null,
+                ];
+            }
+
+            $overallDiscount = $validated['discount_amount'] ?? 0;
+            $grandTotal = $subtotal - $totalDiscount - $overallDiscount + $totalTax + ($validated['shipping_amount'] ?? 0);
+
+            $purchaseInvoice->update([
+                'supplier_id' => $validated['supplier_id'],
+                'warehouse_id' => $validated['warehouse_id'],
+                'date' => $validated['date'],
+                'due_date' => $validated['due_date'],
+                'subtotal' => $subtotal,
+                'discount_amount' => $totalDiscount + $overallDiscount,
+                'tax_amount' => $totalTax,
+                'shipping_amount' => $validated['shipping_amount'] ?? 0,
+                'total' => $grandTotal,
+                'due_amount' => $grandTotal - $purchaseInvoice->paid_amount,
+                'notes' => $validated['notes'] ?? null,
+            ]);
+
+            $purchaseInvoice->lines()->delete();
+
+            foreach ($lineData as $data) {
+                $data['purchase_invoice_id'] = $purchaseInvoice->id;
+                PurchaseInvoiceLine::create($data);
+            }
+
+            DB::commit();
+
+            return redirect()->route('purchase-invoices.show', $purchaseInvoice)
+                ->with('success', 'تم تحديث فاتورة المشتريات بنجاح');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()->with('error', 'حدث خطأ أثناء تحديث الفاتورة: ' . $e->getMessage());
+        }
+    }
+
+    public function destroy(PurchaseInvoice $purchaseInvoice)
+    {
+        if ($purchaseInvoice->status !== 'draft') {
+            return back()->with('error', 'لا يمكن حذف فاتورة غير مسودة');
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $purchaseInvoice->lines()->delete();
+            $purchaseInvoice->delete();
+
+            DB::commit();
+
+            return redirect()->route('purchase-invoices.index')
+                ->with('success', 'تم حذف فاتورة المشتريات بنجاح');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'حدث خطأ أثناء الحذف: ' . $e->getMessage());
+        }
+    }
+
+    public function post(PurchaseInvoice $purchaseInvoice)
+    {
+        if ($purchaseInvoice->status !== 'draft') {
+            return back()->with('error', 'الفاتورة مرحلة بالفعل');
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $purchaseInvoice->update([
+                'status' => 'approved',
+                'payment_status' => $purchaseInvoice->paid_amount > 0 ? 'partial' : 'unpaid',
+            ]);
+
+            foreach ($purchaseInvoice->lines as $line) {
+                $itemWarehouse = ItemWarehouse::firstOrCreate(
+                    ['item_id' => $line->item_id, 'warehouse_id' => $purchaseInvoice->warehouse_id],
+                    ['quantity' => 0, 'reserved_quantity' => 0, 'available_quantity' => 0, 'average_cost' => 0]
+                );
+
+                $itemWarehouse->increment('quantity', $line->quantity);
+                $itemWarehouse->increment('available_quantity', $line->quantity);
+
+                if ($itemWarehouse->quantity > 0) {
+                    $totalCost = ($itemWarehouse->quantity - $line->quantity) * $itemWarehouse->average_cost + $line->quantity * $line->unit_cost;
+                    $itemWarehouse->average_cost = $totalCost / $itemWarehouse->quantity;
+                }
+
+                StockMovement::create([
+                    'item_id' => $line->item_id,
+                    'warehouse_id' => $purchaseInvoice->warehouse_id,
+                    'stockable_type' => PurchaseInvoice::class,
+                    'stockable_id' => $purchaseInvoice->id,
+                    'type' => 'in',
+                    'quantity' => $line->quantity,
+                    'unit_cost' => $line->unit_cost,
+                    'total_cost' => $line->total,
+                    'reference_number' => $purchaseInvoice->invoice_number,
+                    'date' => now()->toDateString(),
+                    'notes' => 'إدخال مخزون - فاتورة مشتريات',
+                    'created_by' => auth()->id(),
+                ]);
+            }
+
+            DB::commit();
+
+            return back()->with('success', 'تم ترحيل الفاتورة بنجاح');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'حدث خطأ أثناء الترحيل: ' . $e->getMessage());
+        }
+    }
+
+    public function void(PurchaseInvoice $purchaseInvoice)
+    {
+        if ($purchaseInvoice->status !== 'approved') {
+            return back()->with('error', 'لا يمكن إلغاء فاتورة غير مرحلة');
+        }
+
+        DB::beginTransaction();
+
+        try {
+            foreach ($purchaseInvoice->lines as $line) {
+                $itemWarehouse = ItemWarehouse::where('item_id', $line->item_id)
+                    ->where('warehouse_id', $purchaseInvoice->warehouse_id)
+                    ->first();
+
+                if ($itemWarehouse) {
+                    $itemWarehouse->decrement('quantity', $line->quantity);
+                    $itemWarehouse->decrement('available_quantity', $line->quantity);
+                }
+
+                StockMovement::create([
+                    'item_id' => $line->item_id,
+                    'warehouse_id' => $purchaseInvoice->warehouse_id,
+                    'stockable_type' => PurchaseInvoice::class,
+                    'stockable_id' => $purchaseInvoice->id,
+                    'type' => 'out',
+                    'quantity' => $line->quantity,
+                    'unit_cost' => $line->unit_cost,
+                    'total_cost' => $line->total,
+                    'reference_number' => $purchaseInvoice->invoice_number,
+                    'date' => now()->toDateString(),
+                    'notes' => 'خروج مخزون - إلغاء فاتورة مشتريات',
+                    'created_by' => auth()->id(),
+                ]);
+            }
+
+            $purchaseInvoice->update(['status' => 'cancelled']);
+
+            DB::commit();
+
+            return back()->with('success', 'تم إلغاء الفاتورة وخصم المخزون بنجاح');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'حدث خطأ أثناء الإلغاء: ' . $e->getMessage());
+        }
+    }
+
+    public function searchSuppliers(Request $request)
+    {
+        $term = $request->input('search', '');
+        $suppliers = $this->tenantQuery(Supplier::class)
+            ->where('is_active', true)
+            ->where(function ($q) use ($term) {
+                $q->where('name', 'like', "%{$term}%")
+                  ->orWhere('name_ar', 'like', "%{$term}%")
+                  ->orWhere('phone', 'like', "%{$term}%")
+                  ->orWhere('mobile', 'like', "%{$term}%");
+            })
+            ->limit(10)
+            ->get(['id', 'name', 'name_ar', 'phone', 'mobile', 'balance']);
+
+        return response()->json($suppliers);
+    }
+
+    protected function generateInvoiceNumber(): string
+    {
+        $year = date('Y');
+        $lastInvoice = $this->tenantQuery(PurchaseInvoice::class)
+            ->whereYear('date', $year)
+            ->max('invoice_number');
+
+        if ($lastInvoice) {
+            $lastSequence = (int) substr($lastInvoice, -4);
+            $newSequence = $lastSequence + 1;
+        } else {
+            $newSequence = 1;
+        }
+
+        return 'INV-P-' . $year . '-' . str_pad($newSequence, 4, '0', STR_PAD_LEFT);
+    }
+}

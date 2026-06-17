@@ -1,0 +1,181 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Account;
+use App\Models\JournalEntryLine;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class AccountController extends Controller
+{
+    public function index(Request $request)
+    {
+        $query = Account::where('tenant_id', Auth::user()->tenant_id);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('name_en', 'like', "%{$search}%")
+                    ->orWhere('code', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        $accounts = $query->with('parent')->orderBy('code')->get();
+
+        $accountTypes = [
+            'assets' => 'أصول',
+            'liabilities' => 'خصوم',
+            'equity' => 'حقوق ملكية',
+            'revenue' => 'إيرادات',
+            'expenses' => 'مصروفات',
+        ];
+
+        return view('accounts.index', compact('accounts', 'accountTypes'));
+    }
+
+    public function create()
+    {
+        $accounts = Account::where('tenant_id', Auth::user()->tenant_id)
+            ->where('is_active', true)
+            ->orderBy('code')
+            ->get();
+
+        $accountTypes = [
+            'assets' => 'أصول',
+            'liabilities' => 'خصوم',
+            'equity' => 'حقوق ملكية',
+            'revenue' => 'إيرادات',
+            'expenses' => 'مصروفات',
+        ];
+
+        return view('accounts.create', compact('accounts', 'accountTypes'));
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'code' => 'required|string|max:10|unique:accounts,code,NULL,id,tenant_id,' . Auth::user()->tenant_id,
+            'name' => 'required|string|max:255',
+            'name_en' => 'nullable|string|max:255',
+            'type' => 'required|in:assets,liabilities,equity,revenue,expenses',
+            'sub_type' => 'nullable|string|max:255',
+            'parent_id' => 'nullable|exists:accounts,id',
+            'opening_balance' => 'required|numeric|min:0',
+            'is_active' => 'boolean',
+        ]);
+
+        $validated['tenant_id'] = Auth::user()->tenant_id;
+        $validated['balance'] = $validated['opening_balance'];
+        $validated['is_active'] = $request->boolean('is_active', true);
+
+        Account::create($validated);
+
+        return redirect()->route('accounts.index')
+            ->with('success', 'تم إنشاء الحساب بنجاح');
+    }
+
+    public function show(Account $account)
+    {
+        $this->authorizeAccount($account);
+
+        $journalLines = JournalEntryLine::where('account_id', $account->id)
+            ->with('journalEntry')
+            ->orderByDesc('id')
+            ->paginate(25);
+
+        return view('accounts.show', compact('account', 'journalLines'));
+    }
+
+    public function edit(Account $account)
+    {
+        $this->authorizeAccount($account);
+
+        $accounts = Account::where('tenant_id', Auth::user()->tenant_id)
+            ->where('is_active', true)
+            ->where('id', '!=', $account->id)
+            ->orderBy('code')
+            ->get();
+
+        $accountTypes = [
+            'assets' => 'أصول',
+            'liabilities' => 'خصوم',
+            'equity' => 'حقوق ملكية',
+            'revenue' => 'إيرادات',
+            'expenses' => 'مصروفات',
+        ];
+
+        return view('accounts.edit', compact('account', 'accounts', 'accountTypes'));
+    }
+
+    public function update(Request $request, Account $account)
+    {
+        $this->authorizeAccount($account);
+
+        $validated = $request->validate([
+            'code' => 'required|string|max:10|unique:accounts,code,' . $account->id . ',id,tenant_id,' . Auth::user()->tenant_id,
+            'name' => 'required|string|max:255',
+            'name_en' => 'nullable|string|max:255',
+            'type' => 'required|in:assets,liabilities,equity,revenue,expenses',
+            'sub_type' => 'nullable|string|max:255',
+            'parent_id' => 'nullable|exists:accounts,id',
+            'opening_balance' => 'required|numeric|min:0',
+            'is_active' => 'boolean',
+        ]);
+
+        $validated['is_active'] = $request->boolean('is_active', true);
+
+        $account->update($validated);
+
+        return redirect()->route('accounts.index')
+            ->with('success', 'تم تحديث الحساب بنجاح');
+    }
+
+    public function destroy(Account $account)
+    {
+        $this->authorizeAccount($account);
+
+        $hasLines = JournalEntryLine::where('account_id', $account->id)->exists();
+
+        if ($hasLines) {
+            return redirect()->back()
+                ->with('error', 'لا يمكن حذف هذا الحساب لارتباطه بقيود يومية');
+        }
+
+        $hasChildren = Account::where('parent_id', $account->id)->exists();
+
+        if ($hasChildren) {
+            return redirect()->back()
+                ->with('error', 'لا يمكن حذف هذا الحساب لارتباطه بحسابات فرعية');
+        }
+
+        $account->delete();
+
+        return redirect()->route('accounts.index')
+            ->with('success', 'تم حذف الحساب بنجاح');
+    }
+
+    public function toggleStatus(Account $account)
+    {
+        $this->authorizeAccount($account);
+
+        $account->update(['is_active' => !$account->is_active]);
+
+        $status = $account->is_active ? 'تفعيل' : 'إلغاء تفعيل';
+
+        return redirect()->back()
+            ->with('success', "تم {$status} الحساب بنجاح");
+    }
+
+    private function authorizeAccount(Account $account): void
+    {
+        if ($account->tenant_id !== Auth::user()->tenant_id) {
+            abort(403, 'غير مصرح לך بالوصول لهذا الحساب');
+        }
+    }
+}

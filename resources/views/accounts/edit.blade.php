@@ -1,0 +1,106 @@
+<x-app-layout>
+    <x-slot name="header">
+        <div class="flex items-center justify-between">
+            <h2 class="text-xl font-bold text-gray-800">تعديل الحساب: {{ $account->name }}</h2>
+            <a href="{{ route('accounts.index') }}" class="inline-flex items-center gap-2 rounded-lg bg-gray-600 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                إلغاء
+            </a>
+        </div>
+    </x-slot>
+
+    @if ($errors->any())
+        <div class="mb-4 rounded-lg bg-red-50 p-4 text-red-800 border border-red-200">
+            <ul class="list-disc list-inside space-y-1">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6">
+        <form action="{{ route('accounts.update', $account) }}" method="POST" class="space-y-6">
+            @csrf
+            @method('PUT')
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div>
+                    <label for="code" class="mb-1 block text-sm font-medium text-gray-700">كود الحساب <span class="text-red-500">*</span></label>
+                    <input type="text" name="code" id="code" value="{{ old('code', $account->code) }}" required
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        placeholder="مثال: 1101">
+                </div>
+
+                <div>
+                    <label for="name" class="mb-1 block text-sm font-medium text-gray-700">اسم الحساب <span class="text-red-500">*</span></label>
+                    <input type="text" name="name" id="name" value="{{ old('name', $account->name) }}" required
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        placeholder="مثال: نقداً">
+                </div>
+
+                <div>
+                    <label for="name_en" class="mb-1 block text-sm font-medium text-gray-700">الاسم الإنجليزي</label>
+                    <input type="text" name="name_en" id="name_en" value="{{ old('name_en', $account->name_en) }}"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        placeholder="مثال: Cash">
+                </div>
+
+                <div>
+                    <label for="type" class="mb-1 block text-sm font-medium text-gray-700">نوع الحساب <span class="text-red-500">*</span></label>
+                    <select name="type" id="type" required
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <option value="">اختر النوع</option>
+                        @foreach($accountTypes as $type => $typeName)
+                            <option value="{{ $type }}" {{ old('type', $account->type) === $type ? 'selected' : '' }}>{{ $typeName }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label for="sub_type" class="mb-1 block text-sm font-medium text-gray-700">النوع الفرعي</label>
+                    <input type="text" name="sub_type" id="sub_type" value="{{ old('sub_type', $account->sub_type) }}"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        placeholder="مثال: أصول متداولة">
+                </div>
+
+                <div>
+                    <label for="parent_id" class="mb-1 block text-sm font-medium text-gray-700">الحساب الأب</label>
+                    <select name="parent_id" id="parent_id"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <option value="">بدون حساب أب (حساب رئيسي)</option>
+                        @foreach($accounts as $acc)
+                            <option value="{{ $acc->id }}" {{ old('parent_id', $account->parent_id) == $acc->id ? 'selected' : '' }}>
+                                {{ $acc->code }} - {{ $acc->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div>
+                    <label for="opening_balance" class="mb-1 block text-sm font-medium text-gray-700">الرصيد الافتتاحي</label>
+                    <input type="number" name="opening_balance" id="opening_balance" value="{{ old('opening_balance', $account->opening_balance) }}" step="0.01" min="0"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                </div>
+
+                <div class="flex items-end">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="is_active" value="1" {{ old('is_active', $account->is_active) ? 'checked' : '' }}
+                            class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                        <span class="text-sm font-medium text-gray-700">حساب نشط</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 border-t border-gray-200 pt-6">
+                <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    حفظ التعديلات
+                </button>
+                <a href="{{ route('accounts.index') }}" class="rounded-lg bg-gray-200 px-6 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-300 transition">
+                    إلغاء
+                </a>
+            </div>
+        </form>
+    </div>
+</x-app-layout>
