@@ -17,4 +17,15 @@ require __DIR__.'/../vendor/autoload.php';
 /** @var Application $app */
 $app = require_once __DIR__.'/../bootstrap/app.php';
 
+if (DIRECTORY_SEPARATOR === '\\') {
+    $app->booted(function () {
+        set_error_handler(function ($errno, $errstr) {
+            if ($errno === E_WARNING && str_contains($errstr, 'Header may not contain more than a single header')) {
+                return true;
+            }
+            return false;
+        });
+    });
+}
+
 $app->handleRequest(Request::capture());

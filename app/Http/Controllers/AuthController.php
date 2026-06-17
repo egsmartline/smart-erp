@@ -12,7 +12,7 @@ class AuthController extends Controller
     public function showLogin()
     {
         if (Auth::check()) {
-            return redirect()->route('dashboard');
+            return new \Illuminate\Http\RedirectResponse('/');
         }
         return view('auth.login');
     }
@@ -33,7 +33,8 @@ class AuthController extends Controller
                 session(['current_tenant_id' => $user->tenant_id]);
             }
 
-            return redirect()->intended(route('dashboard'));
+            $intended = session()->pull('url.intended', '/');
+            return new \Illuminate\Http\RedirectResponse($intended);
         }
 
         return back()->withErrors([
@@ -47,6 +48,6 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        return new \Illuminate\Http\RedirectResponse('/login');
     }
 }

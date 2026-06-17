@@ -23,7 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Unauthenticated.'], 401);
             }
-            return redirect()->route('login');
+            return new \Illuminate\Http\RedirectResponse('/login');
         });
     })
     ->withExceptions(function (Exceptions $exceptions): void {
