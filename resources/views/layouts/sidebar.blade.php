@@ -21,8 +21,8 @@
             الرئيسية
         </a>
 
-        <!-- الحسابات -->
-        <div x-data="{ open: {{ request()->routeIs('accounts.*') || request()->routeIs('journal-entries.*') || request()->routeIs('payments.*') ? 'true' : 'false' }} }">
+        <!-- المحاسبة -->
+        <div x-data="{ open: {{ in_array(true, [request()->routeIs('accounts.*'), request()->routeIs('journals.*'), request()->routeIs('journal-entries.*'), request()->routeIs('payments.*'), request()->routeIs('payment-terms.*'), request()->routeIs('taxes.*'), request()->routeIs('bank-statements.*'), request()->routeIs('analytical-accounts.*'), request()->routeIs('budgets.*')]) ? 'true' : 'false' }} }">
             <button @click="open = !open" class="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition text-gray-300 hover:bg-gray-800 hover:text-white">
                 <div class="flex items-center gap-3">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
@@ -35,6 +35,10 @@
                     <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
                     دليل الحسابات
                 </a>
+                <a href="{{ route('journals.index') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('journals.*') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                    يوميات القيود
+                </a>
                 <a href="{{ route('journal-entries.index') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('journal-entries.*') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
                     <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
                     القيود اليومية
@@ -42,6 +46,26 @@
                 <a href="{{ route('payments.index') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('payments.*') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
                     <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
                     المدفوعات
+                </a>
+                <a href="{{ route('payment-terms.index') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('payment-terms.*') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                    شروط الدفع
+                </a>
+                <a href="{{ route('taxes.index') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('taxes.*') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                    الضرائب
+                </a>
+                <a href="{{ route('bank-statements.index') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('bank-statements.*') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}>
+                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                    كشف حساب البنك
+                </a>
+                <a href="{{ route('analytical-accounts.index') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('analytical-accounts.*') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                    الحسابات التحليلية
+                </a>
+                <a href="{{ route('budgets.index') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('budgets.*') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                    الميزانيات
                 </a>
             </div>
         </div>
@@ -143,6 +167,10 @@
                     <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
                     ميزان المراجعة
                 </a>
+                <a href="{{ route('reports.general-ledger') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('reports.general-ledger') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                    دفتر الأستاذ العام
+                </a>
                 <a href="{{ route('reports.income-statement') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('reports.income-statement') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
                     <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
                     قائمة الدخل
@@ -150,6 +178,34 @@
                 <a href="{{ route('reports.balance-sheet') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('reports.balance-sheet') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
                     <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
                     الميزانية العمومية
+                </a>
+                <a href="{{ route('reports.cash-flow') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('reports.cash-flow') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                    التدفقات النقدية
+                </a>
+                <a href="{{ route('reports.sales') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('reports.sales') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                    تقرير المبيعات
+                </a>
+                <a href="{{ route('reports.purchases') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('reports.purchases') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                    تقرير المشتريات
+                </a>
+                <a href="{{ route('reports.customer-statement') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('reports.customer-statement') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                    كشف حساب العملاء
+                </a>
+                <a href="{{ route('reports.supplier-statement') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('reports.supplier-statement') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                    كشف حساب الموردين
+                </a>
+                <a href="{{ route('reports.vat') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('reports.vat') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                    تقرير ضريبة القيمة المضافة
+                </a>
+                <a href="{{ route('reports.inventory') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('reports.inventory') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                    تقرير المخزون
                 </a>
             </div>
         </div>

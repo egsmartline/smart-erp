@@ -14,6 +14,7 @@ class JournalEntry extends Model
         'date',
         'description',
         'reference',
+        'journal_id',
         'total_debit',
         'total_credit',
         'is_posted',
@@ -27,6 +28,11 @@ class JournalEntry extends Model
         'total_credit' => 'decimal:2',
         'is_posted' => 'boolean',
     ];
+
+    public function journal()
+    {
+        return $this->belongsTo(Journal::class);
+    }
 
     public function lines()
     {

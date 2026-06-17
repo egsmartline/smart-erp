@@ -23,10 +23,16 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\TaxController;
+use App\Http\Controllers\BankStatementController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\FiscalYearController;
+use App\Http\Controllers\JournalController;
+use App\Http\Controllers\PaymentTermController;
 use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\InventoryCountController;
+use App\Http\Controllers\AnalyticalAccountController;
+use App\Http\Controllers\BudgetController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -109,12 +115,26 @@ Route::middleware(['auth', 'tenant'])->group(function () {
 
     Route::get('/audit-log', [AuditLogController::class, 'index'])->name('audit-log.index');
 
+    Route::resource('taxes', TaxController::class);
+    Route::resource('bank-statements', BankStatementController::class);
+    Route::post('bank-statements/{bankStatement}/post', [BankStatementController::class, 'post'])->name('bank-statements.post');
+
     Route::resource('currencies', CurrencyController::class);
     Route::resource('fiscal-years', FiscalYearController::class);
+    Route::resource('journals', JournalController::class);
+    Route::resource('payment-terms', PaymentTermController::class);
 
     // Stock Movements
     Route::get('stock-movements', [StockMovementController::class, 'index'])->name('stock-movements.index');
 
     // Inventory Count
     Route::get('inventory-count', [InventoryCountController::class, 'index'])->name('inventory-count.index');
+
+    // Analytical Accounts
+    Route::resource('analytical-accounts', AnalyticalAccountController::class);
+
+    // Budgets
+    Route::resource('budgets', BudgetController::class);
+    Route::post('budgets/{budget}/confirm', [BudgetController::class, 'confirm'])->name('budgets.confirm');
+    Route::post('budgets/{budget}/cancel', [BudgetController::class, 'cancel'])->name('budgets.cancel');
 });
