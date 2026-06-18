@@ -12,8 +12,9 @@ class SettingController extends TenantAwareController
     {
         $company = $this->tenantQuery(Company::class)->first();
         $currencies = Currency::where('tenant_id', $this->getTenantId())->get();
+        $companies = $this->tenantQuery(Company::class)->get();
 
-        return view('settings.index', compact('company', 'currencies'));
+        return view('settings.index', compact('company', 'currencies', 'companies'));
     }
 
     public function update(Request $request)
@@ -27,6 +28,7 @@ class SettingController extends TenantAwareController
             'website' => 'nullable|url',
             'logo' => 'nullable|image|max:2048',
             'currency_id' => 'required|exists:currencies,id',
+            'secondary_currency_id' => 'nullable|exists:currencies,id',
         ]);
 
         $company = $this->tenantQuery(Company::class)->first();
@@ -38,5 +40,21 @@ class SettingController extends TenantAwareController
         $company->update($validated);
 
         return redirect()->route('settings.index')->with('success', 'تم تحديث الإعدادات بنجاح');
+    }
+
+    public function updateLogo(Request $request)
+    {
+        $request->validate([
+            'logo' => 'required|image|max:2048',
+        ]);
+
+        $company = $this->tenantQuery(Company::class)->first();
+
+        if ($request->hasFile('logo')) {
+            $path = $request->file('logo')->store('logos', 'public');
+            $company->update(['logo' => $path]);
+        }
+
+        return back()->with('success', 'تم تحديث شعار الشركة بنجاح');
     }
 }

@@ -2,12 +2,15 @@
 <aside class="fixed inset-y-0 right-0 z-50 w-64 bg-gray-900 text-white shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 translate-x-full lg:translate-x-0" dir="rtl">
     <!-- Logo -->
     <div class="flex items-center justify-center h-16 border-b border-gray-800">
+        @php $company = \App\Models\Company::where('tenant_id', session('current_tenant_id'))->first(); @endphp
         <div class="flex items-center gap-3">
-            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-lg font-bold">
-                S
-            </div>
+            @if($company && $company->logo)
+                <img src="{{ asset('storage/' . $company->logo) }}" alt="Logo" class="h-10 w-10 rounded-lg object-cover">
+            @else
+                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-lg font-bold">S</div>
+            @endif
             <div>
-                <div class="text-lg font-bold text-white">Smart ERP</div>
+                <div class="text-lg font-bold text-white">{{ $company->name ?? 'Smart ERP' }}</div>
                 <div class="text-xs text-gray-400">نظام المحاسبة الذكي</div>
             </div>
         </div>
@@ -274,6 +277,29 @@
                 </a>
             </div>
         </div>
+
+        <!-- الشركات -->
+        <div x-data="{ open: {{ in_array(true, [request()->routeIs('companies.*')]) ? 'true' : 'false' }} }">
+            <button @click="open = !open" class="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition text-gray-300 hover:bg-gray-800 hover:text-white">
+                <div class="flex items-center gap-3">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                    الشركات
+                </div>
+                <svg class="h-4 w-4 transform transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div x-show="open" x-collapse class="mr-8 mt-1 space-y-1">
+                <a href="{{ route('companies.index') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('companies.*') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                    إدارة الشركات
+                </a>
+            </div>
+        </div>
+
+        <!-- استيراد وتصدير البيانات -->
+        <a href="{{ route('import.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('import.*') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+            استيراد وتصدير البيانات
+        </a>
 
         <!-- الإعدادات -->
         <div x-data="{ open: {{ in_array(true, [request()->routeIs('settings.*'), request()->routeIs('currencies.*'), request()->routeIs('fiscal-years.*')]) ? 'true' : 'false' }} }">

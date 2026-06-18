@@ -16,6 +16,7 @@ class Setting extends Model
         'group',
         'key',
         'value',
+        'display_currency',
         'type',
         'description',
     ];

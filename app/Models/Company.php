@@ -14,16 +14,21 @@ class Company extends Model
     protected $fillable = [
         'tenant_id',
         'name',
+        'name_en',
         'legal_name',
         'commercial_register',
         'tax_number',
         'email',
         'phone',
         'address',
+        'address_en',
         'city',
         'country',
         'logo',
         'website',
+        'currency_code',
+        'secondary_currency_id',
+        'secondary_currency_code',
         'is_active',
     ];
 
@@ -42,5 +47,10 @@ class Company extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    public function secondaryCurrency(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class, 'secondary_currency_id');
     }
 }

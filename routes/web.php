@@ -46,6 +46,10 @@ use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\LoanController;
+use App\Http\Controllers\CurrencySwitcherController;
+use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\ImportController;
+use App\Http\Controllers\PdfController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -134,6 +138,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
 
     Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
     Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
+    Route::post('/settings/logo', [SettingController::class, 'updateLogo'])->name('settings.update-logo');
 
     Route::get('/backups', [BackupController::class, 'index'])->name('backups.index');
     Route::post('/backups', [BackupController::class, 'create'])->name('backups.create');
@@ -208,4 +213,22 @@ Route::middleware(['auth', 'tenant'])->group(function () {
 
     // HR - Loans
     Route::resource('loans', LoanController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
+
+    // Currency Switcher
+    Route::get('currency/switch/{currency}', [CurrencySwitcherController::class, 'switch'])->name('currency.switch');
+
+    // Companies
+    Route::resource('companies', CompanyController::class);
+
+    // Import/Export
+    Route::get('import', [ImportController::class, 'index'])->name('import.index');
+    Route::post('import', [ImportController::class, 'import'])->name('import.do');
+    Route::get('export/{type}', [ImportController::class, 'export'])->name('import.export');
+
+    // PDF
+    Route::get('pdf/sales-invoice/{invoice}', [PdfController::class, 'salesInvoice'])->name('pdf.sales-invoice');
+    Route::get('pdf/purchase-invoice/{invoice}', [PdfController::class, 'purchaseInvoice'])->name('pdf.purchase-invoice');
+    Route::get('pdf/sales-order/{order}', [PdfController::class, 'salesOrder'])->name('pdf.sales-order');
+    Route::get('pdf/purchase-order/{order}', [PdfController::class, 'purchaseOrder'])->name('pdf.purchase-order');
+    Route::get('pdf/quotation/{quotation}', [PdfController::class, 'quotation'])->name('pdf.quotation');
 });

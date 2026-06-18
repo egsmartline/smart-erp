@@ -1,65 +1,74 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="text-xl font-bold text-gray-800">الإعدادات العامة</h2>
+        <h2 class="text-xl font-bold text-gray-800">تعديل الشركة</h2>
     </x-slot>
 
-    @if(session('success'))
-        <div class="mb-4 rounded-lg bg-green-50 border border-green-200 p-4 text-sm text-green-700">
-            {{ session('success') }}
+    @if($errors->any())
+        <div class="mb-4 rounded-lg bg-red-50 border border-red-200 p-4 text-sm text-red-700">
+            <ul class="list-disc list-inside">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
         </div>
     @endif
 
     <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6">
-        <form action="{{ route('settings.update') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+        <form action="{{ route('companies.update', $company) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
             @method('PUT')
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div class="lg:col-span-2">
-                    <label for="company_name" class="mb-1 block text-sm font-medium text-gray-700">اسم الشركة <span class="text-red-500">*</span></label>
-                    <input type="text" name="company_name" id="company_name" value="{{ old('company_name', $company->name ?? '') }}" required
+                    <label for="name" class="mb-1 block text-sm font-medium text-gray-700">اسم الشركة <span class="text-red-500">*</span></label>
+                    <input type="text" name="name" id="name" value="{{ old('name', $company->name) }}" required
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                </div>
+
+                <div>
+                    <label for="name_en" class="mb-1 block text-sm font-medium text-gray-700">الاسم بالإنجليزية</label>
+                    <input type="text" name="name_en" id="name_en" value="{{ old('name_en', $company->name_en) }}"
                         class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
 
                 <div>
                     <label for="email" class="mb-1 block text-sm font-medium text-gray-700">البريد الإلكتروني</label>
-                    <input type="email" name="email" id="email" value="{{ old('email', $company->email ?? '') }}"
+                    <input type="email" name="email" id="email" value="{{ old('email', $company->email) }}"
                         class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
 
                 <div>
                     <label for="phone" class="mb-1 block text-sm font-medium text-gray-700">الهاتف</label>
-                    <input type="text" name="phone" id="phone" value="{{ old('phone', $company->phone ?? '') }}"
+                    <input type="text" name="phone" id="phone" value="{{ old('phone', $company->phone) }}"
                         class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
 
                 <div>
                     <label for="tax_number" class="mb-1 block text-sm font-medium text-gray-700">الرقم الضريبي</label>
-                    <input type="text" name="tax_number" id="tax_number" value="{{ old('tax_number', $company->tax_number ?? '') }}"
+                    <input type="text" name="tax_number" id="tax_number" value="{{ old('tax_number', $company->tax_number) }}"
                         class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
 
                 <div>
                     <label for="website" class="mb-1 block text-sm font-medium text-gray-700">الموقع الإلكتروني</label>
-                    <input type="url" name="website" id="website" value="{{ old('website', $company->website ?? '') }}"
+                    <input type="url" name="website" id="website" value="{{ old('website', $company->website) }}"
                         class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
 
                 <div class="lg:col-span-3">
                     <label for="address" class="mb-1 block text-sm font-medium text-gray-700">العنوان</label>
-                    <input type="text" name="address" id="address" value="{{ old('address', $company->address ?? '') }}"
+                    <input type="text" name="address" id="address" value="{{ old('address', $company->address) }}"
                         class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
 
                 <div>
-                    <label for="currency_id" class="mb-1 block text-sm font-medium text-gray-700">العملة الافتراضية <span class="text-red-500">*</span></label>
-                    <select name="currency_id" id="currency_id" required
+                    <label for="currency_code" class="mb-1 block text-sm font-medium text-gray-700">العملة الأساسية</label>
+                    <select name="currency_code" id="currency_code"
                         class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                        @foreach($currencies as $currency)
-                            <option value="{{ $currency->id }}" {{ old('currency_id', $company->currency_id) == $currency->id ? 'selected' : '' }}>
-                                {{ $currency->name }} ({{ $currency->code }}) - {{ $currency->symbol }}
-                            </option>
-                        @endforeach
+                        <option value="EGP" {{ old('currency_code', $company->currency_code) == 'EGP' ? 'selected' : '' }}>ج.م - جنيه مصري</option>
+                        <option value="USD" {{ old('currency_code', $company->currency_code) == 'USD' ? 'selected' : '' }}>$ - دولار أمريكي</option>
+                        <option value="SAR" {{ old('currency_code', $company->currency_code) == 'SAR' ? 'selected' : '' }}>ر.س - ريال سعودي</option>
+                        <option value="AED" {{ old('currency_code', $company->currency_code) == 'AED' ? 'selected' : '' }}>د.إ - درهم إماراتي</option>
                     </select>
                 </div>
 
@@ -81,18 +90,27 @@
                     <input type="file" name="logo" id="logo" accept="image/*"
                         class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     <div id="logo-preview" class="mt-2">
-                        @if($company->logo ?? false)
-                            <img src="{{ asset('storage/' . $company->logo) }}" alt="Current Logo" class="h-16 w-16 rounded-lg object-cover">
+                        @if($company->logo)
+                            <img src="{{ asset('storage/' . $company->logo) }}" alt="Current Logo" class="h-20 w-20 rounded-lg object-cover">
                         @endif
                     </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" name="is_active" id="is_active" value="1" {{ old('is_active', $company->is_active) ? 'checked' : '' }}
+                        class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    <label for="is_active" class="text-sm font-medium text-gray-700">نشطة</label>
                 </div>
             </div>
 
             <div class="flex items-center gap-3 border-t border-gray-200 pt-6">
                 <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                    حفظ الإعدادات
+                    تحديث الشركة
                 </button>
+                <a href="{{ route('companies.index') }}" class="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-6 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                    إلغاء
+                </a>
             </div>
         </form>
     </div>
@@ -104,7 +122,7 @@
             if (e.target.files[0]) {
                 const img = document.createElement('img');
                 img.src = URL.createObjectURL(e.target.files[0]);
-                img.className = 'h-16 w-16 rounded-lg object-cover';
+                img.className = 'h-20 w-20 rounded-lg object-cover';
                 preview.appendChild(img);
             }
         });

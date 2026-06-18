@@ -2,9 +2,12 @@
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <h2 class="text-xl font-bold text-gray-800">عرض أسعار - {{ $quotation->quotation_number }}</h2>
-            <a href="{{ route('quotations.index') }}" class="inline-flex items-center gap-2 rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 transition">
-                العودة للقائمة
-            </a>
+            <div class="flex items-center gap-2">
+                <x-print-button url="{{ route('pdf.quotation', $quotation) }}" label="تحميل PDF" />
+                <a href="{{ route('quotations.index') }}" class="inline-flex items-center gap-2 rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 transition">
+                    العودة للقائمة
+                </a>
+            </div>
         </div>
     </x-slot>
 
