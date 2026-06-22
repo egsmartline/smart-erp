@@ -68,7 +68,7 @@
                     <select name="currency_id" id="currency_id" required
                         class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         @foreach($currencies as $currency)
-                            <option value="{{ $currency->id }}" {{ old('currency_id', $company->currency_id) == $currency->id ? 'selected' : '' }}>
+                            <option value="{{ $currency->id }}" {{ old('currency_id', $company->currency_id ?? '') == $currency->id ? 'selected' : '' }}>
                                 {{ $currency->name }} ({{ $currency->code }}) - {{ $currency->symbol }}
                             </option>
                         @endforeach
@@ -81,7 +81,7 @@
                         class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         <option value="">-- بدون عملة ثانوية --</option>
                         @foreach($currencies as $currency)
-                            <option value="{{ $currency->id }}" {{ old('secondary_currency_id', $company->secondary_currency_id) == $currency->id ? 'selected' : '' }}>
+                            <option value="{{ $currency->id }}" {{ old('secondary_currency_id', $company->secondary_currency_id ?? '') == $currency->id ? 'selected' : '' }}>
                                 {{ $currency->name }} ({{ $currency->code }}) - {{ $currency->symbol }}
                             </option>
                         @endforeach
