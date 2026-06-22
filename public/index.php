@@ -13,17 +13,18 @@ if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php'))
 // Register the Composer autoloader...
 require __DIR__.'/../vendor/autoload.php';
 
+$previousErrorHandler = set_error_handler(function ($errno, $errstr, $errfile, $errline) use (&$previousErrorHandler) {
+    if ($errno === E_WARNING && str_contains($errstr, 'Header may not contain more than a single header')) {
+        return true;
+    }
+    if ($previousErrorHandler) {
+        return $previousErrorHandler($errno, $errstr, $errfile, $errline);
+    }
+    return false;
+});
+
 // Bootstrap Laravel and handle the request...
 /** @var Application $app */
 $app = require_once __DIR__.'/../bootstrap/app.php';
-
-$app->booted(function () {
-    set_error_handler(function ($errno, $errstr) {
-        if ($errno === E_WARNING && str_contains($errstr, 'Header may not contain more than a single header')) {
-            return true;
-        }
-        return false;
-    });
-});
 
 $app->handleRequest(Request::capture());
