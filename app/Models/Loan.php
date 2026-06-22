@@ -21,6 +21,8 @@ class Loan extends Model
         'remaining',
         'status',
         'start_date',
+        'end_date',
+        'reason',
         'notes',
     ];
 
@@ -30,6 +32,7 @@ class Loan extends Model
         'total_paid' => 'decimal:2',
         'remaining' => 'decimal:2',
         'start_date' => 'date',
+        'end_date' => 'date',
     ];
 
     public function employee(): BelongsTo
