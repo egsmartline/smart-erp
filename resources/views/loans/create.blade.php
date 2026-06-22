@@ -34,7 +34,7 @@
                     <input type="number" name="amount" id="amount" step="0.01" min="0.01" value="{{ old('amount') }}" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
                 </div>
                 <div>
-                    <label for="monthly_deduction" class="mb-1 block text-sm font-medium text-gray-700">الdeduction الشهري <span class="text-red-500">*</span></label>
+                    <label for="monthly_deduction" class="mb-1 block text-sm font-medium text-gray-700">القسط الشهري <span class="text-red-500">*</span></label>
                     <input type="number" name="monthly_deduction" id="monthly_deduction" step="0.01" min="0.01" value="{{ old('monthly_deduction') }}" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
                 </div>
                 <div>
