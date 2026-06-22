@@ -49,8 +49,11 @@ class LoanController extends TenantAwareController
         $validated['status'] = 'active';
         $validated['remaining'] = $validated['amount'];
 
-        $lastLoan = Loan::where('tenant_id', $this->getTenantId())->orderBy('id', 'desc')->first();
-        $nextNumber = $lastLoan ? intval(substr($lastLoan->loan_number, 2)) + 1 : 1;
+        $maxLoan = Loan::where('tenant_id', $this->getTenantId())
+            ->where('loan_number', 'like', 'L-%')
+            ->orderByRaw('CAST(SUBSTRING(loan_number, 3) AS UNSIGNED) DESC')
+            ->first();
+        $nextNumber = $maxLoan ? intval(substr($maxLoan->loan_number, 2)) + 1 : 1;
         $validated['loan_number'] = 'L-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
 
         Loan::create($validated);
