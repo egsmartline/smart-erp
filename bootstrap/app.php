@@ -19,12 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
 
 
-        $middleware->redirectGuestsTo(function ($request) {
-            if ($request->expectsJson()) {
-                return response()->json(['message' => 'Unauthenticated.'], 401);
-            }
-            return new \Illuminate\Http\RedirectResponse('/login');
-        });
+        $middleware->redirectGuestsTo(fn ($request) => '/login');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
