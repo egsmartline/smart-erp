@@ -11,24 +11,26 @@
 
     <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6">
         <div class="overflow-x-auto">
-            <table class="w-full text-right text-sm">
-                <thead>
-                    <tr class="border-b border-gray-200 bg-gray-50">
-                        <th class="px-4 py-3 font-semibold text-gray-700">الاسم</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700">الحساب المحاسبي</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700 text-left">الرصيد الحالي</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700 text-center">الافتراضي</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700 text-center">إجراءات</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($treasuries as $treasury)
-                        <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
-                            <td class="px-4 py-3 font-medium text-gray-900">{{ $treasury->name }}</td>
-                            <td class="px-4 py-3 text-gray-600">{{ $treasury->account->name ?? '-' }}</td>
-                            <td class="px-4 py-3 text-left font-mono text-sm font-bold {{ $treasury->current_balance > 0 ? 'text-emerald-600' : 'text-red-600' }}">
-                                {{ number_format($treasury->current_balance, 2) }} ج.م
-                            </td>
+                    <table class="w-full text-right text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-200 bg-gray-50">
+                                <th class="px-4 py-3 font-semibold text-gray-700">الاسم</th>
+                                <th class="px-4 py-3 font-semibold text-gray-700">الحساب المحاسبي</th>
+                                <th class="px-4 py-3 font-semibold text-gray-700">العملة</th>
+                                <th class="px-4 py-3 font-semibold text-gray-700 text-left">الرصيد الحالي</th>
+                                <th class="px-4 py-3 font-semibold text-gray-700 text-center">الافتراضي</th>
+                                <th class="px-4 py-3 font-semibold text-gray-700 text-center">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($treasuries as $treasury)
+                                <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+                                    <td class="px-4 py-3 font-medium text-gray-900">{{ $treasury->name }}</td>
+                                    <td class="px-4 py-3 text-gray-600">{{ $treasury->account->name ?? '-' }}</td>
+                                    <td class="px-4 py-3 text-gray-600">{{ $treasury->currency->code ?? 'ج.م' }}</td>
+                                    <td class="px-4 py-3 text-left font-mono text-sm font-bold {{ $treasury->current_balance > 0 ? 'text-emerald-600' : 'text-red-600' }}">
+                                        {{ number_format($treasury->current_balance, 2) }} {{ $treasury->currency->code ?? 'ج.م' }}
+                                    </td>
                             <td class="px-4 py-3 text-center">
                                 @if($treasury->is_default)
                                     <span class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-800">افتراضي</span>
@@ -51,8 +53,8 @@
                                 </div>
                             </td>
                         </tr>
-                    @empty
-                        <tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">لا توجد خزائن</td></tr>
+                        @empty
+                            <tr><td colspan="6" class="px-4 py-8 text-center text-gray-500">لا توجد خزائن</td></tr>
                     @endforelse
                 </tbody>
             </table>

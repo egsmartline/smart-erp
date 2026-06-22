@@ -16,7 +16,7 @@ class PurchaseOrderLine extends Model
         'item_id',
         'description',
         'quantity',
-        'received_qty',
+        'received_quantity',
         'unit_price',
         'discount_percent',
         'discount_amount',
@@ -31,7 +31,7 @@ class PurchaseOrderLine extends Model
     {
         return [
             'quantity' => 'decimal:2',
-            'received_qty' => 'decimal:2',
+            'received_quantity' => 'decimal:2',
             'unit_price' => 'decimal:2',
             'discount_percent' => 'decimal:2',
             'discount_amount' => 'decimal:2',

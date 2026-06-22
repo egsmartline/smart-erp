@@ -53,4 +53,12 @@ class Company extends Model
     {
         return $this->belongsTo(Currency::class, 'secondary_currency_id');
     }
+
+    public function getCurrencyIdAttribute(): ?int
+    {
+        $currency = Currency::where('tenant_id', $this->tenant_id)
+            ->where('code', $this->currency_code)
+            ->first();
+        return $currency?->id;
+    }
 }

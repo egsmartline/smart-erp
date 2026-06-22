@@ -96,7 +96,7 @@
                             <tr class="bg-blue-50">
                                 <td colspan="5" class="px-3 py-3"></td>
                                 <td class="px-3 py-3 text-left text-sm font-bold text-gray-800">الإجمالي</td>
-                                <td class="px-3 py-3 text-left font-mono text-lg font-bold text-blue-700">{{ number_format($quotation->total, 2) }}</td>
+                                <td class="px-3 py-3 text-left font-mono text-lg font-bold text-blue-700">{{ number_format($quotation->total, 2) }} {{ $quotation->currency_code ?? '' }}</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -122,7 +122,7 @@
             <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-4">
                 <h4 class="text-sm font-bold text-gray-700 mb-3">إجراءات</h4>
                 <div class="space-y-2">
-                    <button onclick="window.print()" class="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition cursor-pointer">طباعة العرض</button>
+                    <button @click="$root.closest('[x-data]')?.__x?.$data.printModalOpen = true" class="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition cursor-pointer">طباعة العرض</button>
 
                     @if($quotation->status === 'draft')
                         <form action="{{ route('quotations.send', $quotation) }}" method="POST">

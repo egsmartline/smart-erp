@@ -17,7 +17,7 @@ class AccountSeeder extends Seeder
         }
     }
 
-    private function createAccountsForTenant(int $tenantId): void
+    public function createAccountsForTenant(int $tenantId): void
     {
         $accounts = [
             ['code' => '1', 'name' => 'أصول', 'name_en' => 'Assets', 'type' => 'asset', 'sub_type' => 'main', 'parent_code' => null],

@@ -12,12 +12,7 @@
     <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6">
         <form method="GET" class="mb-4 flex gap-4 flex-wrap">
             <input type="text" name="search" value="{{ request('search') }}" placeholder="بحث بالاسم أو الكود..." class="rounded-lg border border-gray-300 px-3 py-2 text-sm w-64">
-            <select name="department_id" class="rounded-lg border border-gray-300 px-3 py-2 text-sm">
-                <option value="">كل الأقسام</option>
-                @foreach($departments as $d)
-                    <option value="{{ $d->id }}" {{ request('department_id') == $d->id ? 'selected' : '' }}>{{ $d->name }}</option>
-                @endforeach
-            </select>
+
             <select name="is_active" class="rounded-lg border border-gray-300 px-3 py-2 text-sm">
                 <option value="">الكل</option>
                 <option value="1" {{ request('is_active') == '1' ? 'selected' : '' }}>نشط</option>
@@ -32,7 +27,6 @@
                     <tr class="border-b border-gray-200 bg-gray-50">
                         <th class="px-4 py-3 font-semibold text-gray-700">الموظف</th>
                         <th class="px-4 py-3 font-semibold text-gray-700">الكود</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700">القسم</th>
                         <th class="px-4 py-3 font-semibold text-gray-700">الوظيفة</th>
                         <th class="px-4 py-3 font-semibold text-gray-700">تاريخ التعيين</th>
                         <th class="px-4 py-3 font-semibold text-gray-700 text-center">الحالة</th>
@@ -52,7 +46,6 @@
                                 </div>
                             </td>
                             <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ $emp->employee_id }}</td>
-                            <td class="px-4 py-3 text-gray-600">{{ $emp->department->name ?? '-' }}</td>
                             <td class="px-4 py-3 text-gray-600">{{ $emp->jobPosition->name ?? '-' }}</td>
                             <td class="px-4 py-3 text-gray-600">{{ $emp->hire_date?->format('Y/m/d') ?? '-' }}</td>
                             <td class="px-4 py-3 text-center">

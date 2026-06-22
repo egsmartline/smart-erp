@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class JobPosition extends Model
@@ -16,7 +15,6 @@ class JobPosition extends Model
         'tenant_id',
         'code',
         'name',
-        'department_id',
         'min_salary',
         'max_salary',
         'is_active',
@@ -31,11 +29,6 @@ class JobPosition extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
-    }
-
-    public function department(): BelongsTo
-    {
-        return $this->belongsTo(Department::class);
     }
 
     public function employees(): HasMany

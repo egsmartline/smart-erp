@@ -16,7 +16,6 @@
                     <tr class="border-b border-gray-200 bg-gray-50">
                         <th class="px-4 py-3 font-semibold text-gray-700">الاسم</th>
                         <th class="px-4 py-3 font-semibold text-gray-700">الكود</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700">القسم</th>
                         <th class="px-4 py-3 font-semibold text-gray-700 text-center">الحد الأدنى للراتب</th>
                         <th class="px-4 py-3 font-semibold text-gray-700 text-center">الحد الأقصى للراتب</th>
                         <th class="px-4 py-3 font-semibold text-gray-700 text-center">عدد الموظفين</th>
@@ -28,7 +27,6 @@
                         <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
                             <td class="px-4 py-3 font-medium text-gray-900"><a href="{{ route('job-positions.show', $pos) }}" class="hover:text-blue-600">{{ $pos->name }}</a></td>
                             <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ $pos->code ?? '-' }}</td>
-                            <td class="px-4 py-3 text-gray-600">{{ $pos->department->name ?? '-' }}</td>
                             <td class="px-4 py-3 text-center font-mono">{{ $pos->min_salary ? number_format($pos->min_salary, 2) : '-' }}</td>
                             <td class="px-4 py-3 text-center font-mono">{{ $pos->max_salary ? number_format($pos->max_salary, 2) : '-' }}</td>
                             <td class="px-4 py-3 text-center">

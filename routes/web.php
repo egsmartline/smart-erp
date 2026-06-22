@@ -28,6 +28,7 @@ use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\TaxController;
 use App\Http\Controllers\BankStatementController;
 use App\Http\Controllers\CurrencyController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\FiscalYearController;
 use App\Http\Controllers\JournalController;
 use App\Http\Controllers\PaymentTermController;
@@ -48,7 +49,10 @@ use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\CurrencySwitcherController;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\ImportController;
+use App\Http\Controllers\SalesDeliveryNoteController;
+use App\Http\Controllers\PurchaseReceiptNoteController;
 use App\Http\Controllers\PdfController;
 use Illuminate\Support\Facades\Route;
 
@@ -58,6 +62,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth', 'tenant'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('switch-tenant/{tenantId}', [DashboardController::class, 'switchTenant'])->name('switch-tenant');
 
     Route::get('/setup', [SetupController::class, 'index'])->name('setup.index');
     Route::post('/setup', [SetupController::class, 'store'])->name('setup.store');
@@ -120,6 +125,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::get('/api/items/search', [SalesInvoiceController::class, 'searchItems'])->name('api.items.search');
 
     Route::resource('payments', PaymentController::class);
+    Route::get('cash-treasuries/balances', [CashTreasuryController::class, 'balances'])->name('cash-treasuries.balances');
     Route::resource('cash-treasuries', CashTreasuryController::class);
     Route::resource('bank-accounts', BankAccountController::class);
 
@@ -139,6 +145,13 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
     Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
     Route::post('/settings/logo', [SettingController::class, 'updateLogo'])->name('settings.update-logo');
+    Route::post('/settings/reset', [SettingController::class, 'reset'])->name('settings.reset');
+
+    Route::prefix('settings')->name('settings.')->group(function () {
+        Route::resource('roles', RoleController::class)->except(['show']);
+        Route::post('roles/assign', [RoleController::class, 'assignRole'])->name('roles.assign');
+        Route::resource('users', UserController::class)->except(['show']);
+    });
 
     Route::get('/backups', [BackupController::class, 'index'])->name('backups.index');
     Route::post('/backups', [BackupController::class, 'create'])->name('backups.create');
@@ -214,8 +227,37 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     // HR - Loans
     Route::resource('loans', LoanController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
 
+    // HR - Custodies
+    Route::get('custodies/{custody}/settle', [\App\Http\Controllers\CustodyController::class, 'settle'])->name('custodies.settle');
+    Route::post('custodies/{custody}/settle', [\App\Http\Controllers\CustodyController::class, 'processSettlement'])->name('custodies.process-settlement');
+    Route::resource('custodies', \App\Http\Controllers\CustodyController::class);
+
     // Currency Switcher
     Route::get('currency/switch/{currency}', [CurrencySwitcherController::class, 'switch'])->name('currency.switch');
+
+    // Sales Delivery Notes
+    Route::resource('sales-delivery-notes', SalesDeliveryNoteController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
+
+    // Purchase Receipt Notes
+    Route::resource('purchase-receipt-notes', PurchaseReceiptNoteController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
+
+    // API: Get sales order lines for delivery note
+    Route::get('api/sales-orders/{salesOrder}/lines', function (\App\Models\SalesOrder $salesOrder) {
+        $tenantId = session('current_tenant_id') ?? auth()->user()->tenant_id;
+        if ($salesOrder->tenant_id !== $tenantId) {
+            abort(403);
+        }
+        return response()->json($salesOrder->load('lines.item', 'customer', 'warehouse'));
+    })->name('api.sales-orders.lines');
+
+    // API: Get purchase order lines for receipt note
+    Route::get('api/purchase-orders/{purchaseOrder}/lines', function (\App\Models\PurchaseOrder $purchaseOrder) {
+        $tenantId = session('current_tenant_id') ?? auth()->user()->tenant_id;
+        if ($purchaseOrder->tenant_id !== $tenantId) {
+            abort(403);
+        }
+        return response()->json($purchaseOrder->load('lines.item', 'supplier', 'warehouse'));
+    })->name('api.purchase-orders.lines');
 
     // Companies
     Route::resource('companies', CompanyController::class);

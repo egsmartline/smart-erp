@@ -26,11 +26,28 @@
                     <input type="text" name="name" id="name" value="{{ old('name', $treasury->name) }}" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
                 <div>
+                    <label for="code" class="mb-1 block text-sm font-medium text-gray-700">كود الخزينة <span class="text-red-500">*</span></label>
+                    <input type="text" name="code" id="code" value="{{ old('code', $treasury->code) }}" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="مثال: CASH-01">
+                </div>
+                <div>
                     <label for="account_id" class="mb-1 block text-sm font-medium text-gray-700">الحساب المحاسبي <span class="text-red-500">*</span></label>
                     <select name="account_id" id="account_id" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         <option value="">اختر الحساب</option>
                         @foreach($accounts as $account)
                             <option value="{{ $account->id }}" {{ old('account_id', $treasury->account_id) == $account->id ? 'selected' : '' }}>{{ $account->code }} - {{ $account->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label for="opening_balance" class="mb-1 block text-sm font-medium text-gray-700">الرصيد الافتتاحي</label>
+                    <input type="number" name="opening_balance" id="opening_balance" value="{{ old('opening_balance', $treasury->opening_balance) }}" step="0.01" min="0" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="currency_id" class="mb-1 block text-sm font-medium text-gray-700">العملة</label>
+                    <select name="currency_id" id="currency_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <option value="">العملة الافتراضية</option>
+                        @foreach($currencies as $currency)
+                            <option value="{{ $currency->id }}" {{ old('currency_id', $treasury->currency_id) == $currency->id ? 'selected' : '' }}>{{ $currency->name }} ({{ $currency->code }})</option>
                         @endforeach
                     </select>
                 </div>
@@ -44,9 +61,19 @@
                         <span class="text-sm font-medium text-gray-700">افتراضية</span>
                     </label>
                 </div>
+                <div>
+                    <label for="whatsapp_number" class="mb-1 block text-sm font-medium text-gray-700">رقم الواتساب</label>
+                    <input type="text" name="whatsapp_number" id="whatsapp_number" value="{{ old('whatsapp_number', $treasury->whatsapp_number) }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="مثال: 201234567890">
+                </div>
+                <div class="md:col-span-2">
+                    <label for="whatsapp_message" class="mb-1 block text-sm font-medium text-gray-700">رسالة الواتساب</label>
+                    <textarea name="whatsapp_message" id="whatsapp_message" rows="3" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="السلام عليكم رصيد الخزينة {name} الحالي هو {balance} {currency}">{{ old('whatsapp_message', $treasury->whatsapp_message) }}</textarea>
+                    <p class="mt-1 text-xs text-gray-400">الرصيد الحالي: {{ number_format($treasury->current_balance, 2) }} {{ $treasury->currency->code ?? 'ج.م' }}</p>
+                    <p class="mt-1 text-xs text-gray-400">نموذج الرسالة: {{ $treasury->whatsapp_message ? str_replace(['{name}','{balance}','{currency}'],[$treasury->name, number_format($treasury->current_balance, 2), $treasury->currency->code ?? 'ج.م'], $treasury->whatsapp_message) : str_replace(['{name}','{balance}','{currency}'],[$treasury->name, number_format($treasury->current_balance, 2), $treasury->currency->code ?? 'ج.م'], 'السلام عليكم رصيد الخزينة {name} الحالي هو {balance} {currency}') }}</p>
+                </div>
                 <div class="md:col-span-2">
                     <label for="description" class="mb-1 block text-sm font-medium text-gray-700">الوصف</label>
-                    <textarea name="description" id="description" rows="3" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">{{ old('description', $treasury->description ?? '') }}</textarea>
+                    <textarea name="description" id="description" rows="3" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">{{ old('description', $treasury->notes ?? '') }}</textarea>
                 </div>
             </div>
             <div class="flex items-center gap-3 border-t border-gray-200 pt-6">

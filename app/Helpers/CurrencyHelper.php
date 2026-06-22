@@ -2,26 +2,42 @@
 
 namespace App\Helpers;
 
+use App\Models\Currency;
+
 class CurrencyHelper
 {
-    public static function format($amount, ?string $currency = null): string
+    public static function format($amount, $currency = null): string
     {
-        $currency = $currency ?? session('display_currency', 'EGP');
-        $symbol = $currency === 'USD' ? '$' : 'ج.م';
+        $symbol = 'ج.م';
+        if ($currency instanceof Currency) {
+            $symbol = $currency->symbol;
+        } elseif (is_numeric($currency)) {
+            $c = Currency::find($currency);
+            if ($c) $symbol = $c->symbol;
+        } elseif (is_string($currency)) {
+            $c = Currency::where('code', $currency)->first();
+            if ($c) $symbol = $c->symbol;
+        } else {
+            $default = Currency::where('is_default', true)->first();
+            if ($default) $symbol = $default->symbol;
+        }
         return number_format((float)$amount, 2) . ' ' . $symbol;
     }
 
-    public static function convert($amount, string $from, string $to): float
+    public static function getSymbol($currency = null): string
     {
-        if ($from === $to) return (float)$amount;
-        $tenantId = session('current_tenant_id') ?? auth()->user()->tenant_id;
-        $rate = \App\Models\Currency::where('tenant_id', $tenantId)
-            ->where('code', $to)->value('exchange_rate') ?? 1;
-        return round((float)$amount * $rate, 2);
-    }
-
-    public static function getSymbol(string $currency = 'EGP'): string
-    {
-        return $currency === 'USD' ? '$' : 'ج.م';
+        if ($currency instanceof Currency) {
+            return $currency->symbol;
+        }
+        if (is_numeric($currency)) {
+            $c = Currency::find($currency);
+            return $c ? $c->symbol : 'ج.م';
+        }
+        if (is_string($currency)) {
+            $c = Currency::where('code', $currency)->first();
+            return $c ? $c->symbol : 'ج.م';
+        }
+        $default = Currency::where('is_default', true)->first();
+        return $default ? $default->symbol : 'ج.م';
     }
 }

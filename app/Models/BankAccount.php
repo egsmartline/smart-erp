@@ -22,8 +22,11 @@ class BankAccount extends Model
         'swift_code',
         'branch',
         'current_balance',
+        'opening_balance',
+        'account_id',
         'is_active',
         'is_default',
+        'notes',
     ];
 
     protected function casts(): array

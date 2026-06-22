@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CashTreasury extends Model
@@ -17,9 +18,14 @@ class CashTreasury extends Model
         'currency_id',
         'name',
         'code',
+        'opening_balance',
         'current_balance',
+        'account_id',
+        'user_id',
         'is_active',
-        'is_default',
+        'notes',
+        'whatsapp_number',
+        'whatsapp_message',
     ];
 
     protected function casts(): array
@@ -51,8 +57,18 @@ class CashTreasury extends Model
         return $this->belongsTo(Currency::class);
     }
 
+    public function account(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'account_id');
+    }
+
     public function transactions(): HasMany
     {
         return $this->hasMany(TreasuryTransaction::class, 'treasury_id');
+    }
+
+    public function journalEntries(): MorphMany
+    {
+        return $this->morphMany(JournalEntry::class, 'journalable');
     }
 }

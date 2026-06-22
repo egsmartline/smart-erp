@@ -12,6 +12,7 @@ class PurchaseInvoiceLine extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'tenant_id',
         'purchase_invoice_id',
         'item_id',
         'description',

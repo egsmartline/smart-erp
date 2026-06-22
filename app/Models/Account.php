@@ -19,14 +19,14 @@ class Account extends Model
         'sub_type',
         'parent_id',
         'opening_balance',
-        'balance',
+        'current_balance',
         'is_active',
         'tenant_id',
     ];
 
     protected $casts = [
         'opening_balance' => 'decimal:2',
-        'balance' => 'decimal:2',
+        'current_balance' => 'decimal:2',
         'is_active' => 'boolean',
     ];
 

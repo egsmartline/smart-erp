@@ -39,4 +39,16 @@ class DashboardController extends TenantAwareController
 
         return view('dashboard', compact('stats', 'recentSales', 'recentPurchases'));
     }
+
+    public function switchTenant(Request $request, $tenantId)
+    {
+        $user = auth()->user();
+        $tenant = \App\Models\Tenant::findOrFail($tenantId);
+        $accessible = $user->getAccessibleTenants()->pluck('id')->toArray();
+        if (!in_array($tenant->id, $accessible)) {
+            abort(403);
+        }
+        session(['current_tenant_id' => $tenant->id]);
+        return redirect()->route('dashboard')->with('success', 'تم التبديل إلى ' . ($tenant->name ?? $tenant->name_en));
+    }
 }

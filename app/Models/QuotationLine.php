@@ -12,6 +12,7 @@ class QuotationLine extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'tenant_id',
         'quotation_id',
         'item_id',
         'description',
@@ -19,7 +20,7 @@ class QuotationLine extends Model
         'unit_price',
         'discount_percent',
         'discount_amount',
-        'tax_rate',
+        'tax_percent',
         'tax_amount',
         'subtotal',
         'total',
@@ -32,7 +33,7 @@ class QuotationLine extends Model
             'unit_price' => 'decimal:2',
             'discount_percent' => 'decimal:2',
             'discount_amount' => 'decimal:2',
-            'tax_rate' => 'decimal:2',
+            'tax_percent' => 'decimal:2',
             'tax_amount' => 'decimal:2',
             'subtotal' => 'decimal:2',
             'total' => 'decimal:2',

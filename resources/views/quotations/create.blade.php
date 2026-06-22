@@ -10,7 +10,7 @@
 
     <form action="{{ route('quotations.store') }}" method="POST">
         @csrf
-        @livewire('invoice-form', ['type' => 'sale'])
+        @livewire('invoice-form', ['type' => 'sale', 'showCustomerSearch' => false, 'showItemSelect' => true])
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
             <div>

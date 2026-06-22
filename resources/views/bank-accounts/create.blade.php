@@ -58,6 +58,10 @@
                         @endforeach
                     </select>
                 </div>
+                <div>
+                    <label for="opening_balance" class="mb-1 block text-sm font-medium text-gray-700">الرصيد الافتتاحي</label>
+                    <input type="number" name="opening_balance" id="opening_balance" value="{{ old('opening_balance', 0) }}" step="0.01" min="0" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                </div>
                 <div class="md:col-span-2 lg:col-span-3">
                     <label for="description" class="mb-1 block text-sm font-medium text-gray-700">الوصف</label>
                     <textarea name="description" id="description" rows="3" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">{{ old('description') }}</textarea>

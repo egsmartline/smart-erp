@@ -40,7 +40,7 @@
                 </div>
                 <div>
                     <label class="mb-1 block text-sm font-medium text-gray-700">تاريخ الميلاد</label>
-                    <input type="date" name="date_of_birth" value="{{ old('date_of_birth') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                    <input type="date" name="birth_date" value="{{ old('birth_date') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
                 </div>
                 <div>
                     <label class="mb-1 block text-sm font-medium text-gray-700">الجنس</label>
@@ -73,15 +73,6 @@
             <h3 class="text-lg font-bold text-gray-800 mb-4">بيانات الوظيفة</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div>
-                    <label class="mb-1 block text-sm font-medium text-gray-700">القسم <span class="text-red-500">*</span></label>
-                    <select name="department_id" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
-                        <option value="">اختر القسم</option>
-                        @foreach($departments as $d)
-                            <option value="{{ $d->id }}" {{ old('department_id') == $d->id ? 'selected' : '' }}>{{ $d->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
                     <label class="mb-1 block text-sm font-medium text-gray-700">الوظيفة <span class="text-red-500">*</span></label>
                     <select name="job_position_id" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
                         <option value="">اختر الوظيفة</option>
@@ -107,8 +98,8 @@
                     <input type="date" name="contract_end_date" value="{{ old('contract_end_date') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
                 </div>
                 <div>
-                    <label class="mb-1 block text-sm font-medium text-gray-700">الراتب الأساسي <span class="text-red-500">*</span></label>
-                    <input type="number" name="basic_salary" step="0.01" min="0" value="{{ old('basic_salary') }}" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                    <label class="mb-1 block text-sm font-medium text-gray-700">الراتب الإجمالي <span class="text-red-500">*</span></label>
+                    <input type="number" name="gross_salary" step="0.01" min="0" value="{{ old('gross_salary') }}" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
                 </div>
             </div>
         </div>
@@ -122,7 +113,7 @@
                 </div>
                 <div>
                     <label class="mb-1 block text-sm font-medium text-gray-700">رقم الحساب</label>
-                    <input type="text" name="bank_account_number" value="{{ old('bank_account_number') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                    <input type="text" name="bank_account" value="{{ old('bank_account') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
                 </div>
                 <div>
                     <label class="mb-1 block text-sm font-medium text-gray-700">الآيبان</label>

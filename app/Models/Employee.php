@@ -23,7 +23,6 @@ class Employee extends Model
         'gender',
         'birth_date',
         'national_id',
-        'department_id',
         'job_position_id',
         'hire_date',
         'contract_end_date',

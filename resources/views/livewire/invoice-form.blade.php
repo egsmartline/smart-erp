@@ -1,5 +1,6 @@
 <div>
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        @if($showCustomerSearch)
         <div x-data="{ open: false }" @click.outside="open = false">
             <label class="mb-1 block text-sm font-medium text-gray-700">
                 {{ $type === 'sale' ? 'العميل' : 'المورد' }} <span class="text-red-500">*</span>
@@ -34,6 +35,17 @@
                 @endif
             @endif
         </div>
+        @else
+        <div>
+            <label class="mb-1 block text-sm font-medium text-gray-700">{{ $type === 'sale' ? 'العميل' : 'المورد' }} <span class="text-red-500">*</span></label>
+            <select name="customer_id" wire:model="customerId" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                <option value="">اختر {{ $type === 'sale' ? 'العميل' : 'المورد' }}</option>
+                @foreach($customers as $customer)
+                    <option value="{{ $customer->id }}">{{ $customer->name }}{{ $customer->phone ? ' ('.$customer->phone.')' : '' }}</option>
+                @endforeach
+            </select>
+        </div>
+        @endif
 
         <div>
             <label class="mb-1 block text-sm font-medium text-gray-700">المخزن <span class="text-red-500">*</span></label>
@@ -46,8 +58,13 @@
         </div>
 
         <div>
-            <label class="mb-1 block text-sm font-medium text-gray-700">العملة</label>
-            <input type="text" value="ريال سعودي - SAR" readonly class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600">
+            <label class="mb-1 block text-sm font-medium text-gray-700">العملة <span class="text-red-500">*</span></label>
+            <select wire:model="currencyId" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                <option value="">اختر العملة</option>
+                @foreach($currencies as $currency)
+                    <option value="{{ $currency->id }}">{{ $currency->name }} - {{ $currency->symbol }}</option>
+                @endforeach
+            </select>
         </div>
     </div>
 
@@ -93,21 +110,32 @@
                     <tr class="border-b border-gray-100">
                         <td class="px-3 py-2 text-gray-500">{{ $index + 1 }}</td>
                         <td class="px-3 py-2">
-                            <div class="relative" x-data="{ open: false }" @click.outside="open = false">
-                                <input type="text" value="{{ $line['item_name'] ?? '' }}" wire:input="searchItems($event.target.value, {{ $index }})" @focus="open = true"
-                                    placeholder="بحث عن صنف..." class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" autocomplete="off">
-                                @if($searchingLineIndex === $index && count($filteredItems) > 0)
-                                    <div class="absolute z-50 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-60 overflow-y-auto" x-show="open">
-                                        @foreach($filteredItems as $item)
-                                            <div wire:click="selectItem({{ $item->id }}, {{ $index }})" class="cursor-pointer px-3 py-2 text-sm hover:bg-blue-50 border-b border-gray-100">
-                                                <div class="font-medium text-gray-900">{{ $item->name }}</div>
-                                                <div class="text-xs text-gray-500">{{ $item->sku ?? '' }} | سعر البيع: {{ number_format($item->selling_price, 2) }}</div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @endif
-                            </div>
-                            <input type="hidden" wire:model="lines.{{ $index }}.item_id">
+                            @if($showItemSelect)
+                                <select wire:change="selectItem($event.target.value, {{ $index }})" class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                                    <option value="">اختر صنف</option>
+                                    @foreach($allItems as $item)
+                                        <option value="{{ $item->id }}" {{ ($line['item_id'] ?? '') == $item->id ? 'selected' : '' }}>
+                                            {{ $item->name }} - {{ $item->sku ?? '' }} | {{ $type === 'sale' ? 'بيع' : 'تكلفة' }}: {{ number_format($type === 'sale' ? $item->selling_price : $item->cost_price, 2) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            @else
+                                <div class="relative" x-data="{ open: false }" @click.outside="open = false">
+                                    <input type="text" value="{{ $line['item_name'] ?? '' }}" wire:input="searchItems($event.target.value, {{ $index }})" @focus="open = true"
+                                        placeholder="بحث عن صنف..." class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" autocomplete="off">
+                                    @if($searchingLineIndex === $index && count($filteredItems) > 0)
+                                        <div class="absolute z-50 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-60 overflow-y-auto" x-show="open">
+                                            @foreach($filteredItems as $item)
+                                                <div wire:click="selectItem({{ $item->id }}, {{ $index }})" class="cursor-pointer px-3 py-2 text-sm hover:bg-blue-50 border-b border-gray-100">
+                                                    <div class="font-medium text-gray-900">{{ $item->name }}</div>
+                                                    <div class="text-xs text-gray-500">{{ $item->sku ?? '' }} | سعر البيع: {{ number_format($item->selling_price, 2) }}</div>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </div>
+                                <input type="hidden" wire:model="lines.{{ $index }}.item_id">
+                            @endif
                         </td>
                         <td class="px-3 py-2">
                             <input type="number" wire:model.live="lines.{{ $index }}.quantity" step="0.01" min="0.01"
@@ -169,25 +197,25 @@
             <div class="space-y-2">
                 <div class="flex justify-between text-sm">
                     <span class="text-gray-600">المجموع الفرعي</span>
-                    <span class="font-mono font-medium">{{ number_format($subtotal, 2) }}</span>
+                    <span class="font-mono font-medium">{{ number_format($subtotal, 2) }} {{ $currencies->firstWhere('id', $currencyId)?->symbol ?? '' }}</span>
                 </div>
                 <div class="flex justify-between text-sm">
                     <span class="text-gray-600">الخصم</span>
-                    <span class="font-mono font-medium text-red-600">- {{ number_format($totalDiscount + $discountAmount, 2) }}</span>
+                    <span class="font-mono font-medium text-red-600">- {{ number_format($totalDiscount + $discountAmount, 2) }} {{ $currencies->firstWhere('id', $currencyId)?->symbol ?? '' }}</span>
                 </div>
                 <div class="flex justify-between text-sm">
                     <span class="text-gray-600">الضريبة</span>
-                    <span class="font-mono font-medium text-emerald-600">+ {{ number_format($totalTax, 2) }}</span>
+                    <span class="font-mono font-medium text-emerald-600">+ {{ number_format($totalTax, 2) }} {{ $currencies->firstWhere('id', $currencyId)?->symbol ?? '' }}</span>
                 </div>
                 @if($shippingAmount > 0)
                 <div class="flex justify-between text-sm">
                     <span class="text-gray-600">الشحن</span>
-                    <span class="font-mono font-medium">+ {{ number_format($shippingAmount, 2) }}</span>
+                    <span class="font-mono font-medium">+ {{ number_format($shippingAmount, 2) }} {{ $currencies->firstWhere('id', $currencyId)?->symbol ?? '' }}</span>
                 </div>
                 @endif
                 <div class="border-t border-blue-200 pt-2 flex justify-between">
                     <span class="text-base font-bold text-gray-800">الإجمالي</span>
-                    <span class="text-lg font-bold font-mono text-blue-700">{{ number_format($grandTotal, 2) }}</span>
+                    <span class="text-lg font-bold font-mono text-blue-700">{{ number_format($grandTotal, 2) }} {{ $currencies->firstWhere('id', $currencyId)?->symbol ?? '' }}</span>
                 </div>
             </div>
         </div>
@@ -198,4 +226,18 @@
             <strong>تنبيه:</strong> يجب إضافة صنف واحد على الأقل
         </div>
     @endif
+
+    {{-- Hidden inputs for regular form POST --}}
+    <input type="hidden" name="warehouse_id" wire:model="warehouseId">
+    <input type="hidden" name="currency_id" wire:model="currencyId">
+    <input type="hidden" name="discount_amount" wire:model="discountAmount">
+    <input type="hidden" name="shipping_amount" wire:model="shippingAmount">
+    @foreach($lines as $index => $line)
+        <input type="hidden" name="lines[{{ $index }}][item_id]" wire:model="lines.{{ $index }}.item_id">
+        <input type="hidden" name="lines[{{ $index }}][description]" wire:model="lines.{{ $index }}.description">
+        <input type="hidden" name="lines[{{ $index }}][quantity]" wire:model="lines.{{ $index }}.quantity">
+        <input type="hidden" name="lines[{{ $index }}][unit_price]" wire:model="lines.{{ $index }}.unit_price">
+        <input type="hidden" name="lines[{{ $index }}][discount_percent]" wire:model="lines.{{ $index }}.discount_percent">
+        <input type="hidden" name="lines[{{ $index }}][tax_rate]" wire:model="lines.{{ $index }}.tax_rate">
+    @endforeach
 </div>

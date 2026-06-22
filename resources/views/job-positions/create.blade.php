@@ -29,15 +29,6 @@
                     <input type="text" name="code" id="code" value="{{ old('code') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
                 </div>
                 <div>
-                    <label for="department_id" class="mb-1 block text-sm font-medium text-gray-700">القسم <span class="text-red-500">*</span></label>
-                    <select name="department_id" id="department_id" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
-                        <option value="">اختر القسم</option>
-                        @foreach($departments as $d)
-                            <option value="{{ $d->id }}" {{ old('department_id') == $d->id ? 'selected' : '' }}>{{ $d->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
                     <label for="min_salary" class="mb-1 block text-sm font-medium text-gray-700">الحد الأدنى للراتب</label>
                     <input type="number" name="min_salary" id="min_salary" step="0.01" min="0" value="{{ old('min_salary') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
                 </div>

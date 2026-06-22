@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\JobPosition;
-use App\Models\Department;
 use Illuminate\Http\Request;
 
 class JobPositionController extends TenantAwareController
@@ -11,7 +10,6 @@ class JobPositionController extends TenantAwareController
     public function index()
     {
         $positions = JobPosition::where('tenant_id', $this->getTenantId())
-            ->with('department')
             ->withCount('employees')
             ->orderBy('name')
             ->get();
@@ -21,9 +19,7 @@ class JobPositionController extends TenantAwareController
 
     public function create()
     {
-        $departments = Department::where('tenant_id', $this->getTenantId())->active()->orderBy('name')->get();
-
-        return view('job-positions.create', compact('departments'));
+        return view('job-positions.create');
     }
 
     public function store(Request $request)
@@ -31,7 +27,6 @@ class JobPositionController extends TenantAwareController
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'nullable|string|max:50',
-            'department_id' => 'required|exists:departments,id',
             'description' => 'nullable|string|max:500',
             'min_salary' => 'nullable|numeric|min:0',
             'max_salary' => 'nullable|numeric|min:0|gte:min_salary',
@@ -49,7 +44,7 @@ class JobPositionController extends TenantAwareController
     public function show(JobPosition $position)
     {
         if ($position->tenant_id !== $this->getTenantId()) abort(403);
-        $position->load(['department', 'employees' => fn($q) => $q->limit(20)]);
+        $position->load(['employees' => fn($q) => $q->limit(20)]);
 
         return view('job-positions.show', compact('position'));
     }
@@ -57,9 +52,7 @@ class JobPositionController extends TenantAwareController
     public function edit(JobPosition $position)
     {
         if ($position->tenant_id !== $this->getTenantId()) abort(403);
-        $departments = Department::where('tenant_id', $this->getTenantId())->active()->orderBy('name')->get();
-
-        return view('job-positions.edit', compact('position', 'departments'));
+        return view('job-positions.edit', compact('position'));
     }
 
     public function update(Request $request, JobPosition $position)
@@ -69,7 +62,6 @@ class JobPositionController extends TenantAwareController
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'nullable|string|max:50',
-            'department_id' => 'required|exists:departments,id',
             'description' => 'nullable|string|max:500',
             'min_salary' => 'nullable|numeric|min:0',
             'max_salary' => 'nullable|numeric|min:0',

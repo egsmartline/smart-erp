@@ -89,13 +89,14 @@ class QuotationController extends TenantAwareController
                 $totalTax += $lineTax;
 
                 $lineData[] = [
+                    'tenant_id' => $this->getTenantId(),
                     'item_id' => $line['item_id'],
                     'description' => $line['description'] ?? null,
                     'quantity' => $line['quantity'],
                     'unit_price' => $line['unit_price'],
                     'discount_percent' => $line['discount_percent'] ?? 0,
                     'discount_amount' => $lineDiscount,
-                    'tax_rate' => $line['tax_rate'] ?? 0,
+                    'tax_percent' => $line['tax_rate'] ?? 0,
                     'tax_amount' => $lineTax,
                     'subtotal' => $lineSubtotal,
                     'total' => $lineTotal,
@@ -200,13 +201,14 @@ class QuotationController extends TenantAwareController
                 $totalTax += $lineTax;
 
                 $lineData[] = [
+                    'tenant_id' => $this->getTenantId(),
                     'item_id' => $line['item_id'],
                     'description' => $line['description'] ?? null,
                     'quantity' => $line['quantity'],
                     'unit_price' => $line['unit_price'],
                     'discount_percent' => $line['discount_percent'] ?? 0,
                     'discount_amount' => $lineDiscount,
-                    'tax_rate' => $line['tax_rate'] ?? 0,
+                    'tax_percent' => $line['tax_rate'] ?? 0,
                     'tax_amount' => $lineTax,
                     'subtotal' => $lineSubtotal,
                     'total' => $lineTotal,
@@ -307,6 +309,7 @@ class QuotationController extends TenantAwareController
 
             foreach ($quotation->lines as $qLine) {
                 SalesInvoiceLine::create([
+                    'tenant_id' => $this->getTenantId(),
                     'sales_invoice_id' => $invoice->id,
                     'item_id' => $qLine->item_id,
                     'description' => $qLine->description,
@@ -314,7 +317,7 @@ class QuotationController extends TenantAwareController
                     'unit_price' => $qLine->unit_price,
                     'discount_percent' => $qLine->discount_percent,
                     'discount_amount' => $qLine->discount_amount,
-                    'tax_rate' => $qLine->tax_rate,
+                    'tax_rate' => $qLine->tax_percent,
                     'tax_amount' => $qLine->tax_amount,
                     'subtotal' => $qLine->subtotal,
                     'total' => $qLine->total,
@@ -375,6 +378,7 @@ class QuotationController extends TenantAwareController
     {
         $year = date('Y');
         $lastQuotation = $this->tenantQuery(Quotation::class)
+            ->withTrashed()
             ->whereYear('date', $year)
             ->max('quote_number');
 
@@ -392,6 +396,7 @@ class QuotationController extends TenantAwareController
     {
         $year = date('Y');
         $lastInvoice = $this->tenantQuery(SalesInvoice::class)
+            ->withTrashed()
             ->whereYear('date', $year)
             ->max('invoice_number');
 

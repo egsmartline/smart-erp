@@ -10,6 +10,11 @@
     </x-slot>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        @if($item->image)
+        <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6 flex items-center justify-center">
+            <img src="{{ asset($item->image) }}" class="max-h-48 rounded-lg object-contain">
+        </div>
+        @endif
         <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6">
             <h3 class="text-lg font-bold text-gray-800 mb-4">بيانات الصنف</h3>
             <div class="space-y-3 text-sm">
@@ -18,8 +23,8 @@
                 <div class="flex justify-between"><span class="text-gray-500">الباركود:</span><span class="font-medium font-mono">{{ $item->barcode ?? '-' }}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">التصنيف:</span><span class="font-medium">{{ $item->category->name ?? '-' }}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">الوحدة:</span><span class="font-medium">{{ $item->unit->name ?? '-' }}</span></div>
-                <div class="flex justify-between"><span class="text-gray-500">سعر الشراء:</span><span class="font-medium">{{ number_format($item->cost_price, 2) }}</span></div>
-                <div class="flex justify-between"><span class="text-gray-500">سعر البيع:</span><span class="font-medium text-emerald-600">{{ number_format($item->selling_price, 2) }}</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">سعر الشراء:</span><span class="font-medium">{{ number_format($item->cost_price, 2) }} {{ $item->purchaseCurrency->symbol ?? $item->purchaseCurrency->code ?? '' }}</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">سعر البيع:</span><span class="font-medium text-emerald-600">{{ number_format($item->selling_price, 2) }} {{ $item->salesCurrency->symbol ?? $item->salesCurrency->code ?? '' }}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">الضريبة:</span><span class="font-medium">{{ $item->tax_rate }}%</span></div>
             </div>
         </div>

@@ -6,6 +6,7 @@ use App\Models\Item;
 use App\Models\Customer;
 use App\Models\Supplier;
 use App\Models\Warehouse;
+use App\Models\Currency;
 use Livewire\Component;
 
 class InvoiceForm extends Component
@@ -26,6 +27,9 @@ class InvoiceForm extends Component
     public $totalTax = 0;
     public $grandTotal = 0;
 
+    public $currencyId = '';
+    public $currencies = [];
+
     public $customerSearch = '';
     public $supplierSearch = '';
     public $itemSearches = [];
@@ -37,15 +41,24 @@ class InvoiceForm extends Component
     public $customers = [];
     public $suppliers = [];
     public $warehouses = [];
+    public $allItems = [];
 
-    public function mount($type = 'sale', $invoiceId = null, $customerId = null, $supplierId = null, $warehouseId = null)
+    public $showCustomerSearch = true;
+    public $showItemSelect = false;
+
+    public function mount($type = 'sale', $invoiceId = null, $customerId = null, $supplierId = null, $warehouseId = null, $showCustomerSearch = true, $showItemSelect = false)
     {
+        $this->showCustomerSearch = $showCustomerSearch;
+        $this->showItemSelect = $showItemSelect;
         $this->type = $type;
         $this->invoiceId = $invoiceId;
         $this->date = date('Y-m-d');
         $this->dueDate = date('Y-m-d', strtotime('+30 days'));
 
         $this->warehouses = Warehouse::where('is_active', true)->get();
+        $this->currencies = Currency::where('is_active', true)->get();
+        $defaultCurrency = $this->currencies->firstWhere('is_default', true) ?? $this->currencies->first();
+        $this->currencyId = $defaultCurrency ? $defaultCurrency->id : '';
 
         if ($type === 'sale') {
             $this->customers = Customer::where('is_active', true)->get();
@@ -53,6 +66,10 @@ class InvoiceForm extends Component
         } else {
             $this->suppliers = Supplier::where('is_active', true)->get();
             if ($supplierId) $this->supplierId = $supplierId;
+        }
+
+        if ($this->showItemSelect) {
+            $this->allItems = Item::where('is_active', true)->get();
         }
 
         if ($warehouseId) {
@@ -73,6 +90,7 @@ class InvoiceForm extends Component
             if ($invoice) {
                 $this->customerId = $invoice->customer_id;
                 $this->warehouseId = $invoice->warehouse_id;
+                $this->currencyId = $invoice->currency_id;
                 $this->date = $invoice->date->format('Y-m-d');
                 $this->dueDate = $invoice->due_date->format('Y-m-d');
                 $this->notes = $invoice->notes;
@@ -94,6 +112,7 @@ class InvoiceForm extends Component
             if ($invoice) {
                 $this->supplierId = $invoice->supplier_id;
                 $this->warehouseId = $invoice->warehouse_id;
+                $this->currencyId = $invoice->currency_id;
                 $this->date = $invoice->date->format('Y-m-d');
                 $this->dueDate = $invoice->due_date->format('Y-m-d');
                 $this->notes = $invoice->notes;
@@ -267,6 +286,7 @@ class InvoiceForm extends Component
         return [
             $this->type === 'sale' ? 'customer_id' : 'supplier_id' => $this->type === 'sale' ? $this->customerId : $this->supplierId,
             'warehouse_id' => $this->warehouseId,
+            'currency_id' => $this->currencyId,
             'date' => $this->date,
             'due_date' => $this->dueDate,
             'notes' => $this->notes,

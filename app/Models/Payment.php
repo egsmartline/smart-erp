@@ -18,6 +18,7 @@ class Payment extends Model
         'type',
         'customer_id',
         'supplier_id',
+        'account_id',
         'treasury_id',
         'bank_account_id',
         'amount',
@@ -64,6 +65,11 @@ class Payment extends Model
         return $this->belongsTo(Supplier::class);
     }
 
+    public function account(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'account_id');
+    }
+
     public function treasury(): BelongsTo
     {
         return $this->belongsTo(CashTreasury::class, 'treasury_id');
@@ -72,6 +78,11 @@ class Payment extends Model
     public function bankAccount(): BelongsTo
     {
         return $this->belongsTo(BankAccount::class);
+    }
+
+    public function currency(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class);
     }
 
     public function user(): BelongsTo

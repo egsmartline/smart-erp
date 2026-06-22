@@ -16,19 +16,44 @@
         </div>
     </div>
 
-    <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6">
-        <h3 class="text-lg font-bold text-gray-800 mb-4">بيانات الحساب</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div class="flex justify-between"><span class="text-gray-500">البنك:</span><span class="font-medium">{{ $bankAccount->bank_name }}</span></div>
-            <div class="flex justify-between"><span class="text-gray-500">اسم الحساب:</span><span class="font-medium">{{ $bankAccount->account_name }}</span></div>
-            <div class="flex justify-between"><span class="text-gray-500">رقم الحساب:</span><span class="font-medium font-mono">{{ $bankAccount->account_number }}</span></div>
-            <div class="flex justify-between"><span class="text-gray-500">IBAN:</span><span class="font-medium font-mono">{{ $bankAccount->iban ?? '-' }}</span></div>
-            <div class="flex justify-between"><span class="text-gray-500">Swift Code:</span><span class="font-medium font-mono">{{ $bankAccount->swift_code ?? '-' }}</span></div>
-            <div class="flex justify-between"><span class="text-gray-500">العملة:</span><span class="font-medium">{{ $bankAccount->currency->name ?? '-' }}</span></div>
-            <div class="flex justify-between"><span class="text-gray-500">الحساب المحاسبي:</span><span class="font-medium">{{ $bankAccount->account->name ?? '-' }}</span></div>
-            <div class="flex justify-between"><span class="text-gray-500">الحالة:</span>
-                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $bankAccount->is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600' }}">{{ $bankAccount->is_active ? 'نشط' : 'غير نشط' }}</span>
-            </div>
+    <!-- Transactions -->
+    <div class="rounded-xl bg-white shadow-sm border border-gray-200 mt-6">
+        <div class="border-b border-gray-200 px-6 py-4">
+            <h3 class="text-lg font-bold text-gray-800">الحركات على الحساب البنكي</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-right text-sm">
+                <thead>
+                    <tr class="border-b border-gray-200 bg-gray-50">
+                        <th class="px-4 py-3 font-semibold text-gray-700">التاريخ</th>
+                        <th class="px-4 py-3 font-semibold text-gray-700">النوع</th>
+                        <th class="px-4 py-3 font-semibold text-gray-700">البيان</th>
+                        <th class="px-4 py-3 font-semibold text-gray-700">الطرف</th>
+                        <th class="px-4 py-3 font-semibold text-gray-700 text-left">المبلغ</th>
+                        <th class="px-4 py-3 font-semibold text-gray-700">بواسطة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($payments as $p)
+                        <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+                            <td class="px-4 py-3 text-gray-600">{{ $p->date->format('Y-m-d') }}</td>
+                            <td class="px-4 py-3">
+                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $p->type === 'receipt' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">
+                                    {{ $p->type === 'receipt' ? 'قبض' : 'صرف' }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-gray-600">{{ $p->notes ?? $p->payment_number }}</td>
+                            <td class="px-4 py-3 text-gray-600">{{ $p->customer->name ?? $p->supplier->name ?? '-' }}</td>
+                            <td class="px-4 py-3 text-left font-mono text-sm font-bold {{ $p->type === 'receipt' ? 'text-emerald-600' : 'text-red-600' }}">
+                                {{ $p->type === 'receipt' ? '+' : '-' }}{{ number_format($p->amount, 2) }}
+                            </td>
+                            <td class="px-4 py-3 text-gray-600">{{ $p->user->name ?? '-' }}</td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="6" class="px-4 py-8 text-center text-gray-500">لا توجد حركات على هذا الحساب البنكي</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     </div>
 </x-app-layout>

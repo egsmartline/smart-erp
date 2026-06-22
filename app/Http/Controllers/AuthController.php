@@ -20,7 +20,7 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email' => 'required|email',
+            'name' => 'required',
             'password' => 'required',
         ]);
 
@@ -38,8 +38,8 @@ class AuthController extends Controller
         }
 
         return back()->withErrors([
-            'email' => 'بيانات تسجيل الدخول غير صحيحة',
-        ])->onlyInput('email');
+            'name' => 'بيانات تسجيل الدخول غير صحيحة',
+        ])->onlyInput('name');
     }
 
     public function logout(Request $request)

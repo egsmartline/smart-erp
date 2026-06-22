@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Employee;
-use App\Models\Department;
 use App\Models\JobPosition;
 use Illuminate\Http\Request;
 
@@ -12,11 +11,8 @@ class EmployeeController extends TenantAwareController
     public function index(Request $request)
     {
         $query = Employee::where('tenant_id', $this->getTenantId())
-            ->with(['department', 'jobPosition']);
+            ->with(['jobPosition']);
 
-        if ($request->filled('department_id')) {
-            $query->where('department_id', $request->department_id);
-        }
         if ($request->filled('is_active')) {
             $status = $request->boolean('is_active') ? 'active' : 'inactive';
             $query->where('employment_status', $status);
@@ -32,18 +28,16 @@ class EmployeeController extends TenantAwareController
         }
 
         $employees = $query->latest('hire_date')->paginate(20)->withQueryString();
-        $departments = Department::where('tenant_id', $this->getTenantId())->active()->orderBy('name')->get();
         $jobPositions = JobPosition::where('tenant_id', $this->getTenantId())->active()->orderBy('name')->get();
 
-        return view('employees.index', compact('employees', 'departments', 'jobPositions'));
+        return view('employees.index', compact('employees', 'jobPositions'));
     }
 
     public function create()
     {
-        $departments = Department::where('tenant_id', $this->getTenantId())->active()->orderBy('name')->get();
         $jobPositions = JobPosition::where('tenant_id', $this->getTenantId())->active()->orderBy('name')->get();
 
-        return view('employees.create', compact('departments', 'jobPositions'));
+        return view('employees.create', compact('jobPositions'));
     }
 
     public function store(Request $request)
@@ -58,7 +52,6 @@ class EmployeeController extends TenantAwareController
             'national_id' => 'nullable|string|max:50',
             'address' => 'nullable|string|max:500',
             'city' => 'nullable|string|max:100',
-            'department_id' => 'required|exists:departments,id',
             'job_position_id' => 'required|exists:job_positions,id',
             'hire_date' => 'required|date',
             'contract_end_date' => 'nullable|date',
@@ -83,7 +76,7 @@ class EmployeeController extends TenantAwareController
     public function show(Employee $employee)
     {
         if ($employee->tenant_id !== $this->getTenantId()) abort(403);
-        $employee->load(['department', 'jobPosition', 'attendances' => fn($q) => $q->latest('date')->limit(30),
+        $employee->load(['jobPosition', 'attendances' => fn($q) => $q->latest('date')->limit(30),
             'leaves' => fn($q) => $q->latest('date_from')->limit(20),
             'payslips' => fn($q) => $q->latest()->limit(12),
             'loans' => fn($q) => $q->latest()->limit(10)]);
@@ -94,10 +87,9 @@ class EmployeeController extends TenantAwareController
     public function edit(Employee $employee)
     {
         if ($employee->tenant_id !== $this->getTenantId()) abort(403);
-        $departments = Department::where('tenant_id', $this->getTenantId())->active()->orderBy('name')->get();
         $jobPositions = JobPosition::where('tenant_id', $this->getTenantId())->active()->orderBy('name')->get();
 
-        return view('employees.edit', compact('employee', 'departments', 'jobPositions'));
+        return view('employees.edit', compact('employee', 'jobPositions'));
     }
 
     public function update(Request $request, Employee $employee)
@@ -114,7 +106,6 @@ class EmployeeController extends TenantAwareController
             'national_id' => 'nullable|string|max:50',
             'address' => 'nullable|string|max:500',
             'city' => 'nullable|string|max:100',
-            'department_id' => 'required|exists:departments,id',
             'job_position_id' => 'required|exists:job_positions,id',
             'hire_date' => 'required|date',
             'contract_end_date' => 'nullable|date',

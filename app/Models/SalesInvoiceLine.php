@@ -12,6 +12,7 @@ class SalesInvoiceLine extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'tenant_id',
         'sales_invoice_id',
         'item_id',
         'description',

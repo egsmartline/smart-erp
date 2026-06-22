@@ -140,7 +140,7 @@
                             <tr class="bg-blue-50">
                                 <td colspan="5" class="px-3 py-3"></td>
                                 <td class="px-3 py-3 text-left text-sm font-bold text-gray-800">الإجمالي</td>
-                                <td class="px-3 py-3 text-left font-mono text-lg font-bold text-blue-700" colspan="2">{{ number_format($salesOrder->total, 2) }}</td>
+                                <td class="px-3 py-3 text-left font-mono text-lg font-bold text-blue-700" colspan="2">{{ number_format($salesOrder->total, 2) }} {{ $salesOrder->currency->symbol ?? '' }}</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -214,7 +214,7 @@
                         </form>
                     @endif
 
-                    <button onclick="window.print()" class="w-full rounded-lg bg-gray-600 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition cursor-pointer">
+                    <button @click="$root.closest('[x-data]')?.__x?.$data.printModalOpen = true" class="w-full rounded-lg bg-gray-600 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition cursor-pointer">
                         طباعة أمر البيع
                     </button>
                     <a href="{{ route('sales-orders.index') }}" class="block w-full rounded-lg bg-gray-200 px-4 py-2 text-center text-sm font-medium text-gray-700 hover:bg-gray-300 transition">

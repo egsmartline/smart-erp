@@ -9,6 +9,8 @@ use App\Models\Item;
 use App\Models\Warehouse;
 use App\Models\ItemWarehouse;
 use App\Models\StockMovement;
+use App\Models\JournalEntry;
+use App\Services\JournalService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -55,6 +57,7 @@ class PurchaseInvoiceController extends TenantAwareController
         $validated = $request->validate([
             'supplier_id' => 'required|exists:suppliers,id',
             'warehouse_id' => 'required|exists:warehouses,id',
+            'currency_id' => 'nullable|exists:currencies,id',
             'date' => 'required|date',
             'due_date' => 'required|date|after_or_equal:date',
             'notes' => 'nullable|string',
@@ -91,6 +94,7 @@ class PurchaseInvoiceController extends TenantAwareController
                 $totalTax += $lineTax;
 
                 $lineData[] = [
+                    'tenant_id' => $this->getTenantId(),
                     'item_id' => $line['item_id'],
                     'description' => $line['description'] ?? null,
                     'quantity' => $line['quantity'],
@@ -113,6 +117,7 @@ class PurchaseInvoiceController extends TenantAwareController
                 'tenant_id' => $this->getTenantId(),
                 'supplier_id' => $validated['supplier_id'],
                 'warehouse_id' => $validated['warehouse_id'],
+                'currency_id' => $validated['currency_id'] ?? null,
                 'user_id' => auth()->id(),
                 'invoice_number' => $this->generateInvoiceNumber(),
                 'date' => $validated['date'],
@@ -125,7 +130,6 @@ class PurchaseInvoiceController extends TenantAwareController
                 'total' => $grandTotal,
                 'paid_amount' => 0,
                 'due_amount' => $grandTotal,
-                'currency_code' => 'SAR',
                 'exchange_rate' => 1,
                 'status' => 'draft',
                 'payment_status' => 'unpaid',
@@ -149,7 +153,7 @@ class PurchaseInvoiceController extends TenantAwareController
 
     public function show(PurchaseInvoice $purchaseInvoice)
     {
-        $purchaseInvoice->load(['supplier', 'warehouse', 'lines.item', 'user', 'returns']);
+        $purchaseInvoice->load(['supplier', 'warehouse', 'lines.item', 'user', 'returns', 'currency']);
         return view('purchase-invoices.show', compact('purchaseInvoice'));
     }
 
@@ -175,6 +179,7 @@ class PurchaseInvoiceController extends TenantAwareController
         $validated = $request->validate([
             'supplier_id' => 'required|exists:suppliers,id',
             'warehouse_id' => 'required|exists:warehouses,id',
+            'currency_id' => 'nullable|exists:currencies,id',
             'date' => 'required|date',
             'due_date' => 'required|date|after_or_equal:date',
             'notes' => 'nullable|string',
@@ -211,6 +216,7 @@ class PurchaseInvoiceController extends TenantAwareController
                 $totalTax += $lineTax;
 
                 $lineData[] = [
+                    'tenant_id' => $this->getTenantId(),
                     'item_id' => $line['item_id'],
                     'description' => $line['description'] ?? null,
                     'quantity' => $line['quantity'],
@@ -232,6 +238,7 @@ class PurchaseInvoiceController extends TenantAwareController
             $purchaseInvoice->update([
                 'supplier_id' => $validated['supplier_id'],
                 'warehouse_id' => $validated['warehouse_id'],
+                'currency_id' => $validated['currency_id'] ?? null,
                 'date' => $validated['date'],
                 'due_date' => $validated['due_date'],
                 'subtotal' => $subtotal,
@@ -326,6 +333,21 @@ class PurchaseInvoiceController extends TenantAwareController
                 ]);
             }
 
+            $journalService = app(JournalService::class);
+            $invoiceData = $purchaseInvoice->toArray();
+            $invoiceData['shipping_cost'] = $purchaseInvoice->shipping_cost ?? 0;
+            $lines = $journalService->buildPurchaseInvoiceLines($invoiceData, $this->getTenantId());
+            if (count($lines) >= 2) {
+                $journalService->createEntry([
+                    'tenant_id' => $this->getTenantId(),
+                    'date' => $purchaseInvoice->date->format('Y-m-d'),
+                    'description' => 'فاتورة مشتريات - ' . $purchaseInvoice->invoice_number,
+                    'reference' => $purchaseInvoice->invoice_number,
+                    'type' => 'purchase',
+                    'lines' => $lines,
+                ]);
+            }
+
             DB::commit();
 
             return back()->with('success', 'تم ترحيل الفاتورة بنجاح');
@@ -372,6 +394,8 @@ class PurchaseInvoiceController extends TenantAwareController
 
             $purchaseInvoice->update(['status' => 'voided']);
 
+            app(JournalService::class)->reverseEntryByReference($purchaseInvoice->invoice_number, 'purchase');
+
             DB::commit();
 
             return back()->with('success', 'تم إلغاء الفاتورة وخصم المخزون بنجاح');
@@ -402,6 +426,7 @@ class PurchaseInvoiceController extends TenantAwareController
     {
         $year = date('Y');
         $lastInvoice = $this->tenantQuery(PurchaseInvoice::class)
+            ->withTrashed()
             ->whereYear('date', $year)
             ->max('invoice_number');
 
