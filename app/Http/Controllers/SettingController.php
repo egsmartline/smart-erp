@@ -52,9 +52,14 @@ class SettingController extends TenantAwareController
 {
     public function index()
     {
-        $company = $this->tenantQuery(Company::class)->first();
         $currencies = Currency::where('tenant_id', $this->getTenantId())->get();
         $companies = $this->tenantQuery(Company::class)->get();
+
+        $company = $this->tenantQuery(Company::class)->first();
+        if (!$company) {
+            $company = new Company();
+            $company->tenant_id = $this->getTenantId();
+        }
 
         return view('settings.index', compact('company', 'currencies', 'companies'));
     }
@@ -74,6 +79,10 @@ class SettingController extends TenantAwareController
         ]);
 
         $company = $this->tenantQuery(Company::class)->first();
+        if (!$company) {
+            $company = new Company();
+            $company->tenant_id = $this->getTenantId();
+        }
 
         if ($request->hasFile('logo')) {
             $validated['logo'] = $request->file('logo')->store('logos', 'public');
@@ -107,6 +116,9 @@ class SettingController extends TenantAwareController
         ]);
 
         $company = $this->tenantQuery(Company::class)->first();
+        if (!$company) {
+            return back()->with('error', 'يجب إنشاء الشركة أولاً');
+        }
 
         if ($request->hasFile('logo')) {
             $path = $request->file('logo')->store('logos', 'public');
