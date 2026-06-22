@@ -46,8 +46,8 @@
                             <td class="px-4 py-3 text-center font-mono font-bold">{{ number_format($loan->amount, 2) }}</td>
                             <td class="px-4 py-3 text-center font-mono">{{ number_format($loan->monthly_deduction, 2) }}</td>
                             <td class="px-4 py-3 text-center font-mono">{{ number_format($loan->remaining_amount, 2) }}</td>
-                            <td class="px-4 py-3 text-gray-600">{{ $loan->start_date->format('Y/m/d') }}</td>
-                            <td class="px-4 py-3 text-gray-600">{{ $loan->end_date->format('Y/m/d') }}</td>
+                            <td class="px-4 py-3 text-gray-600">{{ $loan->start_date?->format('Y/m/d') }}</td>
+                            <td class="px-4 py-3 text-gray-600">{{ $loan->end_date?->format('Y/m/d') }}</td>
                             <td class="px-4 py-3 text-center">
                                 @if($loan->status == 'active')
                                     <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">نشطة</span>

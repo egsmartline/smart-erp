@@ -14,8 +14,8 @@
                 <div class="flex justify-between"><span class="text-gray-500">المبلغ:</span><span class="font-medium font-mono text-lg">{{ number_format($loan->amount, 2) }}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">الdeduction الشهري:</span><span class="font-medium font-mono">{{ number_format($loan->monthly_deduction, 2) }}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">المتبقي:</span><span class="font-medium font-mono">{{ number_format($loan->remaining_amount, 2) }}</span></div>
-                <div class="flex justify-between"><span class="text-gray-500">من تاريخ:</span><span class="font-medium">{{ $loan->start_date->format('Y/m/d') }}</span></div>
-                <div class="flex justify-between"><span class="text-gray-500">إلى تاريخ:</span><span class="font-medium">{{ $loan->end_date->format('Y/m/d') }}</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">من تاريخ:</span><span class="font-medium">{{ $loan->start_date?->format('Y/m/d') }}</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">إلى تاريخ:</span><span class="font-medium">{{ $loan->end_date?->format('Y/m/d') }}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">الحالة:</span>
                     @if($loan->status == 'active')
                         <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">نشطة</span>
