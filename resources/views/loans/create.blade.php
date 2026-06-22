@@ -25,7 +25,16 @@
                     <select name="employee_id" id="employee_id" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
                         <option value="">اختر الموظف</option>
                         @foreach($employees as $emp)
-                            <option value="{{ $emp->id }}">{{ $emp->full_name }}</option>
+                            <option value="{{ $emp->id }}" @selected(old('employee_id') == $emp->id)>{{ $emp->full_name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label for="cash_treasury_id" class="mb-1 block text-sm font-medium text-gray-700">الخزينة <span class="text-red-500">*</span></label>
+                    <select name="cash_treasury_id" id="cash_treasury_id" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                        <option value="">اختر الخزينة</option>
+                        @foreach($treasuries as $treasury)
+                            <option value="{{ $treasury->id }}" @selected(old('cash_treasury_id') == $treasury->id)>{{ $treasury->name }}</option>
                         @endforeach
                     </select>
                 </div>

@@ -11,6 +11,7 @@
             <h3 class="text-lg font-bold text-gray-800 mb-4">بيانات السلفة</h3>
             <div class="space-y-3 text-sm">
                 <div class="flex justify-between"><span class="text-gray-500">الموظف:</span><span class="font-medium">{{ $loan->employee->full_name ?? '-' }}</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">الخزينة:</span><span class="font-medium">{{ $loan->treasury->name ?? '-' }}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">المبلغ:</span><span class="font-medium font-mono text-lg">{{ number_format($loan->amount, 2) }}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">القسط الشهري:</span><span class="font-medium font-mono">{{ number_format($loan->monthly_deduction, 2) }}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">المتبقي:</span><span class="font-medium font-mono">{{ number_format($loan->remaining_amount, 2) }}</span></div>

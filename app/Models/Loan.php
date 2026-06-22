@@ -14,6 +14,7 @@ class Loan extends Model
     protected $fillable = [
         'tenant_id',
         'employee_id',
+        'cash_treasury_id',
         'loan_number',
         'amount',
         'monthly_deduction',
@@ -38,5 +39,10 @@ class Loan extends Model
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    public function treasury(): BelongsTo
+    {
+        return $this->belongsTo(CashTreasury::class, 'cash_treasury_id');
     }
 }
