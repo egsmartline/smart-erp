@@ -49,7 +49,7 @@ class LoanController extends TenantAwareController
         $validated['status'] = 'active';
         $validated['remaining'] = $validated['amount'];
 
-        $validated['loan_number'] = 'L-' . str_pad(Loan::max('id') + 1, 5, '0', STR_PAD_LEFT);
+        $validated['loan_number'] = 'L-' . str_pad(Loan::withTrashed()->max('id') + 1, 5, '0', STR_PAD_LEFT);
 
         Loan::create($validated);
 
