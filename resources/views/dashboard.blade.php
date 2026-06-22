@@ -95,7 +95,7 @@
                         <div>
                             <div class="font-mono text-xs text-gray-500">{{ $entry->entry_number }}</div>
                             <div class="font-medium text-gray-900">{{ $entry->description }}</div>
-                            <div class="text-xs text-gray-500">{{ $entry->date->format('Y/m/d') }}</div>
+                            <div class="text-xs text-gray-500">{{ $entry->date?->format('Y/m/d') }}</div>
                         </div>
                         <div class="text-left">
                             @if($entry->is_posted)
