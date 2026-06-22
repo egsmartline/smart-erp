@@ -18,7 +18,6 @@ class ReportController extends TenantAwareController
         $dateTo = $request->date_to ?? now()->toDateString();
 
         $accounts = $this->tenantQuery(Account::class)
-            ->where('is_header', false)
             ->where('is_active', true)
             ->orderBy('code')
             ->get()
@@ -60,7 +59,7 @@ class ReportController extends TenantAwareController
             ->orderBy('created_at')
             ->get();
 
-        $accounts = $this->tenantQuery(Account::class)->where('is_header', false)->where('is_active', true)->orderBy('code')->get();
+        $accounts = $this->tenantQuery(Account::class)->where('is_active', true)->orderBy('code')->get();
 
         return view('reports.general-ledger', compact('lines', 'accounts', 'accountId', 'dateFrom', 'dateTo'));
     }

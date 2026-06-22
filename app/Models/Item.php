@@ -22,7 +22,9 @@ class Item extends Model
         'barcode',
         'description',
         'cost_price',
+        'purchase_currency_id',
         'selling_price',
+        'sales_currency_id',
         'minimum_stock',
         'maximum_stock',
         'reorder_level',
@@ -31,6 +33,7 @@ class Item extends Model
         'has_serial_numbers',
         'has_expiry_date',
         'image',
+        'opening_stock',
     ];
 
     protected function casts(): array
@@ -42,6 +45,7 @@ class Item extends Model
             'maximum_stock' => 'decimal:2',
             'reorder_level' => 'decimal:2',
             'tax_rate' => 'decimal:2',
+            'opening_stock' => 'decimal:2',
             'is_active' => 'boolean',
             'has_serial_numbers' => 'boolean',
             'has_expiry_date' => 'boolean',
@@ -111,5 +115,15 @@ class Item extends Model
     public function purchaseOrderLines(): HasMany
     {
         return $this->hasMany(PurchaseOrderLine::class);
+    }
+
+    public function purchaseCurrency(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class, 'purchase_currency_id');
+    }
+
+    public function salesCurrency(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class, 'sales_currency_id');
     }
 }

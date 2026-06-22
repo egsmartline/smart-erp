@@ -19,14 +19,14 @@ class BankStatementController extends TenantAwareController
         }
 
         $bankStatements = $query->with('bankAccount')->orderByDesc('date')->paginate(20);
-        $bankAccounts = $this->tenantQuery(BankAccount::class)->where('is_active', true)->orderBy('name')->get();
+        $bankAccounts = $this->tenantQuery(BankAccount::class)->where('is_active', true)->orderBy('account_name')->get();
 
         return view('bank-statements.index', compact('bankStatements', 'bankAccounts'));
     }
 
     public function create()
     {
-        $bankAccounts = $this->tenantQuery(BankAccount::class)->where('is_active', true)->orderBy('name')->get();
+        $bankAccounts = $this->tenantQuery(BankAccount::class)->where('is_active', true)->orderBy('account_name')->get();
         $journals = $this->tenantQuery(Journal::class)->where('type', 'bank')->where('is_active', true)->orderBy('name')->get();
 
         return view('bank-statements.create', compact('bankAccounts', 'journals'));

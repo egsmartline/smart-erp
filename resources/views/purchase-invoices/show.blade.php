@@ -92,7 +92,7 @@
                             <tr class="bg-blue-50">
                                 <td colspan="5" class="px-3 py-3"></td>
                                 <td class="px-3 py-3 text-left text-sm font-bold text-gray-800">الإجمالي</td>
-                                <td class="px-3 py-3 text-left font-mono text-lg font-bold text-blue-700">{{ number_format($purchaseInvoice->total, 2) }}</td>
+                                <td class="px-3 py-3 text-left font-mono text-lg font-bold text-blue-700">{{ number_format($purchaseInvoice->total, 2) }} {{ $purchaseInvoice->currency->symbol ?? '' }}</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -106,17 +106,18 @@
                 @endif
 
                 <div class="grid grid-cols-3 gap-4 border-t border-gray-200 pt-4">
+                    @php $curSym = $purchaseInvoice->currency->symbol ?? ''; @endphp
                     <div>
                         <p class="text-xs text-gray-500">الإجمالي</p>
-                        <p class="text-lg font-bold font-mono text-gray-900">{{ number_format($purchaseInvoice->total, 2) }}</p>
+                        <p class="text-lg font-bold font-mono text-gray-900">{{ number_format($purchaseInvoice->total, 2) }} {{ $curSym }}</p>
                     </div>
                     <div>
                         <p class="text-xs text-gray-500">المدفوع</p>
-                        <p class="text-lg font-bold font-mono text-emerald-600">{{ number_format($purchaseInvoice->paid_amount, 2) }}</p>
+                        <p class="text-lg font-bold font-mono text-emerald-600">{{ number_format($purchaseInvoice->paid_amount, 2) }} {{ $curSym }}</p>
                     </div>
                     <div>
                         <p class="text-xs text-gray-500">المستحق</p>
-                        <p class="text-lg font-bold font-mono text-red-600">{{ number_format($purchaseInvoice->due_amount, 2) }}</p>
+                        <p class="text-lg font-bold font-mono text-red-600">{{ number_format($purchaseInvoice->due_amount, 2) }} {{ $curSym }}</p>
                     </div>
                 </div>
             </div>
@@ -127,7 +128,7 @@
                 <h4 class="text-sm font-bold text-gray-700 mb-3">إجراءات</h4>
                 <div class="space-y-2">
                     @if($purchaseInvoice->status === 'draft')
-                        <button onclick="window.print()" class="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition cursor-pointer">طباعة الفاتورة</button>
+                        <button @click="$root.closest('[x-data]')?.__x?.$data.printModalOpen = true" class="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition cursor-pointer">طباعة الفاتورة</button>
                         <form action="{{ route('purchase-invoices.post', $purchaseInvoice) }}" method="POST">
                             @csrf
                             <button type="submit" class="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition cursor-pointer" onclick="return confirm('هل أنت متأكد من الترحيل؟')">
@@ -143,7 +144,7 @@
                             </button>
                         </form>
                     @elseif($purchaseInvoice->status === 'approved')
-                        <button onclick="window.print()" class="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition cursor-pointer">طباعة الفاتورة</button>
+                        <button @click="$root.closest('[x-data]')?.__x?.$data.printModalOpen = true" class="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition cursor-pointer">طباعة الفاتورة</button>
                         <form action="{{ route('purchase-invoices.void', $purchaseInvoice) }}" method="POST">
                             @csrf
                             <button type="submit" class="w-full rounded-lg bg-red-100 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-200 transition cursor-pointer" onclick="return confirm('هل أنت متأكد من الإلغاء؟ سيتم خصم المخزون.')">
@@ -164,11 +165,11 @@
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">المدفوع:</span>
-                        <span class="font-mono font-medium text-emerald-600">{{ number_format($purchaseInvoice->paid_amount, 2) }}</span>
+                        <span class="font-mono font-medium text-emerald-600">{{ number_format($purchaseInvoice->paid_amount, 2) }} {{ $purchaseInvoice->currency->symbol ?? '' }}</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-gray-600">المستحق:</span>
-                        <span class="font-mono font-medium text-red-600">{{ number_format($purchaseInvoice->due_amount, 2) }}</span>
+                        <span class="font-mono font-medium text-red-600">{{ number_format($purchaseInvoice->due_amount, 2) }} {{ $purchaseInvoice->currency->symbol ?? '' }}</span>
                     </div>
                 </div>
             </div>

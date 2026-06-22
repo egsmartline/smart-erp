@@ -19,6 +19,10 @@ class JournalEntry extends Model
         'total_credit',
         'is_posted',
         'tenant_id',
+        'fiscal_year_id',
+        'type',
+        'posted_by',
+        'posted_at',
         'created_by',
     ];
 

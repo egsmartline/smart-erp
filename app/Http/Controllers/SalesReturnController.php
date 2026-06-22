@@ -196,6 +196,7 @@ class SalesReturnController extends TenantAwareController
     {
         $year = date('Y');
         $lastReturn = $this->tenantQuery(SalesReturn::class)
+            ->withTrashed()
             ->whereYear('date', $year)
             ->max('return_number');
 

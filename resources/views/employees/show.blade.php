@@ -40,7 +40,7 @@
                         <div><span class="text-gray-500">الاسم:</span> <span class="font-medium">{{ $employee->full_name }}</span></div>
                         <div><span class="text-gray-500">البريد:</span> <span class="font-medium">{{ $employee->email ?? '-' }}</span></div>
                         <div><span class="text-gray-500">الهاتف:</span> <span class="font-medium">{{ $employee->phone ?? '-' }}</span></div>
-                        <div><span class="text-gray-500">تاريخ الميلاد:</span> <span class="font-medium">{{ $employee->date_of_birth?->format('Y/m/d') ?? '-' }}</span></div>
+                        <div><span class="text-gray-500">تاريخ الميلاد:</span> <span class="font-medium">{{ $employee->birth_date?->format('Y/m/d') ?? '-' }}</span></div>
                         <div><span class="text-gray-500">الجنس:</span> <span class="font-medium">{{ $employee->gender == 'male' ? 'ذكر' : ($employee->gender == 'female' ? 'أنثى' : '-') }}</span></div>
                         <div><span class="text-gray-500">الجنسية:</span> <span class="font-medium">{{ $employee->nationality ?? '-' }}</span></div>
                         <div><span class="text-gray-500">رقم الهوية:</span> <span class="font-medium">{{ $employee->national_id ?? '-' }}</span></div>
@@ -50,19 +50,18 @@
 
                 <div x-show="activeTab == 'job'" class="space-y-3 text-sm">
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <div><span class="text-gray-500">القسم:</span> <span class="font-medium">{{ $employee->department->name ?? '-' }}</span></div>
                         <div><span class="text-gray-500">الوظيفة:</span> <span class="font-medium">{{ $employee->jobPosition->name ?? '-' }}</span></div>
                         <div><span class="text-gray-500">تاريخ التعيين:</span> <span class="font-medium">{{ $employee->hire_date?->format('Y/m/d') ?? '-' }}</span></div>
                         <div><span class="text-gray-500">نوع العقد:</span> <span class="font-medium">{{ $employee->contract_type ?? '-' }}</span></div>
                         <div><span class="text-gray-500">انتهاء العقد:</span> <span class="font-medium">{{ $employee->contract_end_date?->format('Y/m/d') ?? '-' }}</span></div>
-                        <div><span class="text-gray-500">الراتب الأساسي:</span> <span class="font-medium font-mono">{{ number_format($employee->basic_salary, 2) }}</span></div>
+                        <div><span class="text-gray-500">الراتب الإجمالي:</span> <span class="font-medium font-mono">{{ number_format($employee->gross_salary, 2) }}</span></div>
                     </div>
                 </div>
 
                 <div x-show="activeTab == 'bank'" class="space-y-3 text-sm">
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div><span class="text-gray-500">اسم البنك:</span> <span class="font-medium">{{ $employee->bank_name ?? '-' }}</span></div>
-                        <div><span class="text-gray-500">رقم الحساب:</span> <span class="font-medium">{{ $employee->bank_account_number ?? '-' }}</span></div>
+                        <div><span class="text-gray-500">رقم الحساب:</span> <span class="font-medium">{{ $employee->bank_account ?? '-' }}</span></div>
                         <div><span class="text-gray-500">الآيبان:</span> <span class="font-medium">{{ $employee->bank_iban ?? '-' }}</span></div>
                         <div><span class="text-gray-500">جهة الاتصال الطارئ:</span> <span class="font-medium">{{ $employee->emergency_contact_name ?? '-' }}</span></div>
                         <div><span class="text-gray-500">هاتف الطوارئ:</span> <span class="font-medium">{{ $employee->emergency_contact_phone ?? '-' }}</span></div>

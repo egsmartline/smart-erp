@@ -24,7 +24,7 @@ class EnsureTenant
             return new RedirectResponse('/setup');
         }
 
-        if (session('current_tenant_id') !== $user->tenant_id) {
+        if (!session('current_tenant_id')) {
             session(['current_tenant_id' => $user->tenant_id]);
         }
 

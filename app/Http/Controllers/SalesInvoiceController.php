@@ -9,6 +9,8 @@ use App\Models\Item;
 use App\Models\Warehouse;
 use App\Models\ItemWarehouse;
 use App\Models\StockMovement;
+use App\Models\JournalEntry;
+use App\Services\JournalService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -57,6 +59,7 @@ class SalesInvoiceController extends TenantAwareController
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'warehouse_id' => 'required|exists:warehouses,id',
+            'currency_id' => 'nullable|exists:currencies,id',
             'date' => 'required|date',
             'due_date' => 'required|date|after_or_equal:date',
             'notes' => 'nullable|string',
@@ -92,6 +95,7 @@ class SalesInvoiceController extends TenantAwareController
                 $totalTax += $lineTax;
 
                 $lineData[] = [
+                    'tenant_id' => $this->getTenantId(),
                     'item_id' => $line['item_id'],
                     'description' => $line['description'] ?? null,
                     'quantity' => $line['quantity'],
@@ -125,7 +129,7 @@ class SalesInvoiceController extends TenantAwareController
                 'total' => $grandTotal,
                 'paid_amount' => 0,
                 'due_amount' => $grandTotal,
-                'currency_code' => 'SAR',
+                'currency_id' => $validated['currency_id'] ?? null,
                 'exchange_rate' => 1,
                 'status' => 'draft',
                 'payment_status' => 'unpaid',
@@ -149,7 +153,7 @@ class SalesInvoiceController extends TenantAwareController
 
     public function show(SalesInvoice $salesInvoice)
     {
-        $salesInvoice->load(['customer', 'warehouse', 'lines.item', 'cashier', 'returns']);
+        $salesInvoice->load(['customer', 'warehouse', 'lines.item', 'cashier', 'returns', 'currency']);
         return view('sales-invoices.show', compact('salesInvoice'));
     }
 
@@ -175,6 +179,7 @@ class SalesInvoiceController extends TenantAwareController
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'warehouse_id' => 'required|exists:warehouses,id',
+            'currency_id' => 'nullable|exists:currencies,id',
             'date' => 'required|date',
             'due_date' => 'required|date|after_or_equal:date',
             'notes' => 'nullable|string',
@@ -210,6 +215,7 @@ class SalesInvoiceController extends TenantAwareController
                 $totalTax += $lineTax;
 
                 $lineData[] = [
+                    'tenant_id' => $this->getTenantId(),
                     'item_id' => $line['item_id'],
                     'description' => $line['description'] ?? null,
                     'quantity' => $line['quantity'],
@@ -230,6 +236,7 @@ class SalesInvoiceController extends TenantAwareController
             $salesInvoice->update([
                 'customer_id' => $validated['customer_id'],
                 'warehouse_id' => $validated['warehouse_id'],
+                'currency_id' => $validated['currency_id'] ?? null,
                 'date' => $validated['date'],
                 'due_date' => $validated['due_date'],
                 'subtotal' => $subtotal,
@@ -320,6 +327,19 @@ class SalesInvoiceController extends TenantAwareController
                 ]);
             }
 
+            $journalService = app(JournalService::class);
+            $lines = $journalService->buildSalesInvoiceLines($salesInvoice->toArray(), $this->getTenantId());
+            if (count($lines) >= 2) {
+                $journalService->createEntry([
+                    'tenant_id' => $this->getTenantId(),
+                    'date' => $salesInvoice->date->format('Y-m-d'),
+                    'description' => 'فاتورة مبيعات - ' . $salesInvoice->invoice_number,
+                    'reference' => $salesInvoice->invoice_number,
+                    'type' => 'sales',
+                    'lines' => $lines,
+                ]);
+            }
+
             DB::commit();
 
             return back()->with('success', 'تم ترحيل الفاتورة بنجاح');
@@ -365,6 +385,8 @@ class SalesInvoiceController extends TenantAwareController
             }
 
             $salesInvoice->update(['status' => 'voided']);
+
+            app(JournalService::class)->reverseEntryByReference($salesInvoice->invoice_number, 'sales');
 
             DB::commit();
 
@@ -413,6 +435,7 @@ class SalesInvoiceController extends TenantAwareController
     {
         $year = date('Y');
         $lastInvoice = $this->tenantQuery(SalesInvoice::class)
+            ->withTrashed()
             ->whereYear('date', $year)
             ->max('invoice_number');
 

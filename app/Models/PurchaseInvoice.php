@@ -36,6 +36,7 @@ class PurchaseInvoice extends Model
         'notes',
         'terms',
         'reference',
+        'purchase_order_id',
     ];
 
     protected function casts(): array
@@ -88,6 +89,11 @@ class PurchaseInvoice extends Model
     public function lines(): HasMany
     {
         return $this->hasMany(PurchaseInvoiceLine::class);
+    }
+
+    public function currency(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class);
     }
 
     public function returns(): HasMany

@@ -42,12 +42,12 @@
                     </span>
                 </div>
                 <div class="flex justify-between"><span class="text-gray-500">المبلغ:</span><span class="font-medium font-mono text-lg">{{ number_format($payment->amount, 2) }}</span></div>
-                <div class="flex justify-between"><span class="text-gray-500">العملة:</span><span class="font-medium">{{ $payment->currency_code }}</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">العملة:</span><span class="font-medium">{{ $payment->currency->name ?? '-' }} ({{ $payment->currency->code ?? '-' }})</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">سعر الصرف:</span><span class="font-medium font-mono">{{ $payment->exchange_rate }}</span></div>
-                <div class="flex justify-between"><span class="text-gray-500">المبلغ بالعملة المحلية:</span><span class="font-medium font-mono">{{ number_format($payment->amount_local, 2) }}</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">المبلغ بالعملة المحلية:</span><span class="font-medium font-mono">{{ number_format($payment->amount_in_currency, 2) }}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">طريقة الدفع:</span>
                     <span class="font-medium">
-                        @if($payment->payment_method === 'cash') نقاط
+                        @if($payment->payment_method === 'cash') نقداً
                         @elseif($payment->payment_method === 'bank_transfer') تحويل بنكي
                         @elseif($payment->payment_method === 'check') شيك
                         @else {{ $payment->payment_method }}
@@ -72,22 +72,28 @@
                 @if($payment->customer)
                     <div class="flex justify-between"><span class="text-gray-500">العميل:</span><span class="font-medium">{{ $payment->customer->name }}</span></div>
                 @endif
+                @if($payment->account)
+                    <div class="flex justify-between"><span class="text-gray-500">حساب المصروف:</span><span class="font-medium">{{ $payment->account->code }} - {{ $payment->account->name }}</span></div>
+                @endif
                 @if($payment->supplier)
                     <div class="flex justify-between"><span class="text-gray-500">المورد:</span><span class="font-medium">{{ $payment->supplier->name }}</span></div>
+                @endif
+                @if($payment->treasury)
+                    <div class="flex justify-between"><span class="text-gray-500">جهة الدفع:</span><span class="font-medium">{{ $payment->treasury->name }} ({{ $payment->treasury->code }})</span></div>
                 @endif
                 @if($payment->bankAccount)
                     <div class="flex justify-between"><span class="text-gray-500">الحساب البنكي:</span><span class="font-medium">{{ $payment->bankAccount->bank_name }} - {{ $payment->bankAccount->account_name }}</span></div>
                 @endif
-                @if($payment->cheque_number)
-                    <div class="flex justify-between"><span class="text-gray-500">رقم الشيك:</span><span class="font-medium font-mono">{{ $payment->cheque_number }}</span></div>
+                @if($payment->check_number)
+                    <div class="flex justify-between"><span class="text-gray-500">رقم الشيك:</span><span class="font-medium font-mono">{{ $payment->check_number }}</span></div>
                 @endif
-                @if($payment->reference_number)
-                    <div class="flex justify-between"><span class="text-gray-500">رقم المرجع:</span><span class="font-medium font-mono">{{ $payment->reference_number }}</span></div>
+                @if($payment->reference)
+                    <div class="flex justify-between"><span class="text-gray-500">رقم المرجع:</span><span class="font-medium font-mono">{{ $payment->reference }}</span></div>
                 @endif
                 @if($payment->notes)
-                    <div class="flex justify-between"><span class="text-gray-500">ملاحظات:</span><span class="font-medium">{{ $payment->notes }}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">البيان:</span><span class="font-medium">{{ $payment->notes }}</span></div>
                 @endif
-                <div class="flex justify-between"><span class="text-gray-500">أنشئ بواسطة:</span><span class="font-medium">{{ $payment->creator->name ?? '-' }}</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">أنشئ بواسطة:</span><span class="font-medium">{{ $payment->user->name ?? '-' }}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">تاريخ الإنشاء:</span><span class="font-medium">{{ $payment->created_at->format('Y-m-d H:i') }}</span></div>
             </div>
         </div>

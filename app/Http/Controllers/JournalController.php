@@ -26,7 +26,6 @@ class JournalController extends Controller
     public function create()
     {
         $accounts = Account::where('tenant_id', Auth::user()->tenant_id)
-            ->where('is_header', false)
             ->where('is_active', true)
             ->orderBy('code')
             ->get();
@@ -68,7 +67,6 @@ class JournalController extends Controller
     public function edit(Journal $journal)
     {
         $accounts = Account::where('tenant_id', Auth::user()->tenant_id)
-            ->where('is_header', false)
             ->where('is_active', true)
             ->orderBy('code')
             ->get();

@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-class JournalEntryController extends Controller
+class JournalEntryController extends TenantAwareController
 {
     public function index(Request $request)
     {
@@ -262,8 +262,8 @@ class JournalEntryController extends Controller
                 $account = Account::find($line->account_id);
 
                 if ($account) {
-                    $newBalance = $account->balance + $line->debit - $line->credit;
-                    $account->update(['balance' => $newBalance]);
+                    $newBalance = $account->current_balance + $line->debit - $line->credit;
+                    $account->update(['current_balance' => $newBalance]);
                 }
             }
 
@@ -281,9 +281,10 @@ class JournalEntryController extends Controller
     private function generateEntryNumber(): string
     {
         $year = date('Y');
-        $tenantId = Auth::user()->tenant_id;
+        $tenantId = $this->getTenantId();
 
         $lastEntry = JournalEntry::where('tenant_id', $tenantId)
+            ->withTrashed()
             ->whereYear('date', $year)
             ->orderByDesc('entry_number')
             ->first();
@@ -300,7 +301,7 @@ class JournalEntryController extends Controller
 
     private function authorizeEntry(JournalEntry $entry): void
     {
-        if ($entry->tenant_id !== Auth::user()->tenant_id) {
+        if ($entry->tenant_id !== $this->getTenantId()) {
             abort(403, 'غير مصرح לך بالوصول لهذا القيد');
         }
     }

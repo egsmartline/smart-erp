@@ -10,6 +10,7 @@ use App\Models\Customer;
 use App\Models\Item;
 use App\Models\Warehouse;
 use App\Models\PaymentTerm;
+use App\Models\Currency;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -48,7 +49,7 @@ class SalesOrderController extends TenantAwareController
         $warehouses = $this->tenantQuery(Warehouse::class)->where('is_active', true)->get();
         $items = $this->tenantQuery(Item::class)->where('is_active', true)->get();
         $paymentTerms = $this->tenantQuery(PaymentTerm::class)->get();
-        $currencies = collect(['SAR', 'USD', 'EUR']);
+        $currencies = $this->tenantQuery(Currency::class)->where('is_active', true)->get();
 
         return view('sales-orders.create', compact('customers', 'warehouses', 'items', 'paymentTerms', 'currencies'));
     }
@@ -61,7 +62,7 @@ class SalesOrderController extends TenantAwareController
             'date' => 'required|date',
             'required_date' => 'nullable|date|after_or_equal:date',
             'payment_term_id' => 'nullable|exists:payment_terms,id',
-            'currency_code' => 'nullable|string|max:10',
+            'currency_id' => 'nullable|exists:currencies,id',
             'notes' => 'nullable|string',
             'terms' => 'nullable|string',
             'lines' => 'required|array|min:1',
@@ -93,6 +94,7 @@ class SalesOrderController extends TenantAwareController
                 $totalTax += $lineTax;
 
                 $lineData[] = [
+                    'tenant_id' => $this->getTenantId(),
                     'item_id' => $line['item_id'],
                     'description' => $line['description'] ?? null,
                     'quantity' => $line['quantity'],
@@ -100,7 +102,7 @@ class SalesOrderController extends TenantAwareController
                     'unit_price' => $line['unit_price'],
                     'discount_percent' => $line['discount_percent'] ?? 0,
                     'discount_amount' => $lineDiscount,
-                    'tax_rate' => $line['tax_rate'] ?? 0,
+                    'tax_percent' => $line['tax_rate'] ?? 0,
                     'tax_amount' => $lineTax,
                     'subtotal' => $lineSubtotal,
                     'total' => $lineTotal,
@@ -122,7 +124,7 @@ class SalesOrderController extends TenantAwareController
                 'discount_percent' => 0,
                 'tax_amount' => $totalTax,
                 'total' => $grandTotal,
-                'currency_code' => $validated['currency_code'] ?? 'SAR',
+                'currency_id' => $validated['currency_id'] ?? null,
                 'exchange_rate' => 1,
                 'status' => 'draft',
                 'delivery_status' => 'pending',
@@ -150,7 +152,7 @@ class SalesOrderController extends TenantAwareController
 
     public function show(SalesOrder $salesOrder)
     {
-        $salesOrder->load(['customer', 'warehouse', 'user', 'lines.item', 'invoices']);
+        $salesOrder->load(['customer', 'warehouse', 'user', 'lines.item', 'invoices', 'currency']);
         return view('sales-orders.show', compact('salesOrder'));
     }
 
@@ -165,7 +167,7 @@ class SalesOrderController extends TenantAwareController
         $warehouses = $this->tenantQuery(Warehouse::class)->where('is_active', true)->get();
         $items = $this->tenantQuery(Item::class)->where('is_active', true)->get();
         $paymentTerms = $this->tenantQuery(PaymentTerm::class)->get();
-        $currencies = collect(['SAR', 'USD', 'EUR']);
+        $currencies = $this->tenantQuery(Currency::class)->where('is_active', true)->get();
 
         return view('sales-orders.edit', compact('salesOrder', 'customers', 'warehouses', 'items', 'paymentTerms', 'currencies'));
     }
@@ -182,7 +184,7 @@ class SalesOrderController extends TenantAwareController
             'date' => 'required|date',
             'required_date' => 'nullable|date|after_or_equal:date',
             'payment_term_id' => 'nullable|exists:payment_terms,id',
-            'currency_code' => 'nullable|string|max:10',
+            'currency_id' => 'nullable|exists:currencies,id',
             'notes' => 'nullable|string',
             'terms' => 'nullable|string',
             'lines' => 'required|array|min:1',
@@ -214,6 +216,7 @@ class SalesOrderController extends TenantAwareController
                 $totalTax += $lineTax;
 
                 $lineData[] = [
+                    'tenant_id' => $this->getTenantId(),
                     'item_id' => $line['item_id'],
                     'description' => $line['description'] ?? null,
                     'quantity' => $line['quantity'],
@@ -221,7 +224,7 @@ class SalesOrderController extends TenantAwareController
                     'unit_price' => $line['unit_price'],
                     'discount_percent' => $line['discount_percent'] ?? 0,
                     'discount_amount' => $lineDiscount,
-                    'tax_rate' => $line['tax_rate'] ?? 0,
+                    'tax_percent' => $line['tax_rate'] ?? 0,
                     'tax_amount' => $lineTax,
                     'subtotal' => $lineSubtotal,
                     'total' => $lineTotal,
@@ -239,7 +242,7 @@ class SalesOrderController extends TenantAwareController
                 'discount_amount' => $totalDiscount,
                 'tax_amount' => $totalTax,
                 'total' => $grandTotal,
-                'currency_code' => $validated['currency_code'] ?? 'SAR',
+                'currency_id' => $validated['currency_id'] ?? null,
                 'payment_term_id' => $validated['payment_term_id'] ?? null,
                 'notes' => $validated['notes'] ?? null,
                 'terms' => $validated['terms'] ?? null,
@@ -307,10 +310,49 @@ class SalesOrderController extends TenantAwareController
             return back()->with('error', 'لا يمكن إنشاء فاتورة لأمر بيع في هذه الحالة');
         }
 
+        $salesOrder->load('lines');
+
         DB::beginTransaction();
 
         try {
-            $warehouse = $this->tenantQuery(Warehouse::class)->where('id', $salesOrder->warehouse_id)->first();
+            $invSubtotal = 0;
+            $invDiscount = 0;
+            $invTax = 0;
+            $invTotal = 0;
+            $invoiceLines = [];
+
+            foreach ($salesOrder->lines as $orderLine) {
+                $deliveredQty = ($orderLine->delivered_qty ?? 0) > 0 ? $orderLine->delivered_qty : $orderLine->quantity;
+                $ratio = $orderLine->quantity > 0 ? $deliveredQty / $orderLine->quantity : 0;
+                $lineSubtotal = $deliveredQty * $orderLine->unit_price;
+                $lineDiscount = $orderLine->discount_percent
+                    ? $lineSubtotal * $orderLine->discount_percent / 100
+                    : ($orderLine->discount_amount * $ratio);
+                $lineTax = $orderLine->tax_percent
+                    ? ($lineSubtotal - $lineDiscount) * $orderLine->tax_percent / 100
+                    : 0;
+                $lineTotal = $lineSubtotal - $lineDiscount + $lineTax;
+
+                $invSubtotal += $lineSubtotal;
+                $invDiscount += $lineDiscount;
+                $invTax += $lineTax;
+                $invTotal += $lineTotal;
+
+                $invoiceLines[] = [
+                    'tenant_id' => $this->getTenantId(),
+                    'item_id' => $orderLine->item_id,
+                    'description' => $orderLine->description,
+                    'quantity' => $deliveredQty,
+                    'unit_price' => $orderLine->unit_price,
+                    'discount_percent' => $orderLine->discount_percent,
+                    'discount_amount' => $lineDiscount,
+                    'tax_rate' => $orderLine->tax_percent,
+                    'tax_amount' => $lineTax,
+                    'subtotal' => $lineSubtotal,
+                    'total' => $lineTotal,
+                    'warehouse_id' => $salesOrder->warehouse_id,
+                ];
+            }
 
             $invoice = SalesInvoice::create([
                 'tenant_id' => $this->getTenantId(),
@@ -319,15 +361,14 @@ class SalesOrderController extends TenantAwareController
                 'cashier_id' => auth()->id(),
                 'invoice_number' => $this->generateInvoiceNumber(),
                 'date' => now()->toDateString(),
-                'due_date' => now()->addDays(30)->toDateString(),
-                'subtotal' => $salesOrder->subtotal,
-                'discount_amount' => $salesOrder->discount_amount,
+                'subtotal' => $invSubtotal,
+                'discount_amount' => $invDiscount,
                 'discount_percent' => 0,
-                'tax_amount' => $salesOrder->tax_amount,
-                'total' => $salesOrder->total,
+                'tax_amount' => $invTax,
+                'total' => $invTotal,
                 'paid_amount' => 0,
-                'due_amount' => $salesOrder->total,
-                'currency_code' => $salesOrder->currency_code,
+                'due_amount' => $invTotal,
+                'currency_id' => $salesOrder->currency_id,
                 'exchange_rate' => 1,
                 'status' => 'draft',
                 'payment_status' => 'unpaid',
@@ -335,21 +376,9 @@ class SalesOrderController extends TenantAwareController
                 'sales_order_id' => $salesOrder->id,
             ]);
 
-            foreach ($salesOrder->lines as $orderLine) {
-                SalesInvoiceLine::create([
-                    'sales_invoice_id' => $invoice->id,
-                    'item_id' => $orderLine->item_id,
-                    'description' => $orderLine->description,
-                    'quantity' => $orderLine->quantity,
-                    'unit_price' => $orderLine->unit_price,
-                    'discount_percent' => $orderLine->discount_percent,
-                    'discount_amount' => $orderLine->discount_amount,
-                    'tax_rate' => $orderLine->tax_rate,
-                    'tax_amount' => $orderLine->tax_amount,
-                    'subtotal' => $orderLine->subtotal,
-                    'total' => $orderLine->total,
-                    'warehouse_id' => $salesOrder->warehouse_id,
-                ]);
+            foreach ($invoiceLines as $lineData) {
+                $lineData['sales_invoice_id'] = $invoice->id;
+                SalesInvoiceLine::create($lineData);
             }
 
             $salesOrder->update([
@@ -407,6 +436,7 @@ class SalesOrderController extends TenantAwareController
     {
         $year = date('Y');
         $lastOrder = $this->tenantQuery(SalesOrder::class)
+            ->withTrashed()
             ->whereYear('date', $year)
             ->max('order_number');
 

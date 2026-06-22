@@ -30,7 +30,6 @@ class BudgetController extends Controller
             ->get();
 
         $accounts = Account::where('tenant_id', Auth::user()->tenant_id)
-            ->where('is_header', false)
             ->where('is_active', true)
             ->orderBy('code')
             ->get();
@@ -118,7 +117,6 @@ class BudgetController extends Controller
             ->get();
 
         $accounts = Account::where('tenant_id', Auth::user()->tenant_id)
-            ->where('is_header', false)
             ->where('is_active', true)
             ->orderBy('code')
             ->get();

@@ -5,13 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\Item;
 use App\Models\ItemCategory;
 use App\Models\ItemUnit;
+use App\Models\ItemWarehouse;
+use App\Models\Currency;
 use Illuminate\Http\Request;
 
 class ItemController extends TenantAwareController
 {
     public function index(Request $request)
     {
-        $query = $this->tenantQuery(Item::class)->with('category', 'unit');
+        $query = $this->tenantQuery(Item::class)->with('category', 'unit', 'purchaseCurrency', 'salesCurrency', 'warehouses');
 
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
@@ -38,8 +40,9 @@ class ItemController extends TenantAwareController
         $categories = $this->tenantQuery(ItemCategory::class)->get();
         $units = $this->tenantQuery(ItemUnit::class)->get();
         $warehouses = $this->tenantQuery(\App\Models\Warehouse::class)->get();
+        $currencies = $this->tenantQuery(Currency::class)->get();
 
-        return view('items.create', compact('categories', 'units', 'warehouses'));
+        return view('items.create', compact('categories', 'units', 'warehouses', 'currencies'));
     }
 
     public function store(Request $request)
@@ -49,12 +52,17 @@ class ItemController extends TenantAwareController
             'name_ar' => 'nullable|string|max:255',
             'sku' => 'nullable|string|max:255',
             'barcode' => 'nullable|string|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'category_id' => 'nullable|exists:item_categories,id',
             'unit_id' => 'nullable|exists:item_units,id',
             'cost_price' => 'required|numeric|min:0',
+            'purchase_currency_id' => 'nullable|exists:currencies,id',
             'selling_price' => 'required|numeric|min:0',
+            'sales_currency_id' => 'nullable|exists:currencies,id',
             'tax_rate' => 'nullable|numeric|min:0|max:100',
             'minimum_stock' => 'nullable|numeric|min:0',
+            'opening_stock' => 'nullable|numeric|min:0',
+            'default_warehouse' => 'nullable|exists:warehouses,id',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
@@ -62,7 +70,29 @@ class ItemController extends TenantAwareController
         $validated['tenant_id'] = $this->getTenantId();
         $validated['is_active'] = $request->boolean('is_active', true);
 
-        Item::create($validated);
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/items'), $filename);
+            $validated['image'] = 'uploads/items/' . $filename;
+        }
+
+        $item = Item::create($validated);
+
+        if (($validated['opening_stock'] ?? 0) > 0) {
+            $warehouseId = $validated['default_warehouse'] ?? $this->tenantQuery(\App\Models\Warehouse::class)->where('is_default', true)->value('id');
+            if (!$warehouseId) {
+                $warehouseId = $this->tenantQuery(\App\Models\Warehouse::class)->value('id');
+            }
+            if ($warehouseId) {
+                ItemWarehouse::create([
+                    'tenant_id' => $this->getTenantId(),
+                    'item_id' => $item->id,
+                    'warehouse_id' => $warehouseId,
+                    'quantity' => $validated['opening_stock'],
+                ]);
+            }
+        }
 
         return redirect()->route('items.index')->with('success', 'تم إضافة الصنف بنجاح');
     }
@@ -78,8 +108,9 @@ class ItemController extends TenantAwareController
         $categories = $this->tenantQuery(ItemCategory::class)->get();
         $units = $this->tenantQuery(ItemUnit::class)->get();
         $warehouses = $this->tenantQuery(\App\Models\Warehouse::class)->get();
+        $currencies = $this->tenantQuery(Currency::class)->get();
 
-        return view('items.edit', compact('item', 'categories', 'units', 'warehouses'));
+        return view('items.edit', compact('item', 'categories', 'units', 'warehouses', 'currencies'));
     }
 
     public function update(Request $request, Item $item)
@@ -89,19 +120,56 @@ class ItemController extends TenantAwareController
             'name_ar' => 'nullable|string|max:255',
             'sku' => 'nullable|string|max:255',
             'barcode' => 'nullable|string|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'category_id' => 'nullable|exists:item_categories,id',
             'unit_id' => 'nullable|exists:item_units,id',
             'cost_price' => 'required|numeric|min:0',
+            'purchase_currency_id' => 'nullable|exists:currencies,id',
             'selling_price' => 'required|numeric|min:0',
+            'sales_currency_id' => 'nullable|exists:currencies,id',
             'tax_rate' => 'nullable|numeric|min:0|max:100',
             'minimum_stock' => 'nullable|numeric|min:0',
+            'opening_stock' => 'nullable|numeric|min:0',
+            'default_warehouse' => 'nullable|exists:warehouses,id',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
 
         $validated['is_active'] = $request->boolean('is_active', true);
 
+        if ($request->hasFile('image')) {
+            if ($item->image && file_exists(public_path($item->image))) {
+                unlink(public_path($item->image));
+            }
+            $file = $request->file('image');
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/items'), $filename);
+            $validated['image'] = 'uploads/items/' . $filename;
+        }
+
         $item->update($validated);
+
+        if (($validated['opening_stock'] ?? 0) > 0) {
+            $warehouseId = $validated['default_warehouse'] ?? $this->tenantQuery(\App\Models\Warehouse::class)->where('is_default', true)->value('id');
+            if (!$warehouseId) {
+                $warehouseId = $this->tenantQuery(\App\Models\Warehouse::class)->value('id');
+            }
+            if ($warehouseId) {
+                $existing = ItemWarehouse::where('item_id', $item->id)
+                    ->where('warehouse_id', $warehouseId)
+                    ->first();
+                if ($existing) {
+                    $existing->increment('quantity', $validated['opening_stock']);
+                } else {
+                    ItemWarehouse::create([
+                        'tenant_id' => $this->getTenantId(),
+                        'item_id' => $item->id,
+                        'warehouse_id' => $warehouseId,
+                        'quantity' => $validated['opening_stock'],
+                    ]);
+                }
+            }
+        }
 
         return redirect()->route('items.index')->with('success', 'تم تحديث الصنف بنجاح');
     }

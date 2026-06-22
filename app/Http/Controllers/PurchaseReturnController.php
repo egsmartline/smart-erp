@@ -196,6 +196,7 @@ class PurchaseReturnController extends TenantAwareController
     {
         $year = date('Y');
         $lastReturn = $this->tenantQuery(PurchaseReturn::class)
+            ->withTrashed()
             ->whereYear('date', $year)
             ->max('return_number');
 

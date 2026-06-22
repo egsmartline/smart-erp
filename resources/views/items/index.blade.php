@@ -3,7 +3,7 @@
         <div class="flex items-center justify-between">
             <h2 class="text-xl font-bold text-gray-800">الأصناف</h2>
             <div class="flex items-center gap-2">
-                <button onclick="window.print()" class="no-print inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg> طباعة</button>
+                <button @click="$root.closest('[x-data]')?.__x?.$data.printModalOpen = true" class="no-print inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg> طباعة</button>
                 <a href="{{ route('items.create') }}" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                     إضافة صنف
@@ -45,6 +45,7 @@
             <table class="w-full text-right text-sm">
                 <thead>
                     <tr class="border-b border-gray-200 bg-gray-50">
+                        <th class="px-4 py-3 font-semibold text-gray-700">صورة</th>
                         <th class="px-4 py-3 font-semibold text-gray-700">الكود</th>
                         <th class="px-4 py-3 font-semibold text-gray-700">اسم الصنف</th>
                         <th class="px-4 py-3 font-semibold text-gray-700">التصنيف</th>
@@ -58,6 +59,15 @@
                 <tbody>
                     @forelse($items as $item)
                         <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+                            <td class="px-4 py-3">
+                                @if($item->image)
+                                    <img src="{{ asset($item->image) }}" class="h-10 w-10 rounded-lg border object-cover">
+                                @else
+                                    <div class="h-10 w-10 rounded-lg border border-dashed border-gray-300 flex items-center justify-center text-gray-400">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                    </div>
+                                @endif
+                            </td>
                             <td class="px-4 py-3 font-mono text-xs font-bold text-gray-600">{{ $item->sku ?? '#' . $item->id }}</td>
                             <td class="px-4 py-3">
                                 <a href="{{ route('items.show', $item) }}" class="font-medium text-gray-900 hover:text-blue-600">{{ $item->name }}</a>
@@ -67,13 +77,16 @@
                             </td>
                             <td class="px-4 py-3 text-gray-600">{{ $item->category->name ?? '-' }}</td>
                             <td class="px-4 py-3 text-gray-600">{{ $item->unit->name ?? '-' }}</td>
-                            <td class="px-4 py-3 text-left font-mono text-sm">{{ number_format($item->cost_price, 2) }}</td>
-                            <td class="px-4 py-3 text-left font-mono text-sm text-emerald-600">{{ number_format($item->selling_price, 2) }}</td>
+                            <td class="px-4 py-3 text-left font-mono text-sm">{{ number_format($item->cost_price, 2) }} <span class="text-xs text-gray-500">{{ $item->purchaseCurrency->symbol ?? $item->purchaseCurrency->code ?? '' }}</span></td>
+                            <td class="px-4 py-3 text-left font-mono text-sm text-emerald-600">{{ number_format($item->selling_price, 2) }} <span class="text-xs text-gray-500">{{ $item->salesCurrency->symbol ?? $item->salesCurrency->code ?? '' }}</span></td>
                             <td class="px-4 py-3 text-left">
                                 @php $totalStock = $item->warehouses->sum('quantity'); @endphp
                                 <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $totalStock <= 0 ? 'bg-red-100 text-red-800' : ($totalStock <= ($item->minimum_stock ?? 0) ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800') }}">
                                     {{ $totalStock }}
                                 </span>
+                                @if(($item->opening_stock ?? 0) > 0)
+                                    <div class="text-xs text-gray-400 mt-0.5">افتتاحي: {{ number_format($item->opening_stock, 0) }}</div>
+                                @endif
                             </td>
                             <td class="px-4 py-3 text-center">
                                 <div class="inline-flex items-center gap-1">
@@ -92,7 +105,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-4 py-8 text-center text-gray-500">لا توجد أصناف</td>
+                            <td colspan="9" class="px-4 py-8 text-center text-gray-500">لا توجد أصناف</td>
                         </tr>
                     @endforelse
                 </tbody>

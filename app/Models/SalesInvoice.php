@@ -34,6 +34,7 @@ class SalesInvoice extends Model
         'notes',
         'terms',
         'reference',
+        'sales_order_id',
     ];
 
     protected function casts(): array
@@ -85,6 +86,11 @@ class SalesInvoice extends Model
     public function lines(): HasMany
     {
         return $this->hasMany(SalesInvoiceLine::class);
+    }
+
+    public function currency(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class);
     }
 
     public function returns(): HasMany

@@ -33,24 +33,110 @@
         .submenu-item.active { background: rgba(255,255,255,0.1); border-right: 2px solid #10b981; }
         .content-area { min-height: calc(100vh - 64px); }
         .sidebar-transition { transition: all 0.3s ease; }
-        @media print {
-            .no-print { display: none !important; }
-            body { background: white !important; }
-            .print-only { display: block !important; }
-            .mr-64, .mr-20 { margin-right: 0 !important; }
-        }
+        [x-cloak] { display: none !important; }
+
+        {{-- Print Styles --}}
         .print-only { display: none; }
+        .print-header, .print-header-minimal { display: none; }
+
+        {{-- Print Header with Logo --}}
+        .print-header-table { width: 100%; border-collapse: collapse; }
+        .print-header-logo { width: 100px; vertical-align: middle; padding: 10px; }
+        .print-logo-img { max-height: 70px; max-width: 90px; object-fit: contain; }
+        .print-logo-placeholder { width: 70px; height: 70px; border-radius: 12px; background: #2563eb; color: white; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; }
+        .print-header-info { vertical-align: middle; padding: 10px; }
+        .print-company-name { font-size: 20px; font-weight: 800; color: #1e3a8a; margin-bottom: 4px; }
+        .print-company-details { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 10px; color: #4b5563; }
+        .print-header-date { width: 120px; vertical-align: middle; padding: 10px; text-align: left; }
+        .print-date { font-size: 14px; font-weight: 700; color: #1e3a8a; }
+        .print-time { font-size: 10px; color: #6b7280; }
+        .print-minimal-title { font-size: 16px; font-weight: 700; color: #2563eb; text-align: center; padding: 8px; }
+        .print-minimal-date { font-size: 10px; color: #9ca3af; text-align: center; }
+
+        @media print {
+            @page { size: A4; margin: 1.5cm 1cm; }
+
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+
+            .no-print { display: none !important; }
+            body { background: white !important; font-size: 11px; color: #1f2937; }
+            .mr-64, .mr-20 { margin-right: 0 !important; }
+
+            {{-- Print header --}}
+            body.print-with-logo .print-header { display: block !important; margin-bottom: 15px; padding-bottom: 12px; border-bottom: 2px solid #2563eb; }
+            body.print-without-logo .print-header-minimal { display: block !important; margin-bottom: 15px; padding-bottom: 12px; border-bottom: 2px solid #2563eb; }
+
+            header, .topbar, .top-bar, [class*="topbar"], [class*="top-bar"] { display: none !important; }
+
+            {{-- Page content layout --}}
+            .content-area { min-height: auto !important; padding: 0 !important; }
+
+            {{-- Cards/Boxes --}}
+            .rounded-xl, .rounded-2xl, .rounded-lg { border-radius: 4px !important; }
+            .shadow-sm, .shadow, .shadow-md, .shadow-lg, .shadow-xl { box-shadow: none !important; }
+            .border { border-color: #e5e7eb !important; }
+
+            {{-- Tables --}}
+            table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 10px; }
+            thead { display: table-header-group; }
+            th { background: #D4ECF8 !important; color: #1e3a8a !important; padding: 8px 10px; text-align: right; font-weight: 600; font-size: 10px; border: 1px solid #D4ECF8; }
+            td { padding: 6px 10px; text-align: right; border: 1px solid #e5e7eb; font-size: 10px; }
+            tr:nth-child(even) { background: #f8fafc !important; }
+            tr:nth-child(odd) { background: white !important; }
+            tr:hover { background: inherit !important; }
+
+            {{-- Summary rows --}}
+            tr.total-row td, tfoot td { font-weight: 700; background: #f1f5f9 !important; border-top: 2px solid #2563eb; }
+
+            {{-- Badges / Status --}}
+            .inline-flex.items-center.rounded-full { padding: 2px 8px !important; font-size: 8px !important; border-radius: 10px !important; }
+            .bg-green-100 { background: #d1fae5 !important; color: #065f46 !important; }
+            .bg-red-100 { background: #fee2e2 !important; color: #991b1b !important; }
+            .bg-blue-100 { background: #dbeafe !important; color: #1e40af !important; }
+            .bg-yellow-100 { background: #fef3c7 !important; color: #92400e !important; }
+            .bg-gray-100 { background: #f3f4f6 !important; color: #374151 !important; }
+
+            {{-- Typography --}}
+            h1 { font-size: 18px; font-weight: 800; color: #1e3a8a; margin-bottom: 8px; }
+            h2 { font-size: 16px; font-weight: 700; color: #1e3a8a; margin-bottom: 6px; }
+            h3 { font-size: 14px; font-weight: 600; color: #1e40af; margin-bottom: 4px; }
+            .text-gray-900 { color: #111827 !important; }
+            .text-gray-800 { color: #1f2937 !important; }
+            .text-gray-700 { color: #374151 !important; }
+            .text-gray-600 { color: #4b5563 !important; }
+            .text-gray-500 { color: #6b7280 !important; }
+            .text-gray-400 { color: #9ca3af !important; }
+
+            {{-- Buttons / Actions --}}
+            a[href] { text-decoration: none; color: inherit; }
+
+            {{-- Grid to full width --}}
+            .grid { display: block !important; }
+            .grid > * { display: block !important; width: 100% !important; margin-bottom: 8px; }
+
+            {{-- Page breaks --}}
+            .page-break { page-break-before: always; }
+            thead { display: table-header-group; }
+            tfoot { display: table-footer-group; }
+            tr { page-break-inside: avoid; }
+
+            {{-- Footer --}}
+            footer { display: none !important; }
+            .print-footer { position: fixed; bottom: 0; left: 0; right: 0; text-align: center; font-size: 8px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 5px; }
+
+            @page { @bottom-center { content: "Developer by BASSAM DAWOOD {{ date('Y') }} | الصفحة " counter(page) " من " counter(pages); font-size: 8px; color: #9ca3af; } }
+        }
     </style>
     @stack('styles')
 </head>
-<body class="font-cairo bg-gray-100" x-data="{ sidebarOpen: true, mobileMenu: false }">
+<body class="font-cairo bg-gray-100" x-data="{ sidebarOpen: true, mobileMenu: false, printModalOpen: false, includeLogo: true }">
     <div class="flex min-h-screen">
         {{-- Sidebar --}}
         <aside :class="sidebarOpen ? 'w-64' : 'w-20'"
             class="fixed right-0 top-0 h-full bg-primary-800 text-white sidebar-transition z-40 flex flex-col no-print">
 
-            {{-- Logo --}}
-            <div class="flex-shrink-0 p-4 border-b border-primary-700">
+            {{-- Logo + Company Switcher --}}
+            <div class="flex-shrink-0 p-4 border-b border-primary-700" x-data="{ open: false }">
                 @php $company = \App\Models\Company::where('tenant_id', session('current_tenant_id'))->first(); @endphp
                 <div class="flex items-center gap-3">
                     @if($company && $company->logo)
@@ -60,9 +146,34 @@
                             <svg class="h-6 w-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                         </div>
                     @endif
-                    <div x-show="sidebarOpen" x-transition>
-                        <div class="text-lg font-bold text-white">{{ $company->name ?? 'Smart ERP' }}</div>
-                        <div class="text-xs text-primary-300">نظام المحاسبة الذكي</div>
+                    <div x-show="sidebarOpen" x-transition class="flex-1 min-w-0">
+                        <button @click="open = !open" class="flex items-center gap-1 w-full text-right">
+                            <div class="flex-1 min-w-0">
+                                <div class="text-lg font-bold text-white truncate">{{ $company->name ?? 'Smart ERP' }}</div>
+                                <div class="text-xs text-primary-300">Developer by BASSAM DAWOOD {{ date('Y') }}</div>
+                            </div>
+                            <svg x-show="sidebarOpen" class="h-4 w-4 flex-shrink-0 text-primary-300 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div x-show="open && sidebarOpen" @click.outside="open = false" class="absolute z-50 mt-2 w-56 rounded-xl bg-white shadow-xl border border-gray-100 py-1 overflow-hidden">
+                            @php $tenants = auth()->user()->getAccessibleTenants(); @endphp
+                            @foreach($tenants as $t)
+                                @php $c = \App\Models\Company::where('tenant_id', $t->id)->first(); @endphp
+                                <form action="{{ route('switch-tenant', $t->id) }}" method="POST" class="block">
+                                    @csrf
+                                    <button type="submit" class="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-right transition {{ session('current_tenant_id') == $t->id ? 'bg-primary-50 text-primary-700 font-bold' : 'text-gray-700 hover:bg-gray-50' }}">
+                                        @if($c && $c->logo)
+                                            <img src="{{ asset('storage/' . $c->logo) }}" alt="" class="h-7 w-7 rounded-lg object-cover flex-shrink-0">
+                                        @else
+                                            <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-500 flex-shrink-0">{{ mb_substr($c->name ?? $t->name, 0, 1) }}</div>
+                                        @endif
+                                        <span class="truncate">{{ $c->name ?? $t->name }}</span>
+                                        @if(session('current_tenant_id') == $t->id)
+                                            <svg class="h-4 w-4 mr-auto flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                        @endif
+                                    </button>
+                                </form>
+                            @endforeach
+                        </div>
                     </div>
                 </div>
             </div>
@@ -80,33 +191,28 @@
                         </a>
                     </li>
 
-                    {{-- المحاسبة --}}
-                    <li x-data="{ open: {{ in_array(true, [request()->routeIs('accounts.*'), request()->routeIs('journals.*'), request()->routeIs('journal-entries.*'), request()->routeIs('payments.*'), request()->routeIs('payment-terms.*'), request()->routeIs('taxes.*'), request()->routeIs('bank-statements.*'), request()->routeIs('analytical-accounts.*'), request()->routeIs('budgets.*')]) ? 'true' : 'false' }} }">
+                    {{-- الخزينة --}}
+                    <li x-data="{ open: {{ in_array(true, [request()->routeIs('cash-treasuries.*'), request()->routeIs('bank-accounts.*'), request()->routeIs('payments.*')]) ? 'true' : 'false' }} }">
                         <button @click="open = !open"
-                            class="menu-item w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl {{ request()->routeIs('accounts.*') || request()->routeIs('journals.*') || request()->routeIs('journal-entries.*') || request()->routeIs('payments.*') || request()->routeIs('payment-terms.*') || request()->routeIs('taxes.*') || request()->routeIs('bank-statements.*') || request()->routeIs('analytical-accounts.*') || request()->routeIs('budgets.*') ? 'active' : 'hover:bg-primary-700' }} transition-all">
+                            class="menu-item w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl {{ request()->routeIs('cash-treasuries.*') || request()->routeIs('bank-accounts.*') || request()->routeIs('payments.*') ? 'active' : 'hover:bg-primary-700' }} transition-all">
                             <div class="flex items-center gap-3">
-                                <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                                <span x-show="sidebarOpen" class="whitespace-nowrap text-sm font-medium">المحاسبة</span>
+                                <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                <span x-show="sidebarOpen" class="whitespace-nowrap text-sm font-medium">الخزينة</span>
                             </div>
                             <svg x-show="sidebarOpen" class="h-4 w-4 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
                         <ul x-show="open" x-collapse class="mt-1 mr-6 space-y-1">
-                            <li><a href="{{ route('accounts.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('accounts.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">دليل الحسابات</span></a></li>
-                            <li><a href="{{ route('journals.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('journals.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">يوميات القيود</span></a></li>
-                            <li><a href="{{ route('journal-entries.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('journal-entries.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">القيود اليومية</span></a></li>
-                            <li><a href="{{ route('payments.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('payments.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">المدفوعات</span></a></li>
-                            <li><a href="{{ route('payment-terms.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('payment-terms.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">شروط الدفع</span></a></li>
-                            <li><a href="{{ route('taxes.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('taxes.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">الضرائب</span></a></li>
-                            <li><a href="{{ route('bank-statements.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('bank-statements.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">كشف حساب البنك</span></a></li>
-                            <li><a href="{{ route('analytical-accounts.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('analytical-accounts.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">الحسابات التحليلية</span></a></li>
-                            <li><a href="{{ route('budgets.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('budgets.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">الميزانيات</span></a></li>
+                            <li><a href="{{ route('cash-treasuries.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('cash-treasuries.*') && !request()->routeIs('cash-treasuries.balances') && !request()->routeIs('payments.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">إدارة الخزينة</span></a></li>
+                            <li><a href="{{ route('bank-accounts.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('bank-accounts.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">الحسابات البنكية</span></a></li>
+                            <li><a href="{{ route('payments.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('payments.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">سندات القبض والصرف</span></a></li>
+                            <li><a href="{{ route('cash-treasuries.balances') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('cash-treasuries.balances') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">أرصدة الخزائن والحسابات البنكية</span></a></li>
                         </ul>
                     </li>
 
                     {{-- المبيعات --}}
-                    <li x-data="{ open: {{ in_array(true, [request()->routeIs('sales-orders.*'), request()->routeIs('sales-invoices.*'), request()->routeIs('sales-returns.*'), request()->routeIs('quotations.*'), request()->routeIs('customers.*')]) ? 'true' : 'false' }} }">
+                    <li x-data="{ open: {{ in_array(true, [request()->routeIs('sales-orders.*'), request()->routeIs('sales-invoices.*'), request()->routeIs('sales-returns.*'), request()->routeIs('quotations.*'), request()->routeIs('customers.*'), request()->routeIs('sales-delivery-notes.*')]) ? 'true' : 'false' }} }">
                         <button @click="open = !open"
-                            class="menu-item w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl {{ request()->routeIs('sales-orders.*') || request()->routeIs('sales-invoices.*') || request()->routeIs('sales-returns.*') || request()->routeIs('quotations.*') || request()->routeIs('customers.*') ? 'active' : 'hover:bg-primary-700' }} transition-all">
+                            class="menu-item w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl {{ request()->routeIs('sales-orders.*') || request()->routeIs('sales-invoices.*') || request()->routeIs('sales-returns.*') || request()->routeIs('quotations.*') || request()->routeIs('customers.*') || request()->routeIs('sales-delivery-notes.*') ? 'active' : 'hover:bg-primary-700' }} transition-all">
                             <div class="flex items-center gap-3">
                                 <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                                 <span x-show="sidebarOpen" class="whitespace-nowrap text-sm font-medium">المبيعات</span>
@@ -118,14 +224,15 @@
                             <li><a href="{{ route('sales-invoices.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('sales-invoices.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">فواتير البيع</span></a></li>
                             <li><a href="{{ route('sales-returns.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('sales-returns.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">مرتجعات المبيعات</span></a></li>
                             <li><a href="{{ route('quotations.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('quotations.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">عروض الأسعار</span></a></li>
+                            <li><a href="{{ route('sales-delivery-notes.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('sales-delivery-notes.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">إذن تسليم</span></a></li>
                             <li><a href="{{ route('customers.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('customers.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">العملاء</span></a></li>
                         </ul>
                     </li>
 
                     {{-- المشتريات --}}
-                    <li x-data="{ open: {{ in_array(true, [request()->routeIs('purchase-orders.*'), request()->routeIs('purchase-invoices.*'), request()->routeIs('purchase-returns.*'), request()->routeIs('suppliers.*')]) ? 'true' : 'false' }} }">
+                    <li x-data="{ open: {{ in_array(true, [request()->routeIs('purchase-orders.*'), request()->routeIs('purchase-invoices.*'), request()->routeIs('purchase-returns.*'), request()->routeIs('suppliers.*'), request()->routeIs('purchase-receipt-notes.*')]) ? 'true' : 'false' }} }">
                         <button @click="open = !open"
-                            class="menu-item w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl {{ request()->routeIs('purchase-orders.*') || request()->routeIs('purchase-invoices.*') || request()->routeIs('purchase-returns.*') || request()->routeIs('suppliers.*') ? 'active' : 'hover:bg-primary-700' }} transition-all">
+                            class="menu-item w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl {{ request()->routeIs('purchase-orders.*') || request()->routeIs('purchase-invoices.*') || request()->routeIs('purchase-returns.*') || request()->routeIs('suppliers.*') || request()->routeIs('purchase-receipt-notes.*') ? 'active' : 'hover:bg-primary-700' }} transition-all">
                             <div class="flex items-center gap-3">
                                 <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                                 <span x-show="sidebarOpen" class="whitespace-nowrap text-sm font-medium">المشتريات</span>
@@ -136,6 +243,7 @@
                             <li><a href="{{ route('purchase-orders.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('purchase-orders.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">أوامر الشراء</span></a></li>
                             <li><a href="{{ route('purchase-invoices.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('purchase-invoices.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">فواتير الشراء</span></a></li>
                             <li><a href="{{ route('purchase-returns.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('purchase-returns.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">مرتجعات المشتريات</span></a></li>
+                            <li><a href="{{ route('purchase-receipt-notes.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('purchase-receipt-notes.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">إذن استلام</span></a></li>
                             <li><a href="{{ route('suppliers.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('suppliers.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">الموردين</span></a></li>
                         </ul>
                     </li>
@@ -189,9 +297,9 @@
                     </li>
 
                     {{-- شئون العاملين --}}
-                    <li x-data="{ open: {{ in_array(true, [request()->routeIs('employees.*'), request()->routeIs('departments.*'), request()->routeIs('job-positions.*'), request()->routeIs('attendance.*'), request()->routeIs('leaves.*'), request()->routeIs('expenses.*'), request()->routeIs('payroll.*'), request()->routeIs('loans.*')]) ? 'true' : 'false' }} }">
+                    <li x-data="{ open: {{ in_array(true, [request()->routeIs('employees.*'), request()->routeIs('custodies.*'), request()->routeIs('job-positions.*'), request()->routeIs('attendance.*'), request()->routeIs('leaves.*'), request()->routeIs('payroll.*'), request()->routeIs('loans.*')]) ? 'true' : 'false' }} }">
                         <button @click="open = !open"
-                            class="menu-item w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl {{ request()->routeIs('employees.*') || request()->routeIs('departments.*') || request()->routeIs('job-positions.*') || request()->routeIs('attendance.*') || request()->routeIs('leaves.*') || request()->routeIs('expenses.*') || request()->routeIs('payroll.*') || request()->routeIs('loans.*') ? 'active' : 'hover:bg-primary-700' }} transition-all">
+                            class="menu-item w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl {{ request()->routeIs('employees.*') || request()->routeIs('custodies.*') || request()->routeIs('job-positions.*') || request()->routeIs('attendance.*') || request()->routeIs('leaves.*') || request()->routeIs('payroll.*') || request()->routeIs('loans.*') ? 'active' : 'hover:bg-primary-700' }} transition-all">
                             <div class="flex items-center gap-3">
                                 <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                                 <span x-show="sidebarOpen" class="whitespace-nowrap text-sm font-medium">شئون العاملين</span>
@@ -200,11 +308,10 @@
                         </button>
                         <ul x-show="open" x-collapse class="mt-1 mr-6 space-y-1">
                             <li><a href="{{ route('employees.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('employees.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">الموظفون</span></a></li>
-                            <li><a href="{{ route('departments.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('departments.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">الأقسام</span></a></li>
+                            <li><a href="{{ route('custodies.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('custodies.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">العهد</span></a></li>
                             <li><a href="{{ route('job-positions.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('job-positions.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">الوظائف</span></a></li>
                             <li><a href="{{ route('attendance.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('attendance.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">الحضور والانصراف</span></a></li>
                             <li><a href="{{ route('leaves.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('leaves.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">الإجازات</span></a></li>
-                            <li><a href="{{ route('expenses.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('expenses.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">المصروفات</span></a></li>
                             <li><a href="{{ route('payroll.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('payroll.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">الرواتب</span></a></li>
                             <li><a href="{{ route('loans.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('loans.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">السلف</span></a></li>
                         </ul>
@@ -234,6 +341,29 @@
                         </a>
                     </li>
 
+                    {{-- المحاسبة --}}
+                    <li x-data="{ open: {{ in_array(true, [request()->routeIs('accounts.*'), request()->routeIs('journals.*'), request()->routeIs('journal-entries.*'), request()->routeIs('payments.*'), request()->routeIs('payment-terms.*'), request()->routeIs('taxes.*'), request()->routeIs('bank-statements.*'), request()->routeIs('analytical-accounts.*'), request()->routeIs('budgets.*')]) ? 'true' : 'false' }} }">
+                        <button @click="open = !open"
+                            class="menu-item w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl {{ request()->routeIs('accounts.*') || request()->routeIs('journals.*') || request()->routeIs('journal-entries.*') || request()->routeIs('payment-terms.*') || request()->routeIs('taxes.*') || request()->routeIs('bank-statements.*') || request()->routeIs('analytical-accounts.*') || request()->routeIs('budgets.*') ? 'active' : 'hover:bg-primary-700' }} transition-all">
+                            <div class="flex items-center gap-3">
+                                <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                                <span x-show="sidebarOpen" class="whitespace-nowrap text-sm font-medium">المحاسبة</span>
+                            </div>
+                            <svg x-show="sidebarOpen" class="h-4 w-4 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <ul x-show="open" x-collapse class="mt-1 mr-6 space-y-1">
+                            <li><a href="{{ route('accounts.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('accounts.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">دليل الحسابات</span></a></li>
+                            <li><a href="{{ route('journals.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('journals.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">يوميات القيود</span></a></li>
+                            <li><a href="{{ route('journal-entries.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('journal-entries.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">القيود اليومية</span></a></li>
+
+                            <li><a href="{{ route('payment-terms.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('payment-terms.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">شروط الدفع</span></a></li>
+                            <li><a href="{{ route('taxes.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('taxes.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">الضرائب</span></a></li>
+                            <li><a href="{{ route('bank-statements.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('bank-statements.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">كشف حساب البنك</span></a></li>
+                            <li><a href="{{ route('analytical-accounts.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('analytical-accounts.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">الحسابات التحليلية</span></a></li>
+                            <li><a href="{{ route('budgets.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('budgets.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">الميزانيات</span></a></li>
+                        </ul>
+                    </li>
+
                     {{-- الإعدادات --}}
                     <li x-data="{ open: {{ in_array(true, [request()->routeIs('settings.*'), request()->routeIs('currencies.*'), request()->routeIs('fiscal-years.*'), request()->routeIs('backups.*'), request()->routeIs('audit-log.*')]) ? 'true' : 'false' }} }">
                         <button @click="open = !open"
@@ -245,7 +375,9 @@
                             <svg x-show="sidebarOpen" class="h-4 w-4 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
                         <ul x-show="open" x-collapse class="mt-1 mr-6 space-y-1">
-                            <li><a href="{{ route('settings.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('settings.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">إعدادات الشركة</span></a></li>
+                            <li><a href="{{ route('settings.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('settings.*') && !request()->routeIs('settings.users.*') && !request()->routeIs('settings.roles.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">إعدادات الشركة</span></a></li>
+                            <li><a href="{{ route('settings.users.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('settings.users.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">المستخدمون</span></a></li>
+                            <li><a href="{{ route('settings.roles.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('settings.roles.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">الأدوار والصلاحيات</span></a></li>
                             <li><a href="{{ route('currencies.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('currencies.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">العملة</span></a></li>
                             <li><a href="{{ route('fiscal-years.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('fiscal-years.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">السنة المالية</span></a></li>
                             <li><a href="{{ route('backups.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('backups.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">النسخ الاحتياطي</span></a></li>
@@ -255,6 +387,16 @@
                 </ul>
             </nav>
 
+            {{-- Logout --}}
+            <div class="flex-shrink-0 px-3 pb-2">
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 transition-all text-white text-sm font-bold cursor-pointer">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                        <span x-show="sidebarOpen">تسجيل الخروج</span>
+                    </button>
+                </form>
+            </div>
             {{-- Sidebar Toggle --}}
             <div class="flex-shrink-0 p-3 border-t border-primary-700">
                 <button @click="sidebarOpen = !sidebarOpen"
@@ -267,6 +409,42 @@
 
         {{-- Main Content --}}
         <div :class="sidebarOpen ? 'mr-64' : 'mr-20'" class="flex-1 sidebar-transition min-h-screen">
+            {{-- Print headers at top of page --}}
+            <div class="print-header print-only">
+                @php $printCompany = \App\Models\Company::where('tenant_id', session('current_tenant_id'))->first(); @endphp
+                @if($printCompany)
+                <table style="width:100%; border-collapse:collapse;" dir="rtl">
+                    <tr>
+                        <td style="width:90px; vertical-align:middle; padding:5px;">
+                            @if($printCompany->logo)
+                                <img src="{{ asset('storage/' . $printCompany->logo) }}" alt="Logo" style="max-height:65px; max-width:80px; object-fit:contain; display:block;">
+                            @else
+                                <div style="width:60px; height:60px; border-radius:10px; background:#2563eb; color:white; display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:bold;">{{ substr($printCompany->name, 0, 1) }}</div>
+                            @endif
+                        </td>
+                        <td style="vertical-align:middle; padding:5px;">
+                            <div style="font-size:16px; font-weight:800; color:#1e3a8a; margin-bottom:3px;">{{ $printCompany->name }}</div>
+                            <div style="display:flex; flex-wrap:wrap; gap:4px 12px; font-size:9px; color:#4b5563;">
+                                @if($printCompany->address)<span style="white-space:nowrap;">{{ $printCompany->address }}</span>@endif
+                                @if($printCompany->phone)<span style="white-space:nowrap;">{{ $printCompany->phone }}</span>@endif
+                                @if($printCompany->tax_number)<span style="white-space:nowrap;">رقم ضريبي: {{ $printCompany->tax_number }}</span>@endif
+                                @if($printCompany->email)<span style="white-space:nowrap;">{{ $printCompany->email }}</span>@endif
+                            </div>
+                        </td>
+                        <td style="width:100px; vertical-align:middle; padding:5px; text-align:left;">
+                            <div style="font-size:12px; font-weight:700; color:#1e3a8a;">{{ now()->format('Y/m/d') }}</div>
+                            <div style="font-size:9px; color:#6b7280;">{{ now()->format('h:i A') }}</div>
+                        </td>
+                    </tr>
+                </table>
+                @endif
+            </div>
+
+            <div class="print-header-minimal print-only" style="text-align:center; padding:10px;">
+                <div style="font-size:14px; font-weight:700; color:#2563eb;">{{ config('app.name', 'Smart ERP') }}</div>
+                <div style="font-size:9px; color:#9ca3af;">{{ now()->format('Y/m/d h:i A') }}</div>
+            </div>
+
             {{-- Top Bar --}}
             <header class="sticky top-0 z-30 bg-white shadow-sm border-b border-gray-200">
                 <div class="flex items-center justify-between px-6 py-3">
@@ -278,7 +456,13 @@
                             {{ $header }}
                         @endif
                     </div>
-                    <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-3">
+                        {{-- Print Button --}}
+                        <button @click="printModalOpen = true" class="no-print inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-primary-50 hover:text-primary-600 hover:border-primary-300 transition shadow-sm" title="طباعة الصفحة">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                            <span class="hidden sm:inline">طباعة</span>
+                        </button>
+
                         {{-- Currency Switcher --}}
                         <div class="flex items-center gap-2" x-data="{ open: false }">
                             <button @click="open = !open" class="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm hover:bg-gray-50 transition">
@@ -316,6 +500,18 @@
             </header>
 
             {{-- Flash Messages --}}
+            @if (session('error'))
+            <div class="mx-6 mt-4" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)">
+                <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>{{ session('error') }}</span>
+                    </div>
+                    <button @click="show = false" class="text-red-700 hover:text-red-900"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+                </div>
+            </div>
+            @endif
+
             @if (session('success'))
             <div class="mx-6 mt-4" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)">
                 <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl flex items-center justify-between">
@@ -348,11 +544,13 @@
             {{-- Footer --}}
             <footer class="bg-white border-t border-gray-200 px-6 py-4">
                 <div class="flex items-center justify-between text-sm text-gray-500">
-                    <p>Smart ERP &copy; {{ date('Y') }} - جميع الحقوق محفوظة</p>
+                    <p>Developer by BASSAM DAWOOD {{ date('Y') }}</p>
                     <p>الإصدار 1.0.0</p>
                 </div>
             </footer>
         </div>
+        {{-- Print Modal --}}
+        <x-print-modal />
     </div>
 
     @stack('scripts')

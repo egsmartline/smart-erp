@@ -25,7 +25,6 @@ class TaxController extends Controller
     public function create()
     {
         $accounts = Account::where('tenant_id', Auth::user()->tenant_id)
-            ->where('is_header', false)
             ->where('is_active', true)
             ->orderBy('code')
             ->get();
@@ -51,8 +50,8 @@ class TaxController extends Controller
             'is_default' => 'boolean',
             'is_included_in_price' => 'boolean',
             'tax_group_id' => 'nullable|exists:taxes,id',
-            'account_id' => 'nullable|exists:accounts,id',
-            'purchase_account_id' => 'nullable|exists:accounts,id',
+            'account_id' => 'nullable|exists:chart_of_accounts,id',
+            'purchase_account_id' => 'nullable|exists:chart_of_accounts,id',
             'description' => 'nullable|string|max:1000',
         ]);
 
@@ -77,7 +76,6 @@ class TaxController extends Controller
     public function edit(Tax $tax)
     {
         $accounts = Account::where('tenant_id', Auth::user()->tenant_id)
-            ->where('is_header', false)
             ->where('is_active', true)
             ->orderBy('code')
             ->get();
@@ -104,8 +102,8 @@ class TaxController extends Controller
             'is_default' => 'boolean',
             'is_included_in_price' => 'boolean',
             'tax_group_id' => 'nullable|exists:taxes,id',
-            'account_id' => 'nullable|exists:accounts,id',
-            'purchase_account_id' => 'nullable|exists:accounts,id',
+            'account_id' => 'nullable|exists:chart_of_accounts,id',
+            'purchase_account_id' => 'nullable|exists:chart_of_accounts,id',
             'description' => 'nullable|string|max:1000',
         ]);
 

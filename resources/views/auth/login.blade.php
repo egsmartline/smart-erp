@@ -31,15 +31,15 @@
             <form method="POST" action="{{ route('login') }}">
                 @csrf
 
-                <!-- Email -->
+                <!-- Username -->
                 <div class="mb-5">
-                    <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">البريد الإلكتروني</label>
+                    <label for="name" class="block text-sm font-semibold text-gray-700 mb-2">اسم المستخدم</label>
                     <div class="relative">
-                        <input type="email" id="email" name="email" value="{{ old('email') }}" required
+                        <input type="text" id="name" name="name" value="{{ old('name') }}" required
                             class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-gray-50 focus:bg-white"
-                            placeholder="example@company.com">
+                            placeholder="اسم المستخدم">
                         <svg class="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
                     </div>
                 </div>
@@ -90,7 +90,7 @@
 
         <!-- Footer -->
         <p class="text-center text-blue-100 text-sm mt-6">
-            Smart ERP &copy; {{ date('Y') }} - جميع الحقوق محفوظة
+            Developer by BASSAM DAWOOD {{ date('Y') }}
         </p>
     </div>
 </div>

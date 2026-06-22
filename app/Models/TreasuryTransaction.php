@@ -5,34 +5,27 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
-
 class TreasuryTransaction extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
+        'tenant_id',
         'treasury_id',
         'type',
         'amount',
-        'balance_before',
-        'balance_after',
-        'transactionable_type',
-        'transactionable_id',
-        'reference_number',
+        'reference_type',
+        'reference_id',
         'description',
-        'date',
-        'created_by',
+        'reference_number',
+        'user_id',
+        'target_treasury_id',
     ];
 
     protected function casts(): array
     {
         return [
             'amount' => 'decimal:2',
-            'balance_before' => 'decimal:2',
-            'balance_after' => 'decimal:2',
-            'date' => 'date',
         ];
     }
 
@@ -41,13 +34,13 @@ class TreasuryTransaction extends Model
         return $this->belongsTo(CashTreasury::class, 'treasury_id');
     }
 
-    public function transactionable(): MorphTo
+    public function user(): BelongsTo
     {
-        return $this->morphTo();
+        return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function creator(): BelongsTo
+    public function targetTreasury(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(CashTreasury::class, 'target_treasury_id');
     }
 }

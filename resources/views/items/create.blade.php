@@ -17,7 +17,7 @@
     @endif
 
     <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6">
-        <form action="{{ route('items.store') }}" method="POST" class="space-y-6">
+        <form action="{{ route('items.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div>
@@ -31,6 +31,10 @@
                 <div>
                     <label for="barcode" class="mb-1 block text-sm font-medium text-gray-700">الباركود</label>
                     <input type="text" name="barcode" id="barcode" value="{{ old('barcode') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="image" class="mb-1 block text-sm font-medium text-gray-700">صورة الصنف</label>
+                    <input type="file" name="image" id="image" accept="image/jpeg,image/png,image/jpg,image/gif,image/webp" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 file:mr-2 file:rounded file:border-0 file:bg-blue-50 file:px-3 file:py-1 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-100">
                 </div>
                 <div>
                     <label for="category_id" class="mb-1 block text-sm font-medium text-gray-700">التصنيف <span class="text-red-500">*</span></label>
@@ -55,8 +59,26 @@
                     <input type="number" name="cost_price" id="cost_price" value="{{ old('cost_price', 0) }}" step="0.01" min="0" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
                 <div>
+                    <label for="purchase_currency_id" class="mb-1 block text-sm font-medium text-gray-700">عملة الشراء</label>
+                    <select name="purchase_currency_id" id="purchase_currency_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <option value="">اختر العملة</option>
+                        @foreach($currencies as $currency)
+                            <option value="{{ $currency->id }}" {{ old('purchase_currency_id') == $currency->id ? 'selected' : '' }}>{{ $currency->name }} ({{ $currency->code }})</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
                     <label for="selling_price" class="mb-1 block text-sm font-medium text-gray-700">سعر البيع <span class="text-red-500">*</span></label>
                     <input type="number" name="selling_price" id="selling_price" value="{{ old('selling_price', 0) }}" step="0.01" min="0" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="sales_currency_id" class="mb-1 block text-sm font-medium text-gray-700">عملة البيع</label>
+                    <select name="sales_currency_id" id="sales_currency_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <option value="">اختر العملة</option>
+                        @foreach($currencies as $currency)
+                            <option value="{{ $currency->id }}" {{ old('sales_currency_id') == $currency->id ? 'selected' : '' }}>{{ $currency->name }} ({{ $currency->code }})</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div>
                     <label for="tax_rate" class="mb-1 block text-sm font-medium text-gray-700">نسبة الضريبة %</label>
@@ -73,6 +95,10 @@
                 <div>
                     <label for="reorder_level" class="mb-1 block text-sm font-medium text-gray-700">مستوى إعادة الطلب</label>
                     <input type="number" name="reorder_level" id="reorder_level" value="{{ old('reorder_level', 0) }}" step="0.01" min="0" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="opening_stock" class="mb-1 block text-sm font-medium text-gray-700">الرصيد الافتتاحي</label>
+                    <input type="number" name="opening_stock" id="opening_stock" value="{{ old('opening_stock', 0) }}" step="0.01" min="0" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
                 <div>
                     <label for="default_warehouse" class="mb-1 block text-sm font-medium text-gray-700">المخزن الافتراضي</label>

@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class BankTransaction extends Model
@@ -13,27 +12,25 @@ class BankTransaction extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'tenant_id',
         'bank_account_id',
         'type',
         'amount',
-        'balance_before',
-        'balance_after',
-        'transactionable_type',
-        'transactionable_id',
-        'reference_number',
-        'cheque_number',
+        'reference_type',
+        'reference_id',
         'description',
-        'date',
-        'created_by',
+        'check_number',
+        'check_date',
+        'reference_number',
+        'user_id',
+        'target_bank_account_id',
     ];
 
     protected function casts(): array
     {
         return [
             'amount' => 'decimal:2',
-            'balance_before' => 'decimal:2',
-            'balance_after' => 'decimal:2',
-            'date' => 'date',
+            'check_date' => 'date',
         ];
     }
 
@@ -42,13 +39,13 @@ class BankTransaction extends Model
         return $this->belongsTo(BankAccount::class);
     }
 
-    public function transactionable(): MorphTo
+    public function user(): BelongsTo
     {
-        return $this->morphTo();
+        return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function creator(): BelongsTo
+    public function targetBankAccount(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(BankAccount::class, 'target_bank_account_id');
     }
 }

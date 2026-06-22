@@ -49,6 +49,21 @@ class User extends Authenticatable
         return $this->belongsTo(Tenant::class);
     }
 
+    public function tenants()
+    {
+        return $this->belongsToMany(Tenant::class, 'tenant_user')
+            ->withPivot('role')
+            ->withTimestamps();
+    }
+
+    public function getAccessibleTenants()
+    {
+        if ($this->isSuperAdmin()) {
+            return Tenant::where('is_active', true)->get();
+        }
+        return $this->tenants()->where('is_active', true)->get();
+    }
+
     public function journalEntries()
     {
         return $this->hasMany(JournalEntry::class, 'created_by');
@@ -67,6 +82,22 @@ class User extends Authenticatable
     public function auditLogs()
     {
         return $this->hasMany(AuditLog::class);
+    }
+
+    public function roleModel()
+    {
+        return $this->belongsTo(UserRole::class, 'role', 'slug');
+    }
+
+    public function hasPermission(string $permissionSlug): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+        return $this->roleModel()
+            ?->permissions()
+            ->where('slug', $permissionSlug)
+            ->exists() ?? false;
     }
 
     public function isSuperAdmin(): bool

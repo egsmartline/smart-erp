@@ -1,17 +1,42 @@
 <!-- Sidebar -->
 <aside class="fixed inset-y-0 right-0 z-50 w-64 bg-gray-900 text-white shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 translate-x-full lg:translate-x-0" dir="rtl">
-    <!-- Logo -->
-    <div class="flex items-center justify-center h-16 border-b border-gray-800">
+    <!-- Logo + Company Switcher -->
+    <div class="flex items-center h-16 border-b border-gray-800 px-3" x-data="{ open: false }">
         @php $company = \App\Models\Company::where('tenant_id', session('current_tenant_id'))->first(); @endphp
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 w-full">
             @if($company && $company->logo)
-                <img src="{{ asset('storage/' . $company->logo) }}" alt="Logo" class="h-10 w-10 rounded-lg object-cover">
+                <img src="{{ asset('storage/' . $company->logo) }}" alt="Logo" class="h-10 w-10 rounded-lg object-cover flex-shrink-0">
             @else
-                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-lg font-bold">S</div>
+                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-lg font-bold flex-shrink-0">S</div>
             @endif
-            <div>
-                <div class="text-lg font-bold text-white">{{ $company->name ?? 'Smart ERP' }}</div>
-                <div class="text-xs text-gray-400">نظام المحاسبة الذكي</div>
+            <div class="flex-1 min-w-0">
+                <button @click="open = !open" class="flex items-center gap-1 w-full text-right">
+                    <div class="flex-1 min-w-0">
+                        <div class="text-lg font-bold text-white truncate">{{ $company->name ?? 'Smart ERP' }}</div>
+                        <div class="text-xs text-gray-400">Developer by BASSAM DAWOOD {{ date('Y') }}</div>
+                    </div>
+                    <svg class="h-4 w-4 flex-shrink-0 text-gray-400 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+                <div x-show="open" @click.outside="open = false" class="absolute z-50 mt-2 w-56 rounded-xl bg-white shadow-xl border border-gray-100 py-1 overflow-hidden">
+                    @php $tenants = auth()->user()->getAccessibleTenants(); @endphp
+                    @foreach($tenants as $t)
+                        @php $c = \App\Models\Company::where('tenant_id', $t->id)->first(); @endphp
+                        <form action="{{ route('switch-tenant', $t->id) }}" method="POST" class="block">
+                            @csrf
+                            <button type="submit" class="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-right transition {{ session('current_tenant_id') == $t->id ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-700 hover:bg-gray-50' }}">
+                                @if($c && $c->logo)
+                                    <img src="{{ asset('storage/' . $c->logo) }}" alt="" class="h-7 w-7 rounded-lg object-cover flex-shrink-0">
+                                @else
+                                    <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-500 flex-shrink-0">{{ mb_substr($c->name ?? $t->name, 0, 1) }}</div>
+                                @endif
+                                <span class="truncate">{{ $c->name ?? $t->name }}</span>
+                                @if(session('current_tenant_id') == $t->id)
+                                    <svg class="h-4 w-4 mr-auto flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                @endif
+                            </button>
+                        </form>
+                    @endforeach
+                </div>
             </div>
         </div>
     </div>
@@ -25,7 +50,7 @@
         </a>
 
         <!-- المحاسبة -->
-        <div x-data="{ open: {{ in_array(true, [request()->routeIs('accounts.*'), request()->routeIs('journals.*'), request()->routeIs('journal-entries.*'), request()->routeIs('payments.*'), request()->routeIs('payment-terms.*'), request()->routeIs('taxes.*'), request()->routeIs('bank-statements.*'), request()->routeIs('analytical-accounts.*'), request()->routeIs('budgets.*')]) ? 'true' : 'false' }} }">
+        <div x-data="{ open: {{ in_array(true, [request()->routeIs('accounts.*'), request()->routeIs('journals.*'), request()->routeIs('journal-entries.*'), request()->routeIs('payment-terms.*'), request()->routeIs('taxes.*'), request()->routeIs('bank-statements.*'), request()->routeIs('analytical-accounts.*'), request()->routeIs('budgets.*')]) ? 'true' : 'false' }} }">
             <button @click="open = !open" class="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition text-gray-300 hover:bg-gray-800 hover:text-white">
                 <div class="flex items-center gap-3">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
@@ -46,10 +71,6 @@
                     <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
                     القيود اليومية
                 </a>
-                <a href="{{ route('payments.index') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('payments.*') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
-                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
-                    المدفوعات
-                </a>
                 <a href="{{ route('payment-terms.index') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('payment-terms.*') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
                     <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
                     شروط الدفع
@@ -69,6 +90,35 @@
                 <a href="{{ route('budgets.index') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('budgets.*') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
                     <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
                     الميزانيات
+                </a>
+            </div>
+        </div>
+
+        <!-- الخزينة -->
+        <div x-data="{ open: {{ in_array(true, [request()->routeIs('cash-treasuries.*'), request()->routeIs('bank-accounts.*'), request()->routeIs('payments.*')]) ? 'true' : 'false' }} }">
+            <button @click="open = !open" class="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition text-gray-300 hover:bg-gray-800 hover:text-white">
+                <div class="flex items-center gap-3">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    الخزينة
+                </div>
+                <svg class="h-4 w-4 transform transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div x-show="open" x-collapse class="mr-8 mt-1 space-y-1">
+                <a href="{{ route('cash-treasuries.index') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('cash-treasuries.*') && !request()->routeIs('cash-treasuries.balances') && !request()->routeIs('payments.*') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                    إدارة الخزينة
+                </a>
+                <a href="{{ route('bank-accounts.index') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('bank-accounts.*') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                    الحسابات البنكية
+                </a>
+                <a href="{{ route('payments.index') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('payments.*') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                    سندات القبض والصرف
+                </a>
+                <a href="{{ route('cash-treasuries.balances') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('cash-treasuries.balances') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                    أرصدة الخزائن والحسابات البنكية
                 </a>
             </div>
         </div>
@@ -234,7 +284,7 @@
         </div>
 
         <!-- شئون العاملين -->
-        <div x-data="{ open: {{ in_array(true, [request()->routeIs('employees.*'), request()->routeIs('departments.*'), request()->routeIs('job-positions.*'), request()->routeIs('attendance.*'), request()->routeIs('leaves.*'), request()->routeIs('expenses.*'), request()->routeIs('payroll.*'), request()->routeIs('loans.*')]) ? 'true' : 'false' }} }">
+        <div x-data="{ open: {{ in_array(true, [request()->routeIs('employees.*'), request()->routeIs('custodies.*'), request()->routeIs('job-positions.*'), request()->routeIs('attendance.*'), request()->routeIs('leaves.*'), request()->routeIs('payroll.*'), request()->routeIs('loans.*')]) ? 'true' : 'false' }} }">
             <button @click="open = !open" class="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition text-gray-300 hover:bg-gray-800 hover:text-white">
                 <div class="flex items-center gap-3">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -247,9 +297,9 @@
                     <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
                     الموظفون
                 </a>
-                <a href="{{ route('departments.index') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('departments.*') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                <a href="{{ route('custodies.index') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('custodies.*') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
                     <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
-                    الأقسام
+                    العهد
                 </a>
                 <a href="{{ route('job-positions.index') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('job-positions.*') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
                     <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
@@ -262,10 +312,6 @@
                 <a href="{{ route('leaves.index') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('leaves.*') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
                     <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
                     الإجازات
-                </a>
-                <a href="{{ route('expenses.index') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('expenses.*') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
-                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
-                    المصروفات
                 </a>
                 <a href="{{ route('payroll.index') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('payroll.*') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
                     <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
@@ -328,8 +374,8 @@
     </nav>
 
     <!-- User Info -->
-    <div class="absolute bottom-0 left-0 right-0 border-t border-gray-800 bg-gray-900 p-4">
-        <div class="flex items-center gap-3">
+    <div class="border-t border-gray-800 bg-gray-900 p-4">
+        <div class="flex items-center gap-3 mb-3">
             <div class="flex h-9 w-9 items-center justify-center rounded-full bg-blue-600 text-sm font-bold">
                 {{ substr(Auth::user()->name ?? 'م', 0, 1) }}
             </div>
@@ -337,12 +383,13 @@
                 <div class="text-sm font-medium text-white truncate">{{ Auth::user()->name ?? 'مستخدم' }}</div>
                 <div class="text-xs text-gray-400 truncate">{{ Auth::user()->email ?? '' }}</div>
             </div>
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit" class="rounded p-1.5 text-gray-400 hover:bg-gray-800 hover:text-white transition cursor-pointer" title="تسجيل الخروج">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                </button>
-            </form>
         </div>
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" class="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 hover:bg-red-700 px-4 py-2 text-sm font-bold text-white transition cursor-pointer">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                تسجيل الخروج
+            </button>
+        </form>
     </div>
 </aside>

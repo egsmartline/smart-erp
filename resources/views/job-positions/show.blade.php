@@ -15,7 +15,6 @@
             <div class="space-y-3 text-sm">
                 <div class="flex justify-between"><span class="text-gray-500">الاسم:</span><span class="font-medium">{{ $position->name }}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">الكود:</span><span class="font-medium font-mono">{{ $position->code ?? '-' }}</span></div>
-                <div class="flex justify-between"><span class="text-gray-500">القسم:</span><span class="font-medium">{{ $position->department->name ?? '-' }}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">الحد الأدنى:</span><span class="font-medium font-mono">{{ $position->min_salary ? number_format($position->min_salary, 2) : '-' }}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">الحد الأقصى:</span><span class="font-medium font-mono">{{ $position->max_salary ? number_format($position->max_salary, 2) : '-' }}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">الحالة:</span>
@@ -39,7 +38,6 @@
                 <thead>
                     <tr class="border-b border-gray-200 bg-gray-50">
                         <th class="px-4 py-3 font-semibold">الموظف</th>
-                        <th class="px-4 py-3 font-semibold">القسم</th>
                         <th class="px-4 py-3 font-semibold">تاريخ التعيين</th>
                         <th class="px-4 py-3 font-semibold text-center">الحالة</th>
                     </tr>
@@ -48,7 +46,6 @@
                     @forelse($position->employees as $emp)
                         <tr class="border-b border-gray-100 hover:bg-gray-50">
                             <td class="px-4 py-3"><a href="{{ route('employees.show', $emp) }}" class="hover:text-blue-600 font-medium">{{ $emp->full_name }}</a></td>
-                            <td class="px-4 py-3 text-gray-600">{{ $emp->department->name ?? '-' }}</td>
                             <td class="px-4 py-3 text-gray-600">{{ $emp->hire_date?->format('Y/m/d') ?? '-' }}</td>
                             <td class="px-4 py-3 text-center">
                                 @if($emp->is_active)
