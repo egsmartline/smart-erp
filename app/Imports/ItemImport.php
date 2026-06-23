@@ -6,8 +6,10 @@ use App\Models\Item;
 use App\Models\ItemCategory;
 use App\Models\ItemUnit;
 use App\Models\Currency;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 
 class ItemImport implements ToModel, WithHeadingRow
 {
@@ -22,12 +24,34 @@ class ItemImport implements ToModel, WithHeadingRow
         $this->categoryCache = [];
         $this->unitCache = [];
         $this->currencyCache = [];
+        HeadingRowFormatter::default('none');
+    }
+
+    private function val(array $row, array $keys)
+    {
+        foreach ($keys as $k) {
+            if (isset($row[$k]) && $row[$k] !== '') {
+                return $row[$k];
+            }
+        }
+        foreach ($keys as $k) {
+            $slug = Str::slug($k, '_');
+            if (isset($row[$slug]) && $row[$slug] !== '') {
+                return $row[$slug];
+            }
+        }
+        return null;
     }
 
     public function model(array $row)
     {
+        $name = $this->val($row, ['اسم الصنف', 'name']);
+        if (empty($name)) {
+            return null;
+        }
+
+        $categoryName = $this->val($row, ['التصنيف', 'category']);
         $categoryId = null;
-        $categoryName = $row['التصنيف'] ?? $row['category'] ?? null;
         if ($categoryName) {
             if (!isset($this->categoryCache[$categoryName])) {
                 $cat = ItemCategory::where('tenant_id', $this->tenantId)
@@ -37,8 +61,8 @@ class ItemImport implements ToModel, WithHeadingRow
             $categoryId = $this->categoryCache[$categoryName];
         }
 
+        $unitName = $this->val($row, ['الوحدة', 'unit']);
         $unitId = null;
-        $unitName = $row['الوحدة'] ?? $row['unit'] ?? null;
         if ($unitName) {
             if (!isset($this->unitCache[$unitName])) {
                 $u = ItemUnit::where('tenant_id', $this->tenantId)
@@ -48,8 +72,8 @@ class ItemImport implements ToModel, WithHeadingRow
             $unitId = $this->unitCache[$unitName];
         }
 
+        $pcc = $this->val($row, ['عملة الشراء', 'purchase_currency']);
         $purchaseCurrencyId = null;
-        $pcc = $row['عملة الشراء'] ?? $row['purchase_currency'] ?? null;
         if ($pcc) {
             if (!isset($this->currencyCache[$pcc])) {
                 $c = Currency::where('tenant_id', $this->tenantId)
@@ -59,8 +83,8 @@ class ItemImport implements ToModel, WithHeadingRow
             $purchaseCurrencyId = $this->currencyCache[$pcc];
         }
 
+        $scc = $this->val($row, ['عملة البيع', 'sales_currency']);
         $salesCurrencyId = null;
-        $scc = $row['عملة البيع'] ?? $row['sales_currency'] ?? null;
         if ($scc) {
             if (!isset($this->currencyCache[$scc])) {
                 $c = Currency::where('tenant_id', $this->tenantId)
@@ -70,29 +94,29 @@ class ItemImport implements ToModel, WithHeadingRow
             $salesCurrencyId = $this->currencyCache[$scc];
         }
 
-        $hasSerial = $row['يتطلب أرقام تسلسلية'] ?? $row['has_serial_numbers'] ?? null;
-        $hasExpiry = $row['له تاريخ صلاحية'] ?? $row['has_expiry_date'] ?? null;
-        $isActive = $row['الحالة'] ?? $row['status'] ?? null;
+        $hasSerial = $this->val($row, ['يتطلب أرقام تسلسلية', 'has_serial_numbers']);
+        $hasExpiry = $this->val($row, ['له تاريخ صلاحية', 'has_expiry_date']);
+        $isActive = $this->val($row, ['الحالة', 'status', 'is_active']);
 
         return new Item([
             'tenant_id' => $this->tenantId,
-            'name' => $row['اسم الصنف'] ?? $row['name'] ?? '',
-            'sku' => $row['رمز الصنف (SKU)'] ?? $row['sku'] ?? $row['الكود'] ?? null,
-            'barcode' => $row['الباركود'] ?? $row['barcode'] ?? null,
+            'name' => $name,
+            'sku' => $this->val($row, ['رمز الصنف (SKU)', 'sku', 'الكود']),
+            'barcode' => $this->val($row, ['الباركود', 'barcode']),
             'category_id' => $categoryId,
             'unit_id' => $unitId,
-            'cost_price' => $row['سعر الشراء'] ?? $row['cost_price'] ?? $row['سعر التكلفة'] ?? 0,
+            'cost_price' => $this->val($row, ['سعر الشراء', 'cost_price', 'سعر التكلفة']) ?? 0,
             'purchase_currency_id' => $purchaseCurrencyId,
-            'selling_price' => $row['سعر البيع'] ?? $row['selling_price'] ?? 0,
+            'selling_price' => $this->val($row, ['سعر البيع', 'selling_price']) ?? 0,
             'sales_currency_id' => $salesCurrencyId,
-            'tax_rate' => $row['نسبة الضريبة %'] ?? $row['tax_rate'] ?? 0,
-            'minimum_stock' => $row['الحد الأدنى'] ?? $row['minimum_stock'] ?? $row['الحد الادنى'] ?? 0,
-            'maximum_stock' => $row['الحد الأقصى'] ?? $row['maximum_stock'] ?? 0,
-            'reorder_level' => $row['مستوى إعادة الطلب'] ?? $row['reorder_level'] ?? 0,
-            'opening_stock' => $row['الرصيد الافتتاحي'] ?? $row['opening_stock'] ?? 0,
+            'tax_rate' => $this->val($row, ['نسبة الضريبة %', 'tax_rate']) ?? 0,
+            'minimum_stock' => $this->val($row, ['الحد الأدنى', 'minimum_stock', 'الحد الادنى']) ?? 0,
+            'maximum_stock' => $this->val($row, ['الحد الأقصى', 'maximum_stock']) ?? 0,
+            'reorder_level' => $this->val($row, ['مستوى إعادة الطلب', 'reorder_level']) ?? 0,
+            'opening_stock' => $this->val($row, ['الرصيد الافتتاحي', 'opening_stock']) ?? 0,
             'has_serial_numbers' => in_array($hasSerial, ['نعم', 'yes', '1', 1], true),
             'has_expiry_date' => in_array($hasExpiry, ['نعم', 'yes', '1', 1], true),
-            'description' => $row['الوصف'] ?? $row['description'] ?? null,
+            'description' => $this->val($row, ['الوصف', 'description']),
             'is_active' => in_array($isActive, ['نشط', 'active', '1', 1], true),
         ]);
     }
