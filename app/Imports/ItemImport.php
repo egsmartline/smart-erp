@@ -16,7 +16,6 @@ class ItemImport implements ToModel, WithHeadingRow
     private $categoryCache;
     private $unitCache;
     private $currencyCache;
-    private $debug;
 
     public function __construct()
     {
@@ -24,18 +23,13 @@ class ItemImport implements ToModel, WithHeadingRow
         $this->categoryCache = [];
         $this->unitCache = [];
         $this->currencyCache = [];
-        $this->debug = [];
         HeadingRowFormatter::default('none');
     }
 
     public function model(array $row)
     {
-        $keys = array_keys($row);
-        $this->debug[] = ['keys' => $keys, 'hasName' => isset($row['اسم الصنف']), 'hasNameEn' => isset($row['name']), 'sample' => array_slice($row, 0, 3)];
-
         $name = $row['اسم الصنف'] ?? $row['اسم السلعة'] ?? $row['name'] ?? $row['Item Name'] ?? '';
         if (empty($name)) {
-            session()->flash('import_debug', $this->debug);
             return null;
         }
 
@@ -61,7 +55,7 @@ class ItemImport implements ToModel, WithHeadingRow
             $unitId = $this->unitCache[$unitName];
         }
 
-        $item = new Item([
+        return new Item([
             'tenant_id' => $this->tenantId,
             'name' => $name,
             'sku' => $row['رمز الصنف (SKU)'] ?? $row['الكود'] ?? $row['رمز الصنف'] ?? $row['sku'] ?? $row['code'] ?? null,
@@ -82,9 +76,6 @@ class ItemImport implements ToModel, WithHeadingRow
             'description' => $row['الوصف'] ?? $row['description'] ?? null,
             'is_active' => in_array($row['الحالة'] ?? $row['status'] ?? $row['is_active'] ?? 'نشط', ['نشط', 'active', '1', 1], true),
         ]);
-
-        session()->flash('import_debug', $this->debug);
-        return $item;
     }
 
     private function resolveCurrency($code)

@@ -129,18 +129,4 @@
         </div>
     </div>
 
-    @if(session('import_debug'))
-        <div class="mt-6 rounded-xl border border-red-300 bg-red-50 p-6">
-            <h4 class="mb-2 font-bold text-red-700">🔍 Debug: مفاتيح الصف الأول من الملف</h4>
-            @foreach(session('import_debug') as $i => $d)
-                <div class="mb-3 rounded bg-white p-3 text-xs font-mono">
-                    <div class="text-gray-500">الصف {{ $i+1 }}</div>
-                    <div class="text-red-600">المفاتيح: {{ json_encode($d['keys'], JSON_UNESCAPED_UNICODE) }}</div>
-                    <div class="text-blue-600">هل found 'اسم الصنف'? {{ $d['hasName'] ? '✅' : '❌' }}</div>
-                    <div class="text-blue-600">هل found 'name'? {{ $d['hasNameEn'] ? '✅' : '❌' }}</div>
-                    <div class="text-green-600">أول 3 قيم: {{ json_encode($d['sample'], JSON_UNESCAPED_UNICODE) }}</div>
-                </div>
-            @endforeach
-        </div>
-    @endif
 </x-app-layout>
