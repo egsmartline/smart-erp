@@ -81,20 +81,11 @@
             thead { display: table-header-group; }
             th { background: #D4ECF8 !important; color: #1e3a8a !important; padding: 8px 10px; text-align: right; font-weight: 600; font-size: 10px; border: 1px solid #D4ECF8; }
             td { padding: 6px 10px; text-align: right; border: 1px solid #e5e7eb; font-size: 10px; }
-            tr:nth-child(even) { background: #f8fafc !important; }
-            tr:nth-child(odd) { background: white !important; }
+            tr { background: transparent !important; }
             tr:hover { background: inherit !important; }
 
             {{-- Summary rows --}}
-            tr.total-row td, tfoot td { font-weight: 700; background: #f1f5f9 !important; border-top: 2px solid #2563eb; }
-
-            {{-- Badges / Status --}}
-            .inline-flex.items-center.rounded-full { padding: 2px 8px !important; font-size: 8px !important; border-radius: 10px !important; }
-            .bg-green-100 { background: #d1fae5 !important; color: #065f46 !important; }
-            .bg-red-100 { background: #fee2e2 !important; color: #991b1b !important; }
-            .bg-blue-100 { background: #dbeafe !important; color: #1e40af !important; }
-            .bg-yellow-100 { background: #fef3c7 !important; color: #92400e !important; }
-            .bg-gray-100 { background: #f3f4f6 !important; color: #374151 !important; }
+            tr.total-row td, tfoot td { font-weight: 700; border-top: 2px solid #2563eb; }
 
             {{-- Typography --}}
             h1 { font-size: 18px; font-weight: 800; color: #1e3a8a; margin-bottom: 8px; }
