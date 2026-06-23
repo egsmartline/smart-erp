@@ -13,7 +13,7 @@
                 <button @click="open = !open" class="flex items-center gap-1 w-full text-right">
                     <div class="flex-1 min-w-0">
                         <div class="text-lg font-bold text-white truncate">{{ $company->name ?? 'Smart ERP' }}</div>
-                        <div class="text-xs text-gray-400">Developer by BASSAM DAWOOD {{ date('Y') }}</div>
+                        <div class="text-xs text-gray-300">Developer by BASSAM DAWOOD {{ date('Y') }}</div>
                     </div>
                     <svg class="h-4 w-4 flex-shrink-0 text-gray-400 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 </button>

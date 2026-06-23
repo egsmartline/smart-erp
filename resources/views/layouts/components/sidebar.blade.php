@@ -8,7 +8,7 @@
             </div>
             <div>
                 <div class="text-lg font-bold text-white">Smart ERP</div>
-                <div class="text-xs text-gray-400">Developer by BASSAM DAWOOD {{ date('Y') }}</div>
+                <div class="text-xs text-gray-300">Developer by BASSAM DAWOOD {{ date('Y') }}</div>
             </div>
         </div>
     </div>

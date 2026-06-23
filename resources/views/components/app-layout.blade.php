@@ -124,7 +124,7 @@
             footer { display: none !important; }
             .print-footer { position: fixed; bottom: 0; left: 0; right: 0; text-align: center; font-size: 8px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 5px; }
 
-            @page { @bottom-center { content: "Developer by BASSAM DAWOOD {{ date('Y') }} | الصفحة " counter(page) " من " counter(pages); font-size: 8px; color: #9ca3af; } }
+            @page { @bottom-center { content: "Developer by BASSAM DAWOOD {{ date('Y') }} | الصفحة " counter(page) " من " counter(pages); font-size: 8px; color: #000000; } }
         }
     </style>
     @stack('styles')
@@ -150,7 +150,7 @@
                         <button @click="open = !open" class="flex items-center gap-1 w-full text-right">
                             <div class="flex-1 min-w-0">
                                 <div class="text-lg font-bold text-white truncate">{{ $company->name ?? 'Smart ERP' }}</div>
-                                <div class="text-xs text-primary-300">Developer by BASSAM DAWOOD {{ date('Y') }}</div>
+                                <div class="text-xs text-black">Developer by BASSAM DAWOOD {{ date('Y') }}</div>
                             </div>
                             <svg x-show="sidebarOpen" class="h-4 w-4 flex-shrink-0 text-primary-300 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
