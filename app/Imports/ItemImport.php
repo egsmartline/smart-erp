@@ -9,7 +9,6 @@ use App\Models\Currency;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Imports\HeadingRowFormatter;
 
 class ItemImport implements ToModel, WithHeadingRow
 {
@@ -24,7 +23,6 @@ class ItemImport implements ToModel, WithHeadingRow
         $this->categoryCache = [];
         $this->unitCache = [];
         $this->currencyCache = [];
-        HeadingRowFormatter::default('none');
     }
 
     private function val(array $row, array $keys)
@@ -33,8 +31,6 @@ class ItemImport implements ToModel, WithHeadingRow
             if (isset($row[$k]) && $row[$k] !== '') {
                 return $row[$k];
             }
-        }
-        foreach ($keys as $k) {
             $slug = Str::slug($k, '_');
             if (isset($row[$slug]) && $row[$slug] !== '') {
                 return $row[$slug];
