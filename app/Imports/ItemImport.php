@@ -6,16 +6,76 @@ use App\Models\Item;
 use App\Models\ItemCategory;
 use App\Models\ItemUnit;
 use App\Models\Currency;
-use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\ToModel;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithStartRow;
 
-class ItemImport implements ToModel, WithHeadingRow
+class ItemImport implements ToModel, WithStartRow
 {
     private $tenantId;
     private $categoryCache;
     private $unitCache;
     private $currencyCache;
+    private $colMap;
+    private $headerRead;
+
+    private static $KNOWN_HEADERS = [
+        'اسم الصنف' => 'name',
+        'اسم السلعة' => 'name',
+        'name' => 'name',
+        'item name' => 'name',
+        'الكود' => 'sku',
+        'رمز الصنف' => 'sku',
+        'sku' => 'sku',
+        'code' => 'sku',
+        'الباركود' => 'barcode',
+        'barcode' => 'barcode',
+        'التصنيف' => 'category',
+        'category' => 'category',
+        'الوحدة' => 'unit',
+        'unit' => 'unit',
+        'سعر الشراء' => 'cost_price',
+        'سعر التكلفة' => 'cost_price',
+        'cost_price' => 'cost_price',
+        'cost price' => 'cost_price',
+        'purchase price' => 'cost_price',
+        'عملة الشراء' => 'purchase_currency',
+        'purchase_currency' => 'purchase_currency',
+        'سعر البيع' => 'selling_price',
+        'selling_price' => 'selling_price',
+        'selling price' => 'selling_price',
+        'sale price' => 'selling_price',
+        'عملة البيع' => 'sales_currency',
+        'sales_currency' => 'sales_currency',
+        'نسبة الضريبة' => 'tax_rate',
+        'tax_rate' => 'tax_rate',
+        'tax rate' => 'tax_rate',
+        'tax %' => 'tax_rate',
+        'الحد الأدنى' => 'minimum_stock',
+        'الحد الادنى' => 'minimum_stock',
+        'minimum_stock' => 'minimum_stock',
+        'min stock' => 'minimum_stock',
+        'الحد الأقصى' => 'maximum_stock',
+        'الحد الاقصى' => 'maximum_stock',
+        'maximum_stock' => 'maximum_stock',
+        'max stock' => 'maximum_stock',
+        'مستوى إعادة الطلب' => 'reorder_level',
+        'reorder_level' => 'reorder_level',
+        'reorder level' => 'reorder_level',
+        'الرصيد الافتتاحي' => 'opening_stock',
+        'opening_stock' => 'opening_stock',
+        'opening stock' => 'opening_stock',
+        'يتطلب أرقام تسلسلية' => 'has_serial_numbers',
+        'has_serial_numbers' => 'has_serial_numbers',
+        'له تاريخ صلاحية' => 'has_expiry_date',
+        'has_expiry_date' => 'has_expiry_date',
+        'expiry date' => 'has_expiry_date',
+        'الوصف' => 'description',
+        'description' => 'description',
+        'الحالة' => 'is_active',
+        'status' => 'is_active',
+        'is_active' => 'is_active',
+        'active' => 'is_active',
+    ];
 
     public function __construct()
     {
@@ -23,30 +83,29 @@ class ItemImport implements ToModel, WithHeadingRow
         $this->categoryCache = [];
         $this->unitCache = [];
         $this->currencyCache = [];
+        $this->colMap = [];
+        $this->headerRead = false;
     }
 
-    private function val(array $row, array $keys)
+    public function startRow(): int
     {
-        foreach ($keys as $k) {
-            if (isset($row[$k]) && $row[$k] !== '') {
-                return $row[$k];
-            }
-            $slug = Str::slug($k, '_');
-            if (isset($row[$slug]) && $row[$slug] !== '') {
-                return $row[$slug];
-            }
-        }
-        return null;
+        return 1;
     }
 
     public function model(array $row)
     {
-        $name = $this->val($row, ['اسم الصنف', 'name']);
+        if (!$this->headerRead) {
+            $this->headerRead = true;
+            $this->colMap = $this->buildColMap($row);
+            return null;
+        }
+
+        $name = $this->get($row, 'name');
         if (empty($name)) {
             return null;
         }
 
-        $categoryName = $this->val($row, ['التصنيف', 'category']);
+        $categoryName = $this->get($row, 'category');
         $categoryId = null;
         if ($categoryName) {
             if (!isset($this->categoryCache[$categoryName])) {
@@ -57,7 +116,7 @@ class ItemImport implements ToModel, WithHeadingRow
             $categoryId = $this->categoryCache[$categoryName];
         }
 
-        $unitName = $this->val($row, ['الوحدة', 'unit']);
+        $unitName = $this->get($row, 'unit');
         $unitId = null;
         if ($unitName) {
             if (!isset($this->unitCache[$unitName])) {
@@ -68,7 +127,7 @@ class ItemImport implements ToModel, WithHeadingRow
             $unitId = $this->unitCache[$unitName];
         }
 
-        $pcc = $this->val($row, ['عملة الشراء', 'purchase_currency']);
+        $pcc = $this->get($row, 'purchase_currency');
         $purchaseCurrencyId = null;
         if ($pcc) {
             if (!isset($this->currencyCache[$pcc])) {
@@ -79,7 +138,7 @@ class ItemImport implements ToModel, WithHeadingRow
             $purchaseCurrencyId = $this->currencyCache[$pcc];
         }
 
-        $scc = $this->val($row, ['عملة البيع', 'sales_currency']);
+        $scc = $this->get($row, 'sales_currency');
         $salesCurrencyId = null;
         if ($scc) {
             if (!isset($this->currencyCache[$scc])) {
@@ -90,30 +149,61 @@ class ItemImport implements ToModel, WithHeadingRow
             $salesCurrencyId = $this->currencyCache[$scc];
         }
 
-        $hasSerial = $this->val($row, ['يتطلب أرقام تسلسلية', 'has_serial_numbers']);
-        $hasExpiry = $this->val($row, ['له تاريخ صلاحية', 'has_expiry_date']);
-        $isActive = $this->val($row, ['الحالة', 'status', 'is_active']);
+        $hasSerial = $this->get($row, 'has_serial_numbers');
+        $hasExpiry = $this->get($row, 'has_expiry_date');
+        $isActive = $this->get($row, 'is_active');
 
         return new Item([
             'tenant_id' => $this->tenantId,
             'name' => $name,
-            'sku' => $this->val($row, ['رمز الصنف (SKU)', 'sku', 'الكود']),
-            'barcode' => $this->val($row, ['الباركود', 'barcode']),
+            'sku' => $this->get($row, 'sku'),
+            'barcode' => $this->get($row, 'barcode'),
             'category_id' => $categoryId,
             'unit_id' => $unitId,
-            'cost_price' => $this->val($row, ['سعر الشراء', 'cost_price', 'سعر التكلفة']) ?? 0,
+            'cost_price' => $this->get($row, 'cost_price') ?? 0,
             'purchase_currency_id' => $purchaseCurrencyId,
-            'selling_price' => $this->val($row, ['سعر البيع', 'selling_price']) ?? 0,
+            'selling_price' => $this->get($row, 'selling_price') ?? 0,
             'sales_currency_id' => $salesCurrencyId,
-            'tax_rate' => $this->val($row, ['نسبة الضريبة %', 'tax_rate']) ?? 0,
-            'minimum_stock' => $this->val($row, ['الحد الأدنى', 'minimum_stock', 'الحد الادنى']) ?? 0,
-            'maximum_stock' => $this->val($row, ['الحد الأقصى', 'maximum_stock']) ?? 0,
-            'reorder_level' => $this->val($row, ['مستوى إعادة الطلب', 'reorder_level']) ?? 0,
-            'opening_stock' => $this->val($row, ['الرصيد الافتتاحي', 'opening_stock']) ?? 0,
+            'tax_rate' => $this->get($row, 'tax_rate') ?? 0,
+            'minimum_stock' => $this->get($row, 'minimum_stock') ?? 0,
+            'maximum_stock' => $this->get($row, 'maximum_stock') ?? 0,
+            'reorder_level' => $this->get($row, 'reorder_level') ?? 0,
+            'opening_stock' => $this->get($row, 'opening_stock') ?? 0,
             'has_serial_numbers' => in_array($hasSerial, ['نعم', 'yes', '1', 1], true),
             'has_expiry_date' => in_array($hasExpiry, ['نعم', 'yes', '1', 1], true),
-            'description' => $this->val($row, ['الوصف', 'description']),
+            'description' => $this->get($row, 'description'),
             'is_active' => in_array($isActive, ['نشط', 'active', '1', 1], true),
         ]);
+    }
+
+    private function get(array $row, string $field)
+    {
+        if (!isset($this->colMap[$field])) {
+            return null;
+        }
+        $idx = $this->colMap[$field];
+        return $row[$idx] ?? null;
+    }
+
+    private function buildColMap(array $row): array
+    {
+        $map = [];
+        foreach ($row as $idx => $header) {
+            if ($header === null || $header === '') continue;
+            $normalized = trim(mb_strtolower((string)$header));
+            if (isset(self::$KNOWN_HEADERS[$normalized])) {
+                $field = self::$KNOWN_HEADERS[$normalized];
+                $map[$field] = $idx;
+            } else {
+                foreach (self::$KNOWN_HEADERS as $known => $field) {
+                    $knownNorm = trim(mb_strtolower($known));
+                    if ($normalized === $knownNorm) {
+                        $map[$field] = $idx;
+                        break;
+                    }
+                }
+            }
+        }
+        return $map;
     }
 }
