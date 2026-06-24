@@ -65,6 +65,12 @@ class ImportController extends TenantAwareController
             // First row = headers, build column map
             $headers = array_map('trim', $rows[0]);
             $colMap = $this->buildItemColMap($headers);
+            session()->flash('import_debug', [
+                'headers_raw' => $rows[0],
+                'headers_trimmed' => $headers,
+                'colMap' => $colMap,
+                'first_data_row' => $rows[1] ?? null,
+            ]);
             $count = 0;
 
             for ($i = 1; $i < count($rows); $i++) {

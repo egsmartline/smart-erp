@@ -129,4 +129,11 @@
         </div>
     </div>
 
+    @if(session('import_debug'))
+        <div class="mt-6 rounded-xl border border-blue-300 bg-blue-50 p-4 text-xs font-mono">
+            <h4 class="mb-2 font-bold text-blue-700">Debug Row 1</h4>
+            <pre class="whitespace-pre-wrap">@php print_r(session('import_debug')); @endphp</pre>
+        </div>
+    @endif
+
 </x-app-layout>
