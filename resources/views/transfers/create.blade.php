@@ -16,6 +16,7 @@
                     <select id="from_type" name="from_type" onchange="toggleFrom()" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" required>
                         <option value="treasury" {{ old('from_type') === 'treasury' ? 'selected' : '' }}>خزينة</option>
                         <option value="bank" {{ old('from_type') === 'bank' ? 'selected' : '' }}>حساب بنكي</option>
+                        <option value="account" {{ old('from_type') === 'account' ? 'selected' : '' }}>حساب مالي</option>
                     </select>
                 </div>
                 <div>
@@ -32,6 +33,11 @@
                                 <option value="{{ $b->id }}" {{ old('from_id') == $b->id ? 'selected' : '' }} data-group="bank">{{ $b->account_name }} - {{ $b->bank_name }} ({{ number_format($b->current_balance, 2) }})</option>
                             @endforeach
                         </optgroup>
+                        <optgroup label="الحسابات المالية" id="from-accounts">
+                            @foreach($accounts as $a)
+                                <option value="{{ $a->id }}" {{ old('from_id') == $a->id ? 'selected' : '' }} data-group="account">{{ $a->code }} - {{ $a->name }} ({{ number_format($a->current_balance, 2) }})</option>
+                            @endforeach
+                        </optgroup>
                     </select>
                 </div>
 
@@ -40,6 +46,7 @@
                     <select id="to_type" name="to_type" onchange="toggleTo()" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" required>
                         <option value="treasury" {{ old('to_type') === 'treasury' ? 'selected' : '' }}>خزينة</option>
                         <option value="bank" {{ old('to_type') === 'bank' ? 'selected' : '' }}>حساب بنكي</option>
+                        <option value="account" {{ old('to_type') === 'account' ? 'selected' : '' }}>حساب مالي</option>
                     </select>
                 </div>
                 <div>
@@ -54,6 +61,11 @@
                         <optgroup label="الحسابات البنكية" id="to-banks">
                             @foreach($bankAccounts as $b)
                                 <option value="{{ $b->id }}" {{ old('to_id') == $b->id ? 'selected' : '' }} data-group="bank">{{ $b->account_name }} - {{ $b->bank_name }} ({{ number_format($b->current_balance, 2) }})</option>
+                            @endforeach
+                        </optgroup>
+                        <optgroup label="الحسابات المالية" id="to-accounts">
+                            @foreach($accounts as $a)
+                                <option value="{{ $a->id }}" {{ old('to_id') == $a->id ? 'selected' : '' }} data-group="account">{{ $a->code }} - {{ $a->name }} ({{ number_format($a->current_balance, 2) }})</option>
                             @endforeach
                         </optgroup>
                     </select>
@@ -90,6 +102,7 @@
         var type = document.getElementById('from_type').value;
         document.getElementById('from-treasuries').style.display = type === 'treasury' ? '' : 'none';
         document.getElementById('from-banks').style.display = type === 'bank' ? '' : 'none';
+        document.getElementById('from-accounts').style.display = type === 'account' ? '' : 'none';
         var sel = document.getElementById('from_id');
         for (var i = 0; i < sel.options.length; i++) {
             var opt = sel.options[i];
@@ -97,6 +110,7 @@
             var group = opt.getAttribute('data-group');
             if (group === 'treasury') opt.style.display = type === 'treasury' ? '' : 'none';
             if (group === 'bank') opt.style.display = type === 'bank' ? '' : 'none';
+            if (group === 'account') opt.style.display = type === 'account' ? '' : 'none';
         }
         if (sel.selectedIndex > 0) {
             var selected = sel.options[sel.selectedIndex];
@@ -107,6 +121,7 @@
         var type = document.getElementById('to_type').value;
         document.getElementById('to-treasuries').style.display = type === 'treasury' ? '' : 'none';
         document.getElementById('to-banks').style.display = type === 'bank' ? '' : 'none';
+        document.getElementById('to-accounts').style.display = type === 'account' ? '' : 'none';
         var sel = document.getElementById('to_id');
         for (var i = 0; i < sel.options.length; i++) {
             var opt = sel.options[i];
@@ -114,6 +129,7 @@
             var grp = opt.getAttribute('data-group');
             if (grp === 'treasury') opt.style.display = type === 'treasury' ? '' : 'none';
             if (grp === 'bank') opt.style.display = type === 'bank' ? '' : 'none';
+            if (grp === 'account') opt.style.display = type === 'account' ? '' : 'none';
         }
         if (sel.selectedIndex > 0) {
             var selected = sel.options[sel.selectedIndex];
