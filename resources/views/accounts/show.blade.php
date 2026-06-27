@@ -35,8 +35,8 @@
         </div>
         <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6">
             <div class="text-sm text-gray-500 mb-1">الرصيد الحالي</div>
-            <div class="text-2xl font-bold {{ $account->balance >= 0 ? 'text-green-600' : 'text-red-600' }}">
-                {{ number_format($account->balance, 2) }} ر.س
+            <div class="text-2xl font-bold {{ $account->current_balance >= 0 ? 'text-green-600' : 'text-red-600' }}">
+                {{ number_format($account->current_balance, 2) }} ر.س
             </div>
         </div>
     </div>

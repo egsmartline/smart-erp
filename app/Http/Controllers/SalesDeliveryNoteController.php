@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\SalesDeliveryNote;
 use App\Models\SalesDeliveryNoteLine;
-use App\Models\SalesOrder;
 use App\Models\StockMovement;
 use App\Models\ItemWarehouse;
+use App\Models\Customer;
+use App\Models\Warehouse;
+use App\Models\Item;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +18,7 @@ class SalesDeliveryNoteController extends TenantAwareController
     public function index()
     {
         $deliveryNotes = SalesDeliveryNote::where('tenant_id', $this->getTenantId())
-            ->with('salesOrder', 'customer', 'user')
+            ->with('customer', 'user')
             ->orderByDesc('id')
             ->paginate(20);
 
@@ -25,13 +27,11 @@ class SalesDeliveryNoteController extends TenantAwareController
 
     public function create()
     {
-        $salesOrders = SalesOrder::where('tenant_id', $this->getTenantId())
-            ->whereIn('status', ['confirmed', 'delivered'])
-            ->with('customer')
-            ->orderByDesc('id')
-            ->get();
-
-        return view('sales-delivery-notes.create', compact('salesOrders'));
+        $tenantId = $this->getTenantId();
+        $customers = Customer::where('tenant_id', $tenantId)->orderBy('name')->get();
+        $warehouses = Warehouse::where('tenant_id', $tenantId)->orderBy('name')->get();
+        $items = Item::where('tenant_id', $tenantId)->orderBy('name')->get();
+        return view('sales-delivery-notes.create', compact('customers', 'warehouses', 'items'));
     }
 
     public function store(Request $request)
@@ -43,11 +43,11 @@ class SalesDeliveryNoteController extends TenantAwareController
         }
 
         $validated = $request->validate([
-            'sales_order_id' => 'required|exists:sales_orders,id',
+            'customer_id' => 'required|exists:customers,id',
+            'warehouse_id' => 'required|exists:warehouses,id',
             'date' => 'required|date',
             'notes' => 'nullable|string',
             'lines' => 'required|array|min:1',
-            'lines.*.sales_order_line_id' => 'required|exists:sales_order_lines,id',
             'lines.*.item_id' => 'required|exists:items,id',
             'lines.*.quantity' => 'required|numeric|min:0.01',
             'lines.*.unit_price' => 'required|numeric|min:0',
@@ -56,16 +56,13 @@ class SalesDeliveryNoteController extends TenantAwareController
 
         $tenantId = $this->getTenantId();
 
-        $salesOrder = SalesOrder::where('tenant_id', $tenantId)->with('customer', 'warehouse')->findOrFail($validated['sales_order_id']);
-
-        return DB::transaction(function () use ($validated, $salesOrder, $tenantId) {
+        return DB::transaction(function () use ($validated, $tenantId) {
             $deliveryNote = SalesDeliveryNote::create([
                 'tenant_id' => $tenantId,
                 'delivery_number' => 'DN-' . now()->format('Ymd') . '-' . str_pad(SalesDeliveryNote::where('tenant_id', $tenantId)->count() + 1, 4, '0', STR_PAD_LEFT),
                 'date' => $validated['date'],
-                'sales_order_id' => $salesOrder->id,
-                'customer_id' => $salesOrder->customer_id,
-                'warehouse_id' => $salesOrder->warehouse_id,
+                'customer_id' => $validated['customer_id'],
+                'warehouse_id' => $validated['warehouse_id'],
                 'user_id' => Auth::id(),
                 'status' => 'confirmed',
                 'notes' => $validated['notes'] ?? null,
@@ -75,18 +72,14 @@ class SalesDeliveryNoteController extends TenantAwareController
                 SalesDeliveryNoteLine::create([
                     'tenant_id' => $tenantId,
                     'sales_delivery_note_id' => $deliveryNote->id,
-                    'sales_order_line_id' => $line['sales_order_line_id'],
                     'item_id' => $line['item_id'],
                     'quantity' => $line['quantity'],
                     'unit_price' => $line['unit_price'],
                     'total' => $line['total'],
                 ]);
 
-                $orderLine = $salesOrder->lines()->findOrFail($line['sales_order_line_id']);
-                $orderLine->increment('delivered_qty', $line['quantity']);
-
                 $itemWarehouse = ItemWarehouse::firstOrCreate(
-                    ['item_id' => $line['item_id'], 'warehouse_id' => $salesOrder->warehouse_id],
+                    ['item_id' => $line['item_id'], 'warehouse_id' => $validated['warehouse_id']],
                     ['quantity' => 0, 'reserved_quantity' => 0, 'available_quantity' => 0, 'average_cost' => 0]
                 );
 
@@ -95,7 +88,7 @@ class SalesDeliveryNoteController extends TenantAwareController
 
                 StockMovement::create([
                     'item_id' => $line['item_id'],
-                    'warehouse_id' => $salesOrder->warehouse_id,
+                    'warehouse_id' => $validated['warehouse_id'],
                     'stockable_type' => SalesDeliveryNote::class,
                     'stockable_id' => $deliveryNote->id,
                     'type' => 'out',
@@ -109,11 +102,6 @@ class SalesDeliveryNoteController extends TenantAwareController
                 ]);
             }
 
-            $salesOrder->update([
-                'delivery_status' => 'delivered',
-                'status' => $salesOrder->invoice_status === 'fully_invoiced' ? 'invoiced' : 'delivered',
-            ]);
-
             return redirect()->route('sales-delivery-notes.show', $deliveryNote)
                 ->with('success', 'تم إنشاء إذن التسليم بنجاح');
         });
@@ -125,7 +113,7 @@ class SalesDeliveryNoteController extends TenantAwareController
             abort(403);
         }
 
-        $salesDeliveryNote->load('salesOrder', 'customer', 'warehouse', 'user', 'lines.item', 'lines.salesOrderLine');
+        $salesDeliveryNote->load('customer', 'warehouse', 'user', 'lines.item');
 
         return view('sales-delivery-notes.show', compact('salesDeliveryNote'));
     }

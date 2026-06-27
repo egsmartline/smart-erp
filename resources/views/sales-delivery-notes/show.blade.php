@@ -29,10 +29,6 @@
                 </p>
             </div>
             <div>
-                <label class="mb-1 block text-sm font-medium text-gray-500">أمر البيع</label>
-                <p class="text-gray-900 text-sm">{{ $salesDeliveryNote->salesOrder->order_number ?? '-' }}</p>
-            </div>
-            <div>
                 <label class="mb-1 block text-sm font-medium text-gray-500">العميل</label>
                 <p class="text-gray-900 text-sm">{{ $salesDeliveryNote->customer->name ?? '-' }}</p>
             </div>

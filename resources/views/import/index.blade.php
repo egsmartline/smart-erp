@@ -129,4 +129,24 @@
         </div>
     </div>
 
+@if(session('import_debug'))
+<div class="mt-6 rounded-xl border border-blue-200 bg-blue-50 p-4">
+    <h4 class="mb-2 text-sm font-bold text-blue-800">معلومات التصحيح (Debug)</h4>
+    <div class="space-y-2 text-xs font-mono text-blue-900">
+        <div>
+            <span class="font-bold">الترويسة الأصلية (Headers Raw):</span>
+            <pre class="mt-1 whitespace-pre-wrap rounded bg-blue-100 p-2">{{ json_encode(session('import_debug')['headers_raw'], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) }}</pre>
+        </div>
+        <div>
+            <span class="font-bold">خريطة الأعمدة (Column Map):</span>
+            <pre class="mt-1 whitespace-pre-wrap rounded bg-blue-100 p-2">{{ json_encode(session('import_debug')['colMap'], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) }}</pre>
+        </div>
+        <div>
+            <span class="font-bold">أول صف بيانات (First Data Row):</span>
+            <pre class="mt-1 whitespace-pre-wrap rounded bg-blue-100 p-2">{{ json_encode(session('import_debug')['first_data_row'], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) }}</pre>
+        </div>
+    </div>
+</div>
+@endif
+
 </x-app-layout>

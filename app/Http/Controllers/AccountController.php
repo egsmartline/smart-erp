@@ -60,18 +60,18 @@ class AccountController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'code' => 'required|string|max:10|unique:accounts,code,NULL,id,tenant_id,' . Auth::user()->tenant_id,
+            'code' => 'required|string|max:10|unique:chart_of_accounts,code,NULL,id,tenant_id,' . Auth::user()->tenant_id,
             'name' => 'required|string|max:255',
             'name_en' => 'nullable|string|max:255',
             'type' => 'required|in:assets,liabilities,equity,revenue,expenses',
             'sub_type' => 'nullable|string|max:255',
-            'parent_id' => 'nullable|exists:accounts,id',
+            'parent_id' => 'nullable|exists:chart_of_accounts,id',
             'opening_balance' => 'required|numeric|min:0',
             'is_active' => 'boolean',
         ]);
 
         $validated['tenant_id'] = Auth::user()->tenant_id;
-        $validated['balance'] = $validated['opening_balance'];
+        $validated['current_balance'] = $validated['opening_balance'];
         $validated['is_active'] = $request->boolean('is_active', true);
 
         Account::create($validated);
@@ -118,12 +118,12 @@ class AccountController extends Controller
         $this->authorizeAccount($account);
 
         $validated = $request->validate([
-            'code' => 'required|string|max:10|unique:accounts,code,' . $account->id . ',id,tenant_id,' . Auth::user()->tenant_id,
+            'code' => 'required|string|max:10|unique:chart_of_accounts,code,' . $account->id . ',id,tenant_id,' . Auth::user()->tenant_id,
             'name' => 'required|string|max:255',
             'name_en' => 'nullable|string|max:255',
             'type' => 'required|in:assets,liabilities,equity,revenue,expenses',
             'sub_type' => 'nullable|string|max:255',
-            'parent_id' => 'nullable|exists:accounts,id',
+            'parent_id' => 'nullable|exists:chart_of_accounts,id',
             'opening_balance' => 'required|numeric|min:0',
             'is_active' => 'boolean',
         ]);

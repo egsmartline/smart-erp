@@ -77,8 +77,8 @@
                                     {{ $accountTypes[$account->type] ?? $account->type }}
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-left font-mono text-sm {{ $account->balance >= 0 ? 'text-gray-900' : 'text-red-600' }}">
-                                {{ number_format($account->balance, 2) }}
+                            <td class="px-4 py-3 text-left font-mono text-sm {{ $account->current_balance >= 0 ? 'text-gray-900' : 'text-red-600' }}">
+                                {{ number_format($account->current_balance, 2) }}
                             </td>
                             <td class="px-4 py-3 text-center">
                                 <form action="{{ route('accounts.toggle-status', $account) }}" method="POST" class="inline">

@@ -73,7 +73,7 @@
                     <div class="flex justify-between"><span class="text-gray-500">العميل:</span><span class="font-medium">{{ $payment->customer->name }}</span></div>
                 @endif
                 @if($payment->account)
-                    <div class="flex justify-between"><span class="text-gray-500">حساب المصروف:</span><span class="font-medium">{{ $payment->account->code }} - {{ $payment->account->name }}</span></div>
+                    <div class="flex justify-between"><span class="text-gray-500">الحساب المالي:</span><span class="font-medium">{{ $payment->account->code }} - {{ $payment->account->name }}</span></div>
                 @endif
                 @if($payment->supplier)
                     <div class="flex justify-between"><span class="text-gray-500">المورد:</span><span class="font-medium">{{ $payment->supplier->name }}</span></div>

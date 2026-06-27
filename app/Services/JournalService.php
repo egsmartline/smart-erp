@@ -8,6 +8,7 @@ use App\Models\JournalEntry;
 use App\Models\JournalEntryLine;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class JournalService
 {
@@ -40,7 +41,10 @@ class JournalService
 
                 $account = Account::find($line['account_id']);
                 if ($account) {
-                    $newBalance = $account->current_balance + ($line['debit'] ?? 0) - ($line['credit'] ?? 0);
+                    $isDebitBalance = in_array($account->type, ['asset', 'assets', 'expense', 'expenses']);
+                    $newBalance = $isDebitBalance
+                        ? $account->current_balance + ($line['debit'] ?? 0) - ($line['credit'] ?? 0)
+                        : $account->current_balance - ($line['debit'] ?? 0) + ($line['credit'] ?? 0);
                     $account->update(['current_balance' => $newBalance]);
                 }
             }
@@ -55,7 +59,10 @@ class JournalService
             foreach ($entry->lines as $line) {
                 $account = Account::find($line->account_id);
                 if ($account) {
-                    $newBalance = $account->current_balance - $line->debit + $line->credit;
+                    $isDebitBalance = in_array($account->type, ['asset', 'assets', 'expense', 'expenses']);
+                    $newBalance = $isDebitBalance
+                        ? $account->current_balance - $line->debit + $line->credit
+                        : $account->current_balance + $line->debit - $line->credit;
                     $account->update(['current_balance' => $newBalance]);
                 }
             }
@@ -132,17 +139,12 @@ class JournalService
     private function generateEntryNumber(int $tenantId, string $date): string
     {
         $year = date('Y', strtotime($date));
-        $lastEntry = JournalEntry::where('tenant_id', $tenantId)
+        $maxNum = JournalEntry::withTrashed()
+            ->where('tenant_id', $tenantId)
             ->whereYear('date', $year)
-            ->orderByDesc('entry_number')
-            ->first();
+            ->max(DB::raw('CAST(SUBSTRING(entry_number, -4) AS UNSIGNED)'));
 
-        if ($lastEntry) {
-            $lastNumber = (int) substr($lastEntry->entry_number, -4);
-            $newNumber = $lastNumber + 1;
-        } else {
-            $newNumber = 1;
-        }
+        $newNumber = ($maxNum ?: 0) + 1;
 
         return 'JE-' . $year . '-' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
     }

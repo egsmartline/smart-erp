@@ -30,7 +30,6 @@ class Quotation extends Model
         'terms',
         'converted_to_invoice',
         'converted_at',
-        'converted_order_id',
     ];
 
     protected function casts(): array
@@ -69,8 +68,5 @@ class Quotation extends Model
         return $this->hasMany(QuotationLine::class);
     }
 
-    public function salesOrder(): BelongsTo
-    {
-        return $this->belongsTo(SalesOrder::class, 'converted_order_id');
-    }
+
 }

@@ -16,7 +16,6 @@
                     <tr class="border-b-2 border-gray-300 bg-gray-50">
                         <th class="px-4 py-3 font-semibold">رقم الإذن</th>
                         <th class="px-4 py-3 font-semibold">التاريخ</th>
-                        <th class="px-4 py-3 font-semibold">أمر البيع</th>
                         <th class="px-4 py-3 font-semibold">العميل</th>
                         <th class="px-4 py-3 font-semibold text-center">الحالة</th>
                         <th class="px-4 py-3 font-semibold text-center">إجراءات</th>
@@ -29,7 +28,6 @@
                                 <a href="{{ route('sales-delivery-notes.show', $note) }}" class="text-gray-900 hover:text-blue-600">{{ $note->delivery_number }}</a>
                             </td>
                             <td class="px-4 py-3">{{ $note->date->format('Y/m/d') }}</td>
-                            <td class="px-4 py-3">{{ $note->salesOrder->order_number ?? '-' }}</td>
                             <td class="px-4 py-3">{{ $note->customer->name ?? '-' }}</td>
                             <td class="px-4 py-3 text-center">
                                 @if($note->status === 'confirmed')
@@ -49,7 +47,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="px-4 py-8 text-center text-gray-500">لا توجد إذنات تسليم</td></tr>
+                        <tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">لا توجد إذنات تسليم</td></tr>
                     @endforelse
                 </tbody>
             </table>

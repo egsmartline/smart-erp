@@ -50,7 +50,7 @@
         </a>
 
         <!-- المحاسبة -->
-        <div x-data="{ open: {{ in_array(true, [request()->routeIs('accounts.*'), request()->routeIs('journals.*'), request()->routeIs('journal-entries.*'), request()->routeIs('payment-terms.*'), request()->routeIs('taxes.*'), request()->routeIs('bank-statements.*'), request()->routeIs('analytical-accounts.*'), request()->routeIs('budgets.*')]) ? 'true' : 'false' }} }">
+        <div x-data="{ open: {{ in_array(true, [request()->routeIs('accounts.*'), request()->routeIs('journals.*'), request()->routeIs('journal-entries.*'), request()->routeIs('payment-terms.*'), request()->routeIs('taxes.*'), request()->routeIs('bank-statements.*'), request()->routeIs('analytical-accounts.*'), request()->routeIs('budgets.*'), request()->routeIs('reports.account-statement')]) ? 'true' : 'false' }} }">
             <button @click="open = !open" class="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition text-gray-300 hover:bg-gray-800 hover:text-white">
                 <div class="flex items-center gap-3">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
@@ -91,11 +91,15 @@
                     <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
                     الميزانيات
                 </a>
+                <a href="{{ route('reports.account-statement') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('reports.account-statement') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                    بيان حركة حساب
+                </a>
             </div>
         </div>
 
         <!-- الخزينة -->
-        <div x-data="{ open: {{ in_array(true, [request()->routeIs('cash-treasuries.*'), request()->routeIs('bank-accounts.*'), request()->routeIs('payments.*')]) ? 'true' : 'false' }} }">
+        <div x-data="{ open: {{ in_array(true, [request()->routeIs('cash-treasuries.*'), request()->routeIs('bank-accounts.*'), request()->routeIs('payments.*'), request()->routeIs('transfers.*')]) ? 'true' : 'false' }} }">
             <button @click="open = !open" class="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition text-gray-300 hover:bg-gray-800 hover:text-white">
                 <div class="flex items-center gap-3">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
@@ -120,11 +124,15 @@
                     <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
                     أرصدة الخزائن والحسابات البنكية
                 </a>
+                <a href="{{ route('transfers.index') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('transfers.*') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                    التحويلات الداخلية
+                </a>
             </div>
         </div>
 
         <!-- المبيعات -->
-        <div x-data="{ open: {{ in_array(true, [request()->routeIs('sales-orders.*'), request()->routeIs('sales-invoices.*'), request()->routeIs('sales-returns.*'), request()->routeIs('quotations.*'), request()->routeIs('customers.*')]) ? 'true' : 'false' }} }">
+        <div x-data="{ open: {{ in_array(true, [request()->routeIs('sales-invoices.*'), request()->routeIs('sales-returns.*'), request()->routeIs('quotations.*'), request()->routeIs('customers.*')]) ? 'true' : 'false' }} }">
             <button @click="open = !open" class="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition text-gray-300 hover:bg-gray-800 hover:text-white">
                 <div class="flex items-center gap-3">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
@@ -133,10 +141,6 @@
                 <svg class="h-4 w-4 transform transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </button>
             <div x-show="open" x-collapse class="mr-8 mt-1 space-y-1">
-                <a href="{{ route('sales-orders.index') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('sales-orders.*') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
-                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
-                    أوامر البيع
-                </a>
                 <a href="{{ route('sales-invoices.index') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('sales-invoices.*') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
                     <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
                     فواتير البيع

@@ -81,7 +81,6 @@
                             'items' => 'الأصناف',
                             'sales_invoices' => 'فواتير البيع',
                             'purchase_invoices' => 'فواتير الشراء',
-                            'sales_orders' => 'أوامر البيع',
                             'purchase_orders' => 'أوامر الشراء',
                             'sales_returns' => 'مرتجعات البيع',
                             'purchase_returns' => 'مرتجعات الشراء',

@@ -16,7 +16,6 @@ use App\Http\Controllers\PurchaseInvoiceController;
 use App\Http\Controllers\SalesReturnController;
 use App\Http\Controllers\PurchaseReturnController;
 use App\Http\Controllers\QuotationController;
-use App\Http\Controllers\SalesOrderController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\CashTreasuryController;
@@ -80,13 +79,6 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::resource('item-units', ItemUnitController::class);
     Route::resource('warehouses', WarehouseController::class);
 
-    // Sales Orders
-    Route::resource('sales-orders', SalesOrderController::class);
-    Route::post('sales-orders/{salesOrder}/confirm', [SalesOrderController::class, 'confirm'])->name('sales-orders.confirm');
-    Route::post('sales-orders/{salesOrder}/deliver', [SalesOrderController::class, 'deliver'])->name('sales-orders.deliver');
-    Route::post('sales-orders/{salesOrder}/invoice', [SalesOrderController::class, 'invoice'])->name('sales-orders.invoice');
-    Route::post('sales-orders/{salesOrder}/cancel', [SalesOrderController::class, 'cancel'])->name('sales-orders.cancel');
-
     // Purchase Orders
     Route::resource('purchase-orders', PurchaseOrderController::class);
     Route::post('purchase-orders/{purchaseOrder}/confirm', [PurchaseOrderController::class, 'confirm'])->name('purchase-orders.confirm');
@@ -128,6 +120,10 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::get('cash-treasuries/balances', [CashTreasuryController::class, 'balances'])->name('cash-treasuries.balances');
     Route::resource('cash-treasuries', CashTreasuryController::class);
     Route::resource('bank-accounts', BankAccountController::class);
+    Route::get('transfers', [\App\Http\Controllers\TransferController::class, 'index'])->name('transfers.index');
+    Route::get('transfers/create', [\App\Http\Controllers\TransferController::class, 'create'])->name('transfers.create');
+    Route::post('transfers', [\App\Http\Controllers\TransferController::class, 'store'])->name('transfers.store');
+    Route::delete('transfers/{id}', [\App\Http\Controllers\TransferController::class, 'destroy'])->name('transfers.destroy');
 
     Route::get('/reports/trial-balance', [ReportController::class, 'trialBalance'])->name('reports.trial-balance');
     Route::get('/reports/general-ledger', [ReportController::class, 'generalLedger'])->name('reports.general-ledger');
@@ -141,6 +137,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::get('/reports/inventory', [ReportController::class, 'inventoryReport'])->name('reports.inventory');
     Route::get('/reports/cash-flow', [ReportController::class, 'cashFlow'])->name('reports.cash-flow');
     Route::get('/reports/dashboard', [ReportController::class, 'dashboard'])->name('reports.dashboard');
+    Route::get('/account-statement', [ReportController::class, 'accountStatement'])->name('reports.account-statement');
 
     Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
     Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');
@@ -241,15 +238,6 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     // Purchase Receipt Notes
     Route::resource('purchase-receipt-notes', PurchaseReceiptNoteController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
 
-    // API: Get sales order lines for delivery note
-    Route::get('api/sales-orders/{salesOrder}/lines', function (\App\Models\SalesOrder $salesOrder) {
-        $tenantId = session('current_tenant_id') ?? auth()->user()->tenant_id;
-        if ($salesOrder->tenant_id !== $tenantId) {
-            abort(403);
-        }
-        return response()->json($salesOrder->load('lines.item', 'customer', 'warehouse'));
-    })->name('api.sales-orders.lines');
-
     // API: Get purchase order lines for receipt note
     Route::get('api/purchase-orders/{purchaseOrder}/lines', function (\App\Models\PurchaseOrder $purchaseOrder) {
         $tenantId = session('current_tenant_id') ?? auth()->user()->tenant_id;
@@ -270,7 +258,6 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     // PDF
     Route::get('pdf/sales-invoice/{invoice}', [PdfController::class, 'salesInvoice'])->name('pdf.sales-invoice');
     Route::get('pdf/purchase-invoice/{invoice}', [PdfController::class, 'purchaseInvoice'])->name('pdf.purchase-invoice');
-    Route::get('pdf/sales-order/{order}', [PdfController::class, 'salesOrder'])->name('pdf.sales-order');
     Route::get('pdf/purchase-order/{order}', [PdfController::class, 'purchaseOrder'])->name('pdf.purchase-order');
     Route::get('pdf/quotation/{quotation}', [PdfController::class, 'quotation'])->name('pdf.quotation');
 });

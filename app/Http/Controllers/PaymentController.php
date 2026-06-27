@@ -10,9 +10,11 @@ use App\Models\Supplier;
 use App\Models\BankAccount;
 use App\Models\Currency;
 use App\Models\TreasuryTransaction;
+use App\Models\BankTransaction;
 use App\Models\JournalEntry;
 use App\Services\JournalService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PaymentController extends TenantAwareController
 {
@@ -30,7 +32,7 @@ class PaymentController extends TenantAwareController
     {
         $customers = $this->tenantQuery(Customer::class)->where('is_active', true)->get();
         $suppliers = $this->tenantQuery(Supplier::class)->where('is_active', true)->get();
-        $accounts = $this->tenantQuery(Account::class)->where('type', 'expense')->where('is_active', true)->orderBy('code')->get();
+        $accounts = $this->tenantQuery(Account::class)->where('is_active', true)->orderBy('code')->get();
         $treasuries = $this->tenantQuery(CashTreasury::class)->where('is_active', true)->orderBy('name')->get();
         $bankAccounts = $this->tenantQuery(BankAccount::class)->where('is_active', true)->get();
         $currencies = $this->tenantQuery(Currency::class)->get();
@@ -62,49 +64,68 @@ class PaymentController extends TenantAwareController
         $validated['amount_in_currency'] = $validated['amount'] * $validated['exchange_rate'];
         $validated['user_id'] = auth()->id();
         $validated['status'] = 'completed';
-        $payment = Payment::create($validated);
 
         $direction = $validated['type'] === 'receipt' ? 1 : -1;
+        $txType = $validated['type'] === 'receipt' ? 'in' : 'out';
 
-        if (!empty($validated['treasury_id'])) {
-            $treasury = CashTreasury::findOrFail($validated['treasury_id']);
-            $treasury->increment('current_balance', $validated['amount'] * $direction);
-            TreasuryTransaction::create([
-                'tenant_id' => $validated['tenant_id'],
-                'treasury_id' => $validated['treasury_id'],
-                'type' => $validated['type'],
-                'amount' => $validated['amount'],
-                'reference_type' => 'payment',
-                'reference_id' => $payment->id,
-                'reference_number' => $validated['payment_number'],
-                'description' => $validated['notes'] ?? (($validated['type'] === 'receipt' ? 'قبض' : 'دفع') . ' - ' . $validated['payment_number']),
-                'user_id' => $validated['user_id'],
-            ]);
-        }
+        DB::beginTransaction();
+        try {
+            $payment = Payment::create($validated);
 
-        if (!empty($validated['bank_account_id'])) {
-            $bankAccount = BankAccount::findOrFail($validated['bank_account_id']);
-            $bankAccount->increment('current_balance', $validated['amount'] * $direction);
-        }
-
-        $message = $validated['type'] === 'receipt' ? 'تم تسجيل القبض بنجاح' : 'تم تسجيل الدفع بنجاح';
-
-        if ($validated['account_id']) {
-            $journalService = app(JournalService::class);
-            $lines = $journalService->buildPaymentLines($validated);
-            if (count($lines) === 2) {
-                $journalService->createEntry([
+            if (!empty($validated['treasury_id'])) {
+                $treasury = CashTreasury::findOrFail($validated['treasury_id']);
+                $treasury->increment('current_balance', $validated['amount'] * $direction);
+                TreasuryTransaction::create([
                     'tenant_id' => $validated['tenant_id'],
-                    'date' => $validated['date'],
-                    'description' => $validated['notes'] ?? ($validated['type'] === 'receipt' ? 'قبض' : 'دفع') . ' - ' . $validated['payment_number'],
-                    'reference' => $validated['payment_number'],
-                    'type' => $validated['type'] === 'receipt' ? 'receipt' : 'payment',
-                    'lines' => $lines,
+                    'treasury_id' => $validated['treasury_id'],
+                    'type' => $txType,
+                    'amount' => $validated['amount'],
+                    'reference_type' => 'payment',
+                    'reference_id' => $payment->id,
+                    'reference_number' => $validated['payment_number'],
+                    'description' => $validated['notes'] ?? (($validated['type'] === 'receipt' ? 'قبض' : 'دفع') . ' - ' . $validated['payment_number']),
+                    'user_id' => $validated['user_id'],
                 ]);
             }
-        }
 
-        return redirect()->route('payments.index')->with('success', $message);
+            if (!empty($validated['bank_account_id'])) {
+                $bankAccount = BankAccount::findOrFail($validated['bank_account_id']);
+                $bankAccount->increment('current_balance', $validated['amount'] * $direction);
+                BankTransaction::create([
+                    'tenant_id' => $validated['tenant_id'],
+                    'bank_account_id' => $validated['bank_account_id'],
+                    'type' => $txType,
+                    'amount' => $validated['amount'],
+                    'reference_type' => 'payment',
+                    'reference_id' => $payment->id,
+                    'reference_number' => $validated['payment_number'],
+                    'description' => $validated['notes'] ?? (($validated['type'] === 'receipt' ? 'قبض' : 'دفع') . ' - ' . $validated['payment_number']),
+                    'user_id' => $validated['user_id'],
+                ]);
+            }
+
+            if ($validated['account_id']) {
+                $journalService = app(JournalService::class);
+                $lines = $journalService->buildPaymentLines($validated);
+                if (count($lines) === 2) {
+                    $journalService->createEntry([
+                        'tenant_id' => $validated['tenant_id'],
+                        'date' => $validated['date'],
+                        'description' => $validated['notes'] ?? ($validated['type'] === 'receipt' ? 'قبض' : 'دفع') . ' - ' . $validated['payment_number'],
+                        'reference' => $validated['payment_number'],
+                        'type' => $validated['type'] === 'receipt' ? 'receipt' : 'payment',
+                        'lines' => $lines,
+                    ]);
+                }
+            }
+
+            DB::commit();
+            $message = $validated['type'] === 'receipt' ? 'تم تسجيل القبض بنجاح' : 'تم تسجيل الدفع بنجاح';
+            return redirect()->route('payments.index')->with('success', $message);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'خطأ في تسجيل الدفعة: ' . $e->getMessage()])->withInput();
+        }
     }
 
     public function show(Payment $payment)
@@ -119,7 +140,7 @@ class PaymentController extends TenantAwareController
         $this->authorizeTenant($payment);
         $customers = $this->tenantQuery(Customer::class)->where('is_active', true)->get();
         $suppliers = $this->tenantQuery(Supplier::class)->where('is_active', true)->get();
-        $accounts = $this->tenantQuery(Account::class)->where('type', 'expense')->where('is_active', true)->orderBy('code')->get();
+        $accounts = $this->tenantQuery(Account::class)->where('is_active', true)->orderBy('code')->get();
         $treasuries = $this->tenantQuery(CashTreasury::class)->where('is_active', true)->orderBy('name')->get();
         $bankAccounts = $this->tenantQuery(BankAccount::class)->where('is_active', true)->get();
         $currencies = $this->tenantQuery(Currency::class)->get();
@@ -193,6 +214,7 @@ class PaymentController extends TenantAwareController
         $prefix = $type === 'receipt' ? 'RCP' : 'PAY';
         $year = date('Y');
         $last = $this->tenantQuery(Payment::class)
+            ->withTrashed()
             ->where('payment_number', 'like', $prefix . '-' . $year . '-%')
             ->max('payment_number');
 

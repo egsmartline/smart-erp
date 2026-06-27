@@ -13,7 +13,7 @@ class SalesDeliveryNoteLine extends Model
     protected $fillable = [
         'tenant_id',
         'sales_delivery_note_id',
-        'sales_order_line_id',
+
         'item_id',
         'quantity',
         'unit_price',
@@ -33,11 +33,6 @@ class SalesDeliveryNoteLine extends Model
     public function salesDeliveryNote(): BelongsTo
     {
         return $this->belongsTo(SalesDeliveryNote::class);
-    }
-
-    public function salesOrderLine(): BelongsTo
-    {
-        return $this->belongsTo(SalesOrderLine::class);
     }
 
     public function item(): BelongsTo

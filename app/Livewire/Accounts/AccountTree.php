@@ -166,7 +166,7 @@ class AccountTree extends Component
             'sub_type' => 'sub',
             'parent_id' => $this->addingToParentId,
             'opening_balance' => 0,
-            'balance' => 0,
+            'current_balance' => 0,
             'is_active' => true,
             'tenant_id' => Auth::user()->tenant_id,
         ]);
