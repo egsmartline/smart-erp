@@ -12,7 +12,7 @@
     <form action="{{ route('sales-invoices.update', $salesInvoice) }}" method="POST">
         @csrf
         @method('PUT')
-        @livewire('invoice-form', ['type' => 'sale', 'invoiceId' => $salesInvoice->id, 'warehouseId' => $salesInvoice->warehouse_id])
+        @livewire('invoice-form', ['type' => 'sale', 'invoiceId' => $salesInvoice->id, 'warehouseId' => $salesInvoice->warehouse_id, 'showCustomerSearch' => false, 'showItemSelect' => true])
 
         <div class="mt-6 flex items-center gap-3">
             <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition cursor-pointer">

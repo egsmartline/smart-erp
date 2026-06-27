@@ -11,7 +11,7 @@
 
     <form action="{{ route('purchase-invoices.store') }}" method="POST">
         @csrf
-        @livewire('invoice-form', ['type' => 'purchase', 'warehouseId' => $warehouses->first()->id ?? null])
+        @livewire('invoice-form', ['type' => 'purchase', 'warehouseId' => $warehouses->first()->id ?? null, 'showCustomerSearch' => false, 'showItemSelect' => true])
 
         <div class="mt-6 flex items-center gap-3">
             <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition cursor-pointer">
