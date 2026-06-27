@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Account;
 use App\Models\BankAccount;
 use App\Models\BankTransaction;
 use App\Models\CashTreasury;
@@ -51,15 +52,16 @@ class TransferController extends TenantAwareController
     {
         $treasuries = $this->tenantQuery(CashTreasury::class)->with('currency')->where('is_active', true)->orderBy('name')->get();
         $bankAccounts = $this->tenantQuery(BankAccount::class)->with('currency')->where('is_active', true)->orderBy('account_name')->get();
-        return view('transfers.create', compact('treasuries', 'bankAccounts'));
+        $accounts = $this->tenantQuery(Account::class)->where('is_active', true)->orderBy('code')->get(['id', 'name', 'code', 'current_balance']);
+        return view('transfers.create', compact('treasuries', 'bankAccounts', 'accounts'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'from_type' => 'required|in:treasury,bank',
+            'from_type' => 'required|in:treasury,bank,account',
             'from_id' => 'required|integer',
-            'to_type' => 'required|in:treasury,bank',
+            'to_type' => 'required|in:treasury,bank,account',
             'to_id' => 'required|integer',
             'amount' => 'required|numeric|min:0.01',
             'description' => 'nullable|string|max:500',
@@ -104,8 +106,12 @@ class TransferController extends TenantAwareController
             $t = CashTreasury::where('tenant_id', $tenantId)->findOrFail($id);
             return ['model' => $t, 'balance' => $t->current_balance, 'name' => $t->name, 'account_id' => $t->account_id];
         }
-        $b = BankAccount::where('tenant_id', $tenantId)->findOrFail($id);
-        return ['model' => $b, 'balance' => $b->current_balance, 'name' => $b->account_name, 'account_id' => $b->account_id];
+        if ($type === 'bank') {
+            $b = BankAccount::where('tenant_id', $tenantId)->findOrFail($id);
+            return ['model' => $b, 'balance' => $b->current_balance, 'name' => $b->account_name, 'account_id' => $b->account_id];
+        }
+        $a = Account::where('tenant_id', $tenantId)->findOrFail($id);
+        return ['model' => $a, 'balance' => $a->current_balance, 'name' => $a->code . ' - ' . $a->name, 'account_id' => $a->id];
     }
 
     private function resolveTarget($type, $id, $tenantId): array
@@ -114,8 +120,12 @@ class TransferController extends TenantAwareController
             $t = CashTreasury::where('tenant_id', $tenantId)->findOrFail($id);
             return ['model' => $t, 'name' => $t->name, 'account_id' => $t->account_id];
         }
-        $b = BankAccount::where('tenant_id', $tenantId)->findOrFail($id);
-        return ['model' => $b, 'name' => $b->account_name, 'account_id' => $b->account_id];
+        if ($type === 'bank') {
+            $b = BankAccount::where('tenant_id', $tenantId)->findOrFail($id);
+            return ['model' => $b, 'name' => $b->account_name, 'account_id' => $b->account_id];
+        }
+        $a = Account::where('tenant_id', $tenantId)->findOrFail($id);
+        return ['model' => $a, 'name' => $a->code . ' - ' . $a->name, 'account_id' => $a->id];
     }
 
     private function createSourceTransaction($data, $tenantId, $userId, $refNum)
@@ -133,7 +143,7 @@ class TransferController extends TenantAwareController
                 'user_id' => $userId,
                 'target_treasury_id' => $data['to_type'] === 'treasury' ? $data['to_id'] : null,
             ]);
-        } else {
+        } elseif ($data['from_type'] === 'bank') {
             BankTransaction::create([
                 'tenant_id' => $tenantId,
                 'bank_account_id' => $data['from_id'],
@@ -164,7 +174,7 @@ class TransferController extends TenantAwareController
                 'user_id' => $userId,
                 'target_treasury_id' => $data['from_type'] === 'treasury' ? $data['from_id'] : null,
             ]);
-        } else {
+        } elseif ($data['to_type'] === 'bank') {
             BankTransaction::create([
                 'tenant_id' => $tenantId,
                 'bank_account_id' => $data['to_id'],
