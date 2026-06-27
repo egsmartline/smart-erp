@@ -84,10 +84,33 @@ class AccountController extends Controller
     {
         $this->authorizeAccount($account);
 
-        $journalLines = JournalEntryLine::where('account_id', $account->id)
+        $allLines = JournalEntryLine::where('account_id', $account->id)
             ->with('journalEntry')
-            ->orderByDesc('id')
-            ->paginate(25);
+            ->orderBy('id')
+            ->get();
+
+        $isDebitNature = in_array($account->type, ['assets', 'expenses']);
+        $runningBalance = $account->opening_balance;
+
+        foreach ($allLines as $line) {
+            if ($isDebitNature) {
+                $runningBalance += ($line->debit - $line->credit);
+            } else {
+                $runningBalance += ($line->credit - $line->debit);
+            }
+            $line->running_balance = $runningBalance;
+        }
+
+        $perPage = 25;
+        $page = request()->get('page', 1);
+        $offset = ($page - 1) * $perPage;
+        $journalLines = new \Illuminate\Pagination\LengthAwarePaginator(
+            $allLines->slice($offset, $perPage)->values(),
+            $allLines->count(),
+            $perPage,
+            $page,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
 
         return view('accounts.show', compact('account', 'journalLines'));
     }

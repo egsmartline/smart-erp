@@ -94,6 +94,7 @@
                         <th class="px-4 py-3 font-semibold text-gray-700">البيان</th>
                         <th class="px-4 py-3 font-semibold text-gray-700 text-left">مدين</th>
                         <th class="px-4 py-3 font-semibold text-gray-700 text-left">دائن</th>
+                        <th class="px-4 py-3 font-semibold text-gray-700 text-left">الرصيد</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -112,10 +113,13 @@
                             <td class="px-4 py-3 text-left font-mono {{ $line->credit > 0 ? 'text-gray-900' : 'text-gray-400' }}">
                                 {{ $line->credit > 0 ? number_format($line->credit, 2) : '-' }}
                             </td>
+                            <td class="px-4 py-3 text-left font-mono {{ $line->running_balance >= 0 ? 'text-gray-900' : 'text-red-600' }}">
+                                {{ number_format($line->running_balance, 2) }}
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-4 py-8 text-center text-gray-500">لا توجد قيود يومية مرتبطة بهذا الحساب</td>
+                            <td colspan="6" class="px-4 py-8 text-center text-gray-500">لا توجد قيود يومية مرتبطة بهذا الحساب</td>
                         </tr>
                     @endforelse
                 </tbody>
