@@ -236,14 +236,14 @@ class TransferController extends TenantAwareController
                         $treasury = CashTreasury::find($txn->treasury_id);
                         if ($treasury) $treasury->increment('current_balance', $txn->amount);
                     } else {
-                        $account = Account::find($txn->reference_id);
+                        $account = Account::find($txn->target_treasury_id);
                         if ($account) $account->increment('current_balance', $txn->amount);
                     }
                     if ($target->treasury_id) {
                         $targetTreasury = CashTreasury::find($target->treasury_id);
                         if ($targetTreasury) $targetTreasury->decrement('current_balance', $txn->amount);
                     } else {
-                        $targetAccount = Account::find($target->reference_id);
+                        $targetAccount = Account::find($target->target_treasury_id);
                         if ($targetAccount) $targetAccount->decrement('current_balance', $txn->amount);
                     }
                     $target->delete();
