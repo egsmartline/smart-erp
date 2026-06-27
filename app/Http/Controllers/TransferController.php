@@ -130,63 +130,63 @@ class TransferController extends TenantAwareController
 
     private function createSourceTransaction($data, $tenantId, $userId, $refNum)
     {
+        $base = [
+            'tenant_id' => $tenantId,
+            'type' => 'transfer',
+            'amount' => $data['amount'],
+            'reference_type' => $data['to_type'],
+            'reference_id' => $data['to_id'],
+            'reference_number' => $refNum,
+            'description' => 'تحويل صادر: ' . ($data['description'] ?? ''),
+            'user_id' => $userId,
+        ];
+
         if ($data['from_type'] === 'treasury') {
-            TreasuryTransaction::create([
-                'tenant_id' => $tenantId,
+            TreasuryTransaction::create(array_merge($base, [
                 'treasury_id' => $data['from_id'],
-                'type' => 'transfer',
-                'amount' => $data['amount'],
-                'reference_type' => $data['to_type'],
-                'reference_id' => $data['to_id'],
-                'reference_number' => $refNum,
-                'description' => 'تحويل صادر: ' . ($data['description'] ?? ''),
-                'user_id' => $userId,
                 'target_treasury_id' => $data['to_type'] === 'treasury' ? $data['to_id'] : null,
-            ]);
+            ]));
         } elseif ($data['from_type'] === 'bank') {
-            BankTransaction::create([
-                'tenant_id' => $tenantId,
+            BankTransaction::create(array_merge($base, [
                 'bank_account_id' => $data['from_id'],
-                'type' => 'transfer',
-                'amount' => $data['amount'],
-                'reference_type' => $data['to_type'],
-                'reference_id' => $data['to_id'],
-                'reference_number' => $refNum,
-                'description' => 'تحويل صادر: ' . ($data['description'] ?? ''),
-                'user_id' => $userId,
                 'target_bank_account_id' => $data['to_type'] === 'bank' ? $data['to_id'] : null,
-            ]);
+            ]));
+        } elseif ($data['from_type'] === 'account') {
+            TreasuryTransaction::create(array_merge($base, [
+                'treasury_id' => null,
+                'target_treasury_id' => $data['from_id'],
+            ]));
         }
     }
 
     private function createTargetTransaction($data, $tenantId, $userId, $refNum)
     {
+        $base = [
+            'tenant_id' => $tenantId,
+            'type' => 'transfer',
+            'amount' => $data['amount'],
+            'reference_type' => $data['from_type'],
+            'reference_id' => $data['from_id'],
+            'reference_number' => $refNum,
+            'description' => 'تحويل وارد: ' . ($data['description'] ?? ''),
+            'user_id' => $userId,
+        ];
+
         if ($data['to_type'] === 'treasury') {
-            TreasuryTransaction::create([
-                'tenant_id' => $tenantId,
+            TreasuryTransaction::create(array_merge($base, [
                 'treasury_id' => $data['to_id'],
-                'type' => 'transfer',
-                'amount' => $data['amount'],
-                'reference_type' => $data['from_type'],
-                'reference_id' => $data['from_id'],
-                'reference_number' => $refNum,
-                'description' => 'تحويل وارد: ' . ($data['description'] ?? ''),
-                'user_id' => $userId,
                 'target_treasury_id' => $data['from_type'] === 'treasury' ? $data['from_id'] : null,
-            ]);
+            ]));
         } elseif ($data['to_type'] === 'bank') {
-            BankTransaction::create([
-                'tenant_id' => $tenantId,
+            BankTransaction::create(array_merge($base, [
                 'bank_account_id' => $data['to_id'],
-                'type' => 'transfer',
-                'amount' => $data['amount'],
-                'reference_type' => $data['from_type'],
-                'reference_id' => $data['from_id'],
-                'reference_number' => $refNum,
-                'description' => 'تحويل وارد: ' . ($data['description'] ?? ''),
-                'user_id' => $userId,
                 'target_bank_account_id' => $data['from_type'] === 'bank' ? $data['from_id'] : null,
-            ]);
+            ]));
+        } elseif ($data['to_type'] === 'account') {
+            TreasuryTransaction::create(array_merge($base, [
+                'treasury_id' => null,
+                'target_treasury_id' => $data['to_id'],
+            ]));
         }
     }
 
@@ -232,10 +232,20 @@ class TransferController extends TenantAwareController
                 $target = $related->first();
 
                 if ($target) {
-                    $treasury = CashTreasury::find($txn->treasury_id);
-                    $targetTreasury = CashTreasury::find($target->treasury_id);
-                    if ($treasury) $treasury->increment('current_balance', $txn->amount);
-                    if ($targetTreasury) $targetTreasury->decrement('current_balance', $txn->amount);
+                    if ($txn->treasury_id) {
+                        $treasury = CashTreasury::find($txn->treasury_id);
+                        if ($treasury) $treasury->increment('current_balance', $txn->amount);
+                    } else {
+                        $account = Account::find($txn->reference_id);
+                        if ($account) $account->increment('current_balance', $txn->amount);
+                    }
+                    if ($target->treasury_id) {
+                        $targetTreasury = CashTreasury::find($target->treasury_id);
+                        if ($targetTreasury) $targetTreasury->decrement('current_balance', $txn->amount);
+                    } else {
+                        $targetAccount = Account::find($target->reference_id);
+                        if ($targetAccount) $targetAccount->decrement('current_balance', $txn->amount);
+                    }
                     $target->delete();
                 }
 

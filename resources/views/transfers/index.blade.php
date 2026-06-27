@@ -1,7 +1,7 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center justify-between">
-            <h2 class="text-xl font-bold text-gray-800">التحويلات بين الخزن والحسابات البنكية</h2>
+            <h2 class="text-xl font-bold text-gray-800">التحويلات بين الخزن والحسابات البنكية والحسابات المالية</h2>
             <a href="{{ route('transfers.create') }}" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 تحويل جديد
@@ -28,20 +28,34 @@
                         <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
                             <td class="px-4 py-3 text-gray-600 whitespace-nowrap">{{ $t->created_at->format('Y-m-d') }}</td>
                             <td class="px-4 py-3 font-medium text-gray-900">
-                                @if($t instanceof \App\Models\TreasuryTransaction)
-                                    {{ $t->treasury->name ?? '-' }}
-                                @else
-                                    {{ $t->bankAccount->account_name ?? '-' }}
-                                @endif
+                                @php
+                                    $sourceName = '-';
+                                    if ($t instanceof \App\Models\TreasuryTransaction) {
+                                        if ($t->treasury_id) {
+                                            $sourceName = $t->treasury->name ?? '-';
+                                        } elseif ($t->target_treasury_id) {
+                                            $sourceName = optional(\App\Models\Account::find($t->target_treasury_id))->name ?? 'حساب مالي';
+                                        }
+                                    } else {
+                                        $sourceName = $t->bankAccount->account_name ?? '-';
+                                    }
+                                @endphp
+                                {{ $sourceName }}
                             </td>
                             <td class="px-4 py-3 font-medium text-gray-900">
-                                @if($t->reference_type === 'treasury')
-                                    {{ optional(\App\Models\CashTreasury::find($t->reference_id))->name ?? '-' }}
-                                @elseif($t->reference_type === 'bank')
-                                    {{ optional(\App\Models\BankAccount::find($t->reference_id))->account_name ?? '-' }}
-                                @else
-                                    {{ $t->targetTreasury->name ?? $t->targetBankAccount->account_name ?? '-' }}
-                                @endif
+                                @php
+                                    $targetName = '-';
+                                    if ($t->reference_type === 'treasury') {
+                                        $targetName = optional(\App\Models\CashTreasury::find($t->reference_id))->name ?? '-';
+                                    } elseif ($t->reference_type === 'bank') {
+                                        $targetName = optional(\App\Models\BankAccount::find($t->reference_id))->account_name ?? '-';
+                                    } elseif ($t->reference_type === 'account') {
+                                        $targetName = optional(\App\Models\Account::find($t->reference_id))->name ?? 'حساب مالي';
+                                    } else {
+                                        $targetName = $t->targetTreasury->name ?? $t->targetBankAccount->account_name ?? '-';
+                                    }
+                                @endphp
+                                {{ $targetName }}
                             </td>
                             <td class="px-4 py-3 text-left font-mono text-sm font-bold text-emerald-600">{{ number_format($t->amount, 2) }}</td>
                             <td class="px-4 py-3 text-gray-600 max-w-xs truncate">{{ $t->description ?? '-' }}</td>
