@@ -247,7 +247,7 @@ class ReportController extends TenantAwareController
             $beforePeriod = $allLines->filter(fn($l) => $l->journalEntry->date < $dateFrom);
             $isDebit = in_array($account?->type, ['asset', 'assets', 'expense', 'expenses']);
             $netBefore = $beforePeriod->sum('debit') - $beforePeriod->sum('credit');
-            $openingBalance = $isDebit ? $netBefore : -$netBefore;
+            $openingBalance = ($isDebit ? $netBefore : -$netBefore) + ($account->opening_balance ?? 0);
 
             $lines = $allLines->filter(fn($l) => $l->journalEntry->date >= $dateFrom && $l->journalEntry->date <= $dateTo)
                 ->sortBy(fn($l) => $l->journalEntry->date . sprintf('%010d', $l->id))
