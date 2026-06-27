@@ -123,6 +123,8 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::get('transfers', [\App\Http\Controllers\TransferController::class, 'index'])->name('transfers.index');
     Route::get('transfers/create', [\App\Http\Controllers\TransferController::class, 'create'])->name('transfers.create');
     Route::post('transfers', [\App\Http\Controllers\TransferController::class, 'store'])->name('transfers.store');
+    Route::get('transfers/{id}/edit', [\App\Http\Controllers\TransferController::class, 'edit'])->name('transfers.edit');
+    Route::put('transfers/{id}', [\App\Http\Controllers\TransferController::class, 'update'])->name('transfers.update');
     Route::delete('transfers/{id}', [\App\Http\Controllers\TransferController::class, 'destroy'])->name('transfers.destroy');
 
     Route::get('/reports/trial-balance', [ReportController::class, 'trialBalance'])->name('reports.trial-balance');
