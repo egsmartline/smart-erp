@@ -1,16 +1,16 @@
-<div wire:click.away="clearSearch">
+<div>
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         @if($showCustomerSearch)
-        <div class="relative" wire:click.away="filteredCustomers=[]; filteredSuppliers=[]">
+        <div class="relative" wire:key="customer-search" x-data="{ open: false }" @click.outside="open = false; $wire.filteredCustomers = []; $wire.filteredSuppliers = []">
             <label class="mb-1 block text-sm font-medium text-gray-700">
                 {{ $type === 'sale' ? 'العميل' : 'المورد' }} <span class="text-red-500">*</span>
             </label>
             @if($type === 'sale')
-                <input type="text" wire:model.live="customerSearch"
+                <input type="text" wire:model.live="customerSearch" @focus="open = true"
                     placeholder="بحث عن عميل..." class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" autocomplete="off">
                 <input type="hidden" wire:model="customerId">
                 @if(count($filteredCustomers) > 0)
-                    <div class="absolute z-50 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-60 overflow-y-auto">
+                    <div class="absolute z-50 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-60 overflow-y-auto" x-show="open">
                         @foreach($filteredCustomers as $customer)
                             <div wire:click="selectCustomer({{ $customer->id }})" class="cursor-pointer px-3 py-2 text-sm hover:bg-blue-50 border-b border-gray-100">
                                 <div class="font-medium text-gray-900">{{ $customer->name }}</div>
@@ -20,11 +20,11 @@
                     </div>
                 @endif
             @else
-                <input type="text" wire:model.live="supplierSearch"
+                <input type="text" wire:model.live="supplierSearch" @focus="open = true"
                     placeholder="بحث عن مورد..." class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" autocomplete="off">
                 <input type="hidden" wire:model="supplierId">
                 @if(count($filteredSuppliers) > 0)
-                    <div class="absolute z-50 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-60 overflow-y-auto">
+                    <div class="absolute z-50 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-60 overflow-y-auto" x-show="open">
                         @foreach($filteredSuppliers as $supplier)
                             <div wire:click="selectSupplier({{ $supplier->id }})" class="cursor-pointer px-3 py-2 text-sm hover:bg-blue-50 border-b border-gray-100">
                                 <div class="font-medium text-gray-900">{{ $supplier->name }}</div>
@@ -120,11 +120,11 @@
                                     @endforeach
                                 </select>
                             @else
-                                <div class="relative">
-                                    <input type="text" wire:model.live="itemSearches.{{ $index }}"
+                                <div class="relative" wire:key="item-search-{{ $index }}" x-data="{ open: false }" @click.outside="open = false; if($wire.searchingLineIndex === {{ $index }}) { $wire.filteredItems = []; $wire.searchingLineIndex = null }">
+                                    <input type="text" wire:model.live="itemSearches.{{ $index }}" @focus="open = true"
                                         placeholder="بحث عن صنف..." class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" autocomplete="off">
                                     @if($searchingLineIndex === $index && count($filteredItems) > 0)
-                                        <div class="absolute z-50 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-60 overflow-y-auto">
+                                        <div class="absolute z-50 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-60 overflow-y-auto" x-show="open">
                                             @foreach($filteredItems as $item)
                                                 <div wire:click="selectItem({{ $item->id }}, {{ $index }})" class="cursor-pointer px-3 py-2 text-sm hover:bg-blue-50 border-b border-gray-100">
                                                     <div class="font-medium text-gray-900">{{ $item->name }}</div>
