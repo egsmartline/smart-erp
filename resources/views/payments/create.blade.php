@@ -60,9 +60,9 @@
                 </div>
 
                 <div id="account_field">
-                    <label for="account_id" class="mb-1 block text-sm font-medium text-gray-700">حساب المصروف</label>
+                    <label for="account_id" class="mb-1 block text-sm font-medium text-gray-700">الحساب المالي</label>
                     <select name="account_id" id="account_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                        <option value="">اختر حساب المصروف</option>
+                        <option value="">اختر الحساب المالي</option>
                         @foreach($accounts as $account)
                             <option value="{{ $account->id }}" {{ old('account_id') == $account->id ? 'selected' : '' }}>{{ $account->code }} - {{ $account->name }}</option>
                         @endforeach
@@ -163,7 +163,7 @@
                 const showBank = method === 'bank_transfer';
                 const showCheque = method === 'check';
 
-                accountField.style.display = isPayment ? 'block' : 'none';
+                accountField.style.display = 'block';
                 customerField.style.display = showCustomer ? 'block' : 'none';
                 supplierField.style.display = isPayment ? 'block' : 'none';
                 treasuryField.style.display = showTreasury ? 'block' : 'none';

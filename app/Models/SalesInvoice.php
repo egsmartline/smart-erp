@@ -34,7 +34,6 @@ class SalesInvoice extends Model
         'notes',
         'terms',
         'reference',
-
     ];
 
     protected function casts(): array

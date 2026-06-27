@@ -59,7 +59,7 @@ class CashTreasuryController extends TenantAwareController
 
         $txnData = collect();
 
-        foreach (TreasuryTransaction::where('treasury_id', $cashTreasury->id)->with('user')->orderBy('created_at', 'desc')->cursor() as $t) {
+        foreach (TreasuryTransaction::where('treasury_id', $cashTreasury->id)->where(function ($q) { $q->where('reference_type', '!=', 'payment')->orWhereNull('reference_type'); })->with('user')->orderBy('created_at', 'desc')->cursor() as $t) {
             $txnData->push((object) [
                 'date' => $t->created_at->format('Y-m-d'),
                 'type' => $t->type,

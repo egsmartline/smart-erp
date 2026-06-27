@@ -43,7 +43,7 @@ class JournalController extends Controller
             'code' => 'required|string|max:10|unique:journals,code,NULL,id,tenant_id,' . Auth::user()->tenant_id,
             'name' => 'required|string|max:255',
             'type' => 'required|in:sale,purchase,cash,bank,general',
-            'default_account_id' => 'nullable|exists:accounts,id',
+            'default_account_id' => 'nullable|exists:chart_of_accounts,id',
             'currency_id' => 'nullable|exists:currencies,id',
             'is_active' => 'boolean',
         ]);
@@ -84,7 +84,7 @@ class JournalController extends Controller
             'code' => 'required|string|max:10|unique:journals,code,' . $journal->id . ',id,tenant_id,' . Auth::user()->tenant_id,
             'name' => 'required|string|max:255',
             'type' => 'required|in:sale,purchase,cash,bank,general',
-            'default_account_id' => 'nullable|exists:accounts,id',
+            'default_account_id' => 'nullable|exists:chart_of_accounts,id',
             'currency_id' => 'nullable|exists:currencies,id',
             'is_active' => 'boolean',
         ]);

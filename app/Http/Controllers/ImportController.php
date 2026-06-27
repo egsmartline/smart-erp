@@ -62,8 +62,7 @@ class ImportController extends TenantAwareController
                 return back()->withErrors(['error' => 'الملف فارغ']);
             }
 
-            // First row = headers, build column map
-            $headers = array_map('trim', $rows[0]);
+            $headers = $rows[0];
             $colMap = $this->buildItemColMap($headers);
             session()->flash('import_debug', [
                 'headers_raw' => $rows[0],
@@ -73,6 +72,14 @@ class ImportController extends TenantAwareController
             ]);
             $count = 0;
 
+            $debug = [
+                'headers_raw' => $headers,
+                'headers_trimmed' => array_map('trim', $headers),
+                'colMap' => $colMap,
+                'first_data_row' => $rows[1] ?? null,
+            ];
+
+            $skipped = 0;
             for ($i = 1; $i < count($rows); $i++) {
                 $row = $rows[$i];
                 $name = $this->getVal($row, $colMap, 'name');
@@ -96,34 +103,57 @@ class ImportController extends TenantAwareController
                 }
                 $unitId = $this->unitCache[$unitName] ?? null;
 
+                $sku = $this->getVal($row, $colMap, 'sku');
+                if ($sku && Item::where('tenant_id', $tenantId)->where('sku', $sku)->withTrashed()->exists()) {
+                    $base = $sku;
+                    $n = 1;
+                    while (Item::where('tenant_id', $tenantId)->where('sku', $base . '-' . $n)->withTrashed()->exists()) {
+                        $n++;
+                    }
+                    $sku = $base . '-' . $n;
+                    $skipped++;
+                }
+
                 Item::create([
                     'tenant_id' => $tenantId,
                     'name' => $name,
-                    'sku' => $this->getVal($row, $colMap, 'sku'),
+                    'sku' => $sku,
                     'barcode' => $this->getVal($row, $colMap, 'barcode'),
                     'category_id' => $categoryId,
                     'unit_id' => $unitId,
-                    'cost_price' => $this->getVal($row, $colMap, 'cost_price') ?? 0,
+                    'cost_price' => $this->parseNum($this->getVal($row, $colMap, 'cost_price')),
                     'purchase_currency_id' => $this->resolveCurrency($tenantId, $this->getVal($row, $colMap, 'purchase_currency')),
-                    'selling_price' => $this->getVal($row, $colMap, 'selling_price') ?? 0,
+                    'selling_price' => $this->parseNum($this->getVal($row, $colMap, 'selling_price')),
                     'sales_currency_id' => $this->resolveCurrency($tenantId, $this->getVal($row, $colMap, 'sales_currency')),
-                    'tax_rate' => $this->getVal($row, $colMap, 'tax_rate') ?? 0,
-                    'minimum_stock' => $this->getVal($row, $colMap, 'minimum_stock') ?? 0,
-                    'maximum_stock' => $this->getVal($row, $colMap, 'maximum_stock') ?? 0,
-                    'reorder_level' => $this->getVal($row, $colMap, 'reorder_level') ?? 0,
-                    'opening_stock' => $this->getVal($row, $colMap, 'opening_stock') ?? 0,
-                    'has_serial_numbers' => in_array($this->getVal($row, $colMap, 'has_serial_numbers') ?? 'لا', ['نعم', 'yes', '1', 1], true),
-                    'has_expiry_date' => in_array($this->getVal($row, $colMap, 'has_expiry_date') ?? 'لا', ['نعم', 'yes', '1', 1], true),
+                    'tax_rate' => $this->parseNum($this->getVal($row, $colMap, 'tax_rate')),
+                    'minimum_stock' => $this->parseNum($this->getVal($row, $colMap, 'minimum_stock')),
+                    'maximum_stock' => $this->parseNum($this->getVal($row, $colMap, 'maximum_stock')),
+                    'reorder_level' => $this->parseNum($this->getVal($row, $colMap, 'reorder_level')),
+                    'opening_stock' => $this->parseNum($this->getVal($row, $colMap, 'opening_stock')),
+                    'has_serial_numbers' => in_array(mb_strtolower(trim($this->getVal($row, $colMap, 'has_serial_numbers') ?? 'لا')), ['نعم', 'yes', '1', 1, 'true'], true),
+                    'has_expiry_date' => in_array(mb_strtolower(trim($this->getVal($row, $colMap, 'has_expiry_date') ?? 'لا')), ['نعم', 'yes', '1', 1, 'true'], true),
                     'description' => $this->getVal($row, $colMap, 'description'),
-                    'is_active' => in_array($this->getVal($row, $colMap, 'is_active') ?? 'نشط', ['نشط', 'active', '1', 1], true),
+                    'is_active' => in_array(mb_strtolower(trim($this->getVal($row, $colMap, 'is_active') ?? 'نشط')), ['نشط', 'active', '1', 1, 'true'], true),
                 ]);
                 $count++;
             }
 
-            return back()->with('success', "تم استيراد $count صنف بنجاح");
+            $msg = "تم استيراد $count صنف بنجاح";
+            if ($skipped > 0) {
+                $msg .= " (تم تعديل $skipped كود مكرر تلقائياً)";
+            }
+            return back()->with('success', $msg)->with('import_debug', $debug);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => 'خطأ: ' . $e->getMessage()]);
         }
+    }
+
+    private function parseNum($val)
+    {
+        if ($val === null || $val === '') return 0;
+        if (is_numeric($val)) return $val;
+        $cleaned = preg_replace('/[^0-9\.\-]/', '', $val);
+        return is_numeric($cleaned) ? $cleaned : 0;
     }
 
     private function getVal($row, $colMap, $field)
@@ -137,7 +167,8 @@ class ImportController extends TenantAwareController
     {
         $map = [
             'اسم الصنف' => 'name', 'اسم السلعة' => 'name', 'name' => 'name', 'item name' => 'name',
-            'الكود' => 'sku', 'رمز الصنف' => 'sku', 'رمز الصنف (SKU)' => 'sku', 'sku' => 'sku', 'code' => 'sku',
+            'الكود' => 'sku', 'رمز الصنف' => 'sku', 'sku' => 'sku', 'code' => 'sku',
+            'رمز الصنف (sku)' => 'sku', 'رمز الصنف (Sku)' => 'sku',
             'الباركود' => 'barcode', 'barcode' => 'barcode',
             'التصنيف' => 'category', 'category' => 'category',
             'الوحدة' => 'unit', 'unit' => 'unit',
@@ -156,16 +187,34 @@ class ImportController extends TenantAwareController
             'الحالة' => 'is_active', 'status' => 'is_active', 'is_active' => 'is_active',
         ];
 
+        $normalized = [];
+        foreach ($map as $headerText => $field) {
+            $normalized[$this->normalize($headerText)] = $field;
+        }
+
         $result = [];
         foreach ($headers as $idx => $header) {
-            $lower = mb_strtolower(trim($header));
-            if (isset($map[$lower])) {
-                $result[$map[$lower]] = $idx;
-            } elseif (isset($map[$header])) {
-                $result[$map[$header]] = $idx;
+            if ($header === null) continue;
+            $key = $this->normalize($header);
+            if (isset($normalized[$key])) {
+                $result[$normalized[$key]] = $idx;
             }
         }
         return $result;
+    }
+
+    private function normalize($str)
+    {
+        $str = trim($str);
+        // Remove BOM and other invisible characters
+        $str = preg_replace('/[\x00-\x1F\x7F\xA0]/u', '', $str);
+        // Normalize whitespace
+        $str = preg_replace('/\s+/u', ' ', $str);
+        // Lowercase
+        $str = mb_strtolower($str, 'UTF-8');
+        // Remove diacritics (Arabic tashkeel)
+        $str = preg_replace('/[\x{064B}-\x{065F}\x{0670}]/u', '', $str);
+        return $str;
     }
 
     private function resolveCurrency($tenantId, $code)

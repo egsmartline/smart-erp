@@ -120,6 +120,10 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::get('cash-treasuries/balances', [CashTreasuryController::class, 'balances'])->name('cash-treasuries.balances');
     Route::resource('cash-treasuries', CashTreasuryController::class);
     Route::resource('bank-accounts', BankAccountController::class);
+    Route::get('transfers', [\App\Http\Controllers\TransferController::class, 'index'])->name('transfers.index');
+    Route::get('transfers/create', [\App\Http\Controllers\TransferController::class, 'create'])->name('transfers.create');
+    Route::post('transfers', [\App\Http\Controllers\TransferController::class, 'store'])->name('transfers.store');
+    Route::delete('transfers/{id}', [\App\Http\Controllers\TransferController::class, 'destroy'])->name('transfers.destroy');
 
     Route::get('/reports/trial-balance', [ReportController::class, 'trialBalance'])->name('reports.trial-balance');
     Route::get('/reports/general-ledger', [ReportController::class, 'generalLedger'])->name('reports.general-ledger');
@@ -133,6 +137,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::get('/reports/inventory', [ReportController::class, 'inventoryReport'])->name('reports.inventory');
     Route::get('/reports/cash-flow', [ReportController::class, 'cashFlow'])->name('reports.cash-flow');
     Route::get('/reports/dashboard', [ReportController::class, 'dashboard'])->name('reports.dashboard');
+    Route::get('/account-statement', [ReportController::class, 'accountStatement'])->name('reports.account-statement');
 
     Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
     Route::put('/settings', [SettingController::class, 'update'])->name('settings.update');

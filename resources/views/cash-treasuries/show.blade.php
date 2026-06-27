@@ -56,14 +56,14 @@
                         <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
                             <td class="px-4 py-3 text-gray-600">{{ $t->date }}</td>
                             <td class="px-4 py-3">
-                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $t->type === 'receipt' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">
-                                    {{ $t->type === 'receipt' ? 'قبض' : 'صرف' }}
+                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ in_array($t->type, ['receipt', 'in', 'opening', 'transfer']) ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">
+                                    {{ $t->type === 'receipt' || $t->type === 'in' ? 'قبض' : ($t->type === 'out' ? 'صرف' : ($t->type === 'transfer' ? 'تحويل' : ($t->type === 'opening' ? 'رصيد افتتاحي' : 'صرف'))) }}
                                 </span>
                             </td>
                             <td class="px-4 py-3 text-gray-600">{{ $t->description }}</td>
                             <td class="px-4 py-3 text-gray-600">{{ $t->party }}</td>
-                            <td class="px-4 py-3 text-left font-mono text-sm font-bold {{ $t->type === 'receipt' ? 'text-emerald-600' : 'text-red-600' }}">
-                                {{ $t->type === 'receipt' ? '+' : '-' }}{{ number_format($t->amount, 2) }}
+                            <td class="px-4 py-3 text-left font-mono text-sm font-bold {{ in_array($t->type, ['receipt', 'in', 'opening', 'transfer']) ? 'text-emerald-600' : 'text-red-600' }}">
+                                {{ in_array($t->type, ['receipt', 'in', 'opening', 'transfer']) ? '+' : '-' }}{{ number_format($t->amount, 2) }}
                             </td>
                             <td class="px-4 py-3 text-gray-600">{{ $t->user_name }}</td>
                         </tr>

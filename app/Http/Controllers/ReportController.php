@@ -220,6 +220,60 @@ class ReportController extends TenantAwareController
         return view('reports.cash-flow', compact('receipts', 'payments', 'netCashFlow', 'dateFrom', 'dateTo'));
     }
 
+    public function accountStatement(Request $request)
+    {
+        $accountId = $request->account_id;
+        $dateFrom = $request->date_from ?? now()->startOfYear()->toDateString();
+        $dateTo = $request->date_to ?? now()->toDateString();
+
+        $accounts = $this->tenantQuery(Account::class)->where('is_active', true)->orderBy('code')->get();
+
+        $lines = collect();
+        $openingBalance = 0;
+        $totalDebit = 0;
+        $totalCredit = 0;
+        $closingBalance = 0;
+
+        if ($accountId) {
+            $account = $accounts->firstWhere('id', $accountId);
+
+            $query = JournalEntryLine::where('tenant_id', $this->getTenantId())
+                ->where('account_id', $accountId)
+                ->whereHas('journalEntry', fn($q) => $q->where('is_posted', true))
+                ->with(['journalEntry', 'account']);
+
+            $allLines = $query->orderBy('id')->get();
+
+            $beforePeriod = $allLines->filter(fn($l) => $l->journalEntry->date < $dateFrom);
+            $isDebit = in_array($account?->type, ['asset', 'assets', 'expense', 'expenses']);
+            $netBefore = $beforePeriod->sum('debit') - $beforePeriod->sum('credit');
+            $openingBalance = $isDebit ? $netBefore : -$netBefore;
+
+            $lines = $allLines->filter(fn($l) => $l->journalEntry->date >= $dateFrom && $l->journalEntry->date <= $dateTo)
+                ->sortBy(fn($l) => $l->journalEntry->date . sprintf('%010d', $l->id))
+                ->values();
+
+            $running = $openingBalance;
+            $lines = $lines->map(function ($l) use ($isDebit, &$running) {
+                $l->running_balance = $isDebit
+                    ? $running + $l->debit - $l->credit
+                    : $running - $l->debit + $l->credit;
+                $running = $l->running_balance;
+                return $l;
+            });
+
+            $totalDebit = $lines->sum('debit');
+            $totalCredit = $lines->sum('credit');
+            $netChange = $totalDebit - $totalCredit;
+            $closingBalance = $isDebit ? $openingBalance + $netChange : $openingBalance - $netChange;
+        }
+
+        return view('reports.account-statement', compact(
+            'accounts', 'accountId', 'dateFrom', 'dateTo',
+            'lines', 'openingBalance', 'totalDebit', 'totalCredit', 'closingBalance'
+        ));
+    }
+
     public function dashboard(Request $request)
     {
         $totalItems = $this->tenantQuery(Item::class)->count();
