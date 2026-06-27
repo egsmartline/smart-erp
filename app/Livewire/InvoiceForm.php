@@ -192,7 +192,7 @@ class InvoiceForm extends Component
         $this->grandTotal = $this->subtotal - $this->totalDiscount - $this->discountAmount + $this->totalTax + $this->shippingAmount;
     }
 
-    public function searchCustomers(): void
+    public function updatedCustomerSearch(): void
     {
         if (strlen($this->customerSearch) >= 1) {
             $this->filteredCustomers = Customer::where('is_active', true)
@@ -208,6 +208,27 @@ class InvoiceForm extends Component
         }
     }
 
+    public function updatedItemSearches($value, $key): void
+    {
+        $index = (int) $key;
+        $this->searchingLineIndex = $index;
+
+        if (strlen($value) >= 1) {
+            $this->filteredItems = Item::where('is_active', true)
+                ->where(function ($q) use ($value) {
+                    $q->where('name', 'like', "%{$value}%")
+                      ->orWhere('name_ar', 'like', "%{$value}%")
+                      ->orWhere('sku', 'like', "%{$value}%")
+                      ->orWhere('barcode', 'like', "%{$value}%");
+                })
+                ->limit(10)
+                ->get();
+        } else {
+            $this->filteredItems = [];
+            $this->searchingLineIndex = null;
+        }
+    }
+
     public function selectCustomer($id): void
     {
         $customer = Customer::find($id);
@@ -218,7 +239,7 @@ class InvoiceForm extends Component
         }
     }
 
-    public function searchSuppliers(): void
+    public function updatedSupplierSearch(): void
     {
         if (strlen($this->supplierSearch) >= 1) {
             $this->filteredSuppliers = Supplier::where('is_active', true)
@@ -244,25 +265,6 @@ class InvoiceForm extends Component
         }
     }
 
-    public function searchItems(string $term, int $index): void
-    {
-        $this->searchingLineIndex = $index;
-
-        if (strlen($term) >= 1) {
-            $this->filteredItems = Item::where('is_active', true)
-                ->where(function ($q) use ($term) {
-                    $q->where('name', 'like', "%{$term}%")
-                      ->orWhere('name_ar', 'like', "%{$term}%")
-                      ->orWhere('sku', 'like', "%{$term}%")
-                      ->orWhere('barcode', 'like', "%{$term}%");
-                })
-                ->limit(10)
-                ->get();
-        } else {
-            $this->filteredItems = [];
-        }
-    }
-
     public function selectItem(int $itemId, int $index): void
     {
         $item = Item::find($itemId);
@@ -274,6 +276,7 @@ class InvoiceForm extends Component
             $this->lines[$index]['tax_rate'] = $item->tax_rate ?? 15;
         }
 
+        $this->itemSearches[$index] = $item->name ?? '';
         $this->filteredItems = [];
         $this->searchingLineIndex = null;
         $this->calculateTotals();
