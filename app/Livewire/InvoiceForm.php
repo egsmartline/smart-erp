@@ -282,6 +282,14 @@ class InvoiceForm extends Component
         $this->calculateTotals();
     }
 
+    public function clearSearch(): void
+    {
+        $this->filteredCustomers = [];
+        $this->filteredSuppliers = [];
+        $this->filteredItems = [];
+        $this->searchingLineIndex = null;
+    }
+
     public function getFormData(): array
     {
         $this->calculateTotals();
