@@ -130,6 +130,9 @@ class AccountController extends Controller
 
         $validated['is_active'] = $request->boolean('is_active', true);
 
+        $diff = $validated['opening_balance'] - ($account->opening_balance ?? 0);
+        $validated['current_balance'] = $account->current_balance + $diff;
+
         $account->update($validated);
 
         return redirect()->route('accounts.index')
