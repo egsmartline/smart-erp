@@ -17,8 +17,6 @@ use App\Models\SalesReturn;
 use App\Models\SalesReturnLine;
 use App\Models\PurchaseReturn;
 use App\Models\PurchaseReturnLine;
-use App\Models\SalesOrder;
-use App\Models\SalesOrderLine;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderLine;
 use App\Models\SalesDeliveryNote;
@@ -175,8 +173,7 @@ class SettingController extends TenantAwareController
                 'sales_delivery_notes',
                 'sales_invoice_lines',
                 'sales_invoices',
-                'sales_order_lines',
-                'sales_orders',
+
                 'sales_return_lines',
                 'sales_returns',
                 'stock_movements',

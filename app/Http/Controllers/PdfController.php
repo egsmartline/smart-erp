@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\SalesInvoice;
 use App\Models\PurchaseInvoice;
-use App\Models\SalesOrder;
 use App\Models\PurchaseOrder;
 use App\Models\Quotation;
 use App\Models\Company;
@@ -30,16 +29,6 @@ class PdfController extends TenantAwareController
         $pdf = Pdf::loadView('pdf.purchase-invoice', compact('invoice', 'company'));
         $pdf->setPaper('a4');
         return $pdf->download("فاتورة-شراء-{$invoice->invoice_number}.pdf");
-    }
-
-    public function salesOrder(SalesOrder $order)
-    {
-        if ($order->tenant_id !== $this->getTenantId()) abort(403);
-        $order->load(['customer', 'lines.item']);
-        $company = Company::where('tenant_id', $this->getTenantId())->first();
-        $pdf = Pdf::loadView('pdf.sales-order', compact('order', 'company'));
-        $pdf->setPaper('a4');
-        return $pdf->download("أمر-بيع-{$order->order_number}.pdf");
     }
 
     public function purchaseOrder(PurchaseOrder $order)

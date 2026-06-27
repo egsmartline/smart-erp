@@ -51,12 +51,6 @@ class PermissionSeeder extends Seeder
                 ['slug' => 'delete_purchase_invoices', 'name' => 'حذف فاتورة شراء'],
                 ['slug' => 'approve_purchase_invoices', 'name' => 'اعتماد فاتورة شراء'],
             ],
-            'sales_orders' => [
-                ['slug' => 'view_sales_orders', 'name' => 'عرض أوامر البيع'],
-                ['slug' => 'create_sales_orders', 'name' => 'إضافة أمر بيع'],
-                ['slug' => 'edit_sales_orders', 'name' => 'تعديل أمر بيع'],
-                ['slug' => 'delete_sales_orders', 'name' => 'حذف أمر بيع'],
-            ],
             'purchase_orders' => [
                 ['slug' => 'view_purchase_orders', 'name' => 'عرض أوامر الشراء'],
                 ['slug' => 'create_purchase_orders', 'name' => 'إضافة أمر شراء'],
@@ -219,7 +213,7 @@ class PermissionSeeder extends Seeder
                         'view_inventory_adjustments', 'create_inventory_adjustments',
                         'view_delivery_notes', 'create_delivery_notes',
                         'view_receipt_notes', 'create_receipt_notes',
-                        'view_sales_orders', 'view_purchase_orders',
+                        'view_purchase_orders',
                     ],
                 ],
                 'sales' => [
@@ -231,7 +225,6 @@ class PermissionSeeder extends Seeder
                         'view_customers', 'create_customers', 'edit_customers',
                         'view_items',
                         'view_sales_invoices', 'create_sales_invoices',
-                        'view_sales_orders', 'create_sales_orders', 'edit_sales_orders',
                         'view_sales_returns', 'create_sales_returns',
                         'view_quotations', 'create_quotations', 'edit_quotations', 'convert_quotations',
                         'view_delivery_notes', 'create_delivery_notes',

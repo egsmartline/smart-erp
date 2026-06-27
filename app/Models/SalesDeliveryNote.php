@@ -16,7 +16,7 @@ class SalesDeliveryNote extends Model
         'tenant_id',
         'delivery_number',
         'date',
-        'sales_order_id',
+
         'customer_id',
         'warehouse_id',
         'user_id',
@@ -34,11 +34,6 @@ class SalesDeliveryNote extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
-    }
-
-    public function salesOrder(): BelongsTo
-    {
-        return $this->belongsTo(SalesOrder::class);
     }
 
     public function customer(): BelongsTo

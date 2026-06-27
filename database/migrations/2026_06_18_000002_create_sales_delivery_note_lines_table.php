@@ -12,7 +12,6 @@ return new class extends Migration
             $table->id();
             $table->foreignId('tenant_id')->constrained()->onDelete('cascade');
             $table->foreignId('sales_delivery_note_id')->constrained()->onDelete('cascade');
-            $table->foreignId('sales_order_line_id')->constrained()->onDelete('cascade');
             $table->foreignId('item_id')->constrained()->onDelete('cascade');
             $table->decimal('quantity', 15, 2);
             $table->decimal('unit_price', 15, 2)->default(0);

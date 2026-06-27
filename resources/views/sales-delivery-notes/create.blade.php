@@ -24,20 +24,27 @@
             @csrf
             <input type="hidden" name="lines" id="linesInput">
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div>
-                    <label for="sales_order_id" class="mb-1 block text-sm font-medium text-gray-700">أمر البيع <span class="text-red-500">*</span></label>
-                    <select name="sales_order_id" id="sales_order_id" required
+                    <label for="customer_id" class="mb-1 block text-sm font-medium text-gray-700">العميل <span class="text-red-500">*</span></label>
+                    <select name="customer_id" id="customer_id" required
                         class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                        <option value="">اختر أمر البيع</option>
-                        @foreach($salesOrders as $order)
-                            <option value="{{ $order->id }}" data-number="{{ $order->order_number }}">
-                                {{ $order->order_number }} - {{ $order->customer->name ?? '' }}
-                            </option>
+                        <option value="">اختر العميل</option>
+                        @foreach($customers as $customer)
+                            <option value="{{ $customer->id }}">{{ $customer->name }}</option>
                         @endforeach
                     </select>
                 </div>
-
+                <div>
+                    <label for="warehouse_id" class="mb-1 block text-sm font-medium text-gray-700">المخزن <span class="text-red-500">*</span></label>
+                    <select name="warehouse_id" id="warehouse_id" required
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <option value="">اختر المخزن</option>
+                        @foreach($warehouses as $warehouse)
+                            <option value="{{ $warehouse->id }}">{{ $warehouse->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
                 <div>
                     <label for="date" class="mb-1 block text-sm font-medium text-gray-700">التاريخ <span class="text-red-500">*</span></label>
                     <input type="date" name="date" id="date" value="{{ old('date', now()->toDateString()) }}" required
@@ -52,27 +59,26 @@
                     placeholder="ملاحظات...">{{ old('notes') }}</textarea>
             </div>
 
-            {{-- Order Lines --}}
+            {{-- Items --}}
             <div class="border border-gray-200 rounded-lg overflow-hidden">
-                <div class="bg-gray-50 px-4 py-3 border-b border-gray-200">
-                    <h3 class="text-sm font-bold text-gray-700">أصناف أمر البيع</h3>
-                </div>
-                <div id="orderInfo" class="px-4 py-3 text-sm text-gray-500">
-                    الرجاء اختيار أمر بيع لعرض الأصناف
+                <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+                    <h3 class="text-sm font-bold text-gray-700">الأصناف</h3>
+                    <button type="button" id="addItemBtn" class="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 transition cursor-pointer">
+                        + إضافة صنف
+                    </button>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-right text-sm" id="linesTable" style="display:none;">
+                    <table class="w-full text-right text-sm">
                         <thead>
                             <tr class="border-b border-gray-200 bg-gray-50">
                                 <th class="px-4 py-2 font-semibold text-gray-600">الصنف</th>
-                                <th class="px-4 py-2 font-semibold text-gray-600">الكمية المطلوبة</th>
-                                <th class="px-4 py-2 font-semibold text-gray-600">الكمية المسلمة</th>
-                                <th class="px-4 py-2 font-semibold text-gray-600">الكمية للتسليم</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600">الكمية</th>
                                 <th class="px-4 py-2 font-semibold text-gray-600">سعر الوحدة</th>
                                 <th class="px-4 py-2 font-semibold text-gray-600">الإجمالي</th>
+                                <th class="px-4 py-2 font-semibold text-gray-600"></th>
                             </tr>
                         </thead>
-                        <tbody id="linesBody"></tbody>
+                        <tbody id="itemsBody"></tbody>
                     </table>
                 </div>
             </div>
@@ -91,85 +97,66 @@
 
     @push('scripts')
     <script>
-        document.getElementById('sales_order_id').addEventListener('change', function() {
-            const orderId = this.value;
-            const orderInfo = document.getElementById('orderInfo');
-            const linesTable = document.getElementById('linesTable');
-            const linesBody = document.getElementById('linesBody');
+        let itemIndex = 0;
+        const items = @json($items);
 
-            if (!orderId) {
-                orderInfo.textContent = 'الرجاء اختيار أمر بيع لعرض الأصناف';
-                orderInfo.style.display = 'block';
-                linesTable.style.display = 'none';
-                return;
-            }
-
-            fetch('/api/sales-orders/' + orderId + '/lines')
-                .then(function(r) { return r.json(); })
-                .then(function(data) {
-                    orderInfo.innerHTML = '<strong>العميل:</strong> ' + (data.customer?.name || '') +
-                        ' | <strong>المخزن:</strong> ' + (data.warehouse?.name || '');
-                    orderInfo.style.display = 'block';
-                    linesTable.style.display = 'table';
-                    linesBody.innerHTML = '';
-
-                    if (!data.lines || data.lines.length === 0) {
-                        linesBody.innerHTML = '<tr><td colspan="6" class="px-4 py-4 text-center text-gray-500">لا توجد أصناف في أمر البيع</td></tr>';
-                        return;
-                    }
-
-                    data.lines.forEach(function(line) {
-                        var remaining = line.quantity - (line.delivered_qty || 0);
-                        if (remaining <= 0) return;
-
-                        var tr = document.createElement('tr');
-                        tr.className = 'border-b border-gray-100';
-                        tr.innerHTML =
-                            '<td class="px-4 py-2">' + (line.item?.name || '') + '</td>' +
-                            '<td class="px-4 py-2">' + line.quantity + '</td>' +
-                            '<td class="px-4 py-2">' + (line.delivered_qty || 0) + '</td>' +
-                            '<td class="px-4 py-2"><input type="number" class="line-qty w-20 rounded border border-gray-300 px-2 py-1 text-sm" min="0" max="' + remaining + '" step="0.01" value="' + remaining + '" data-line-id="' + line.id + '" data-item-id="' + line.item_id + '" data-unit-price="' + line.unit_price + '" required></td>' +
-                            '<td class="px-4 py-2 unit-price">' + line.unit_price + '</td>' +
-                            '<td class="px-4 py-2 line-total">' + (remaining * line.unit_price).toFixed(2) + '</td>';
-                        linesBody.appendChild(tr);
-                    });
-
-                    document.querySelectorAll('.line-qty').forEach(function(input) {
-                        input.addEventListener('input', function() {
-                            var qty = parseFloat(this.value) || 0;
-                            var price = parseFloat(this.dataset.unitPrice) || 0;
-                            var totalTd = this.closest('tr').querySelector('.line-total');
-                            totalTd.textContent = (qty * price).toFixed(2);
-                        });
-                    });
-                })
-                .catch(function() {
-                    orderInfo.textContent = 'حدث خطأ في تحميل البيانات';
-                });
+        document.getElementById('addItemBtn').addEventListener('click', function() {
+            addItemRow();
         });
 
+        function addItemRow(data) {
+            const tbody = document.getElementById('itemsBody');
+            const tr = document.createElement('tr');
+            tr.className = 'border-b border-gray-100';
+            tr.dataset.index = itemIndex;
+            tr.innerHTML =
+                '<td class="px-4 py-2">' +
+                    '<select name="items[' + itemIndex + '][item_id]" class="item-select w-40 rounded border border-gray-300 px-2 py-1 text-sm" required>' +
+                        '<option value="">اختر صنف</option>' +
+                        items.map(function(i) { return '<option value="' + i.id + '"' + (data && data.item_id === i.id ? ' selected' : '') + '>' + i.name + ' (' + (i.sku || '') + ')</option>'; }).join('') +
+                    '</select>' +
+                '</td>' +
+                '<td class="px-4 py-2"><input type="number" class="item-qty w-20 rounded border border-gray-300 px-2 py-1 text-sm" min="0.01" step="0.01" value="' + (data ? data.quantity : 1) + '" required></td>' +
+                '<td class="px-4 py-2"><input type="number" class="item-price w-24 rounded border border-gray-300 px-2 py-1 text-sm" min="0" step="0.01" value="' + (data ? data.unit_price : 0) + '" required></td>' +
+                '<td class="px-4 py-2 item-total font-medium">' + (data ? (data.quantity * data.unit_price).toFixed(2) : '0.00') + '</td>' +
+                '<td class="px-4 py-2"><button type="button" class="remove-item rounded p-1 text-red-500 hover:bg-red-50 transition cursor-pointer" onclick="this.closest(\'tr\').remove()">✕</button></td>';
+            tbody.appendChild(tr);
+            itemIndex++;
+
+            tr.querySelector('.item-qty').addEventListener('input', updateRowTotal);
+            tr.querySelector('.item-price').addEventListener('input', updateRowTotal);
+        }
+
+        function updateRowTotal() {
+            const tr = this.closest('tr');
+            const qty = parseFloat(tr.querySelector('.item-qty').value) || 0;
+            const price = parseFloat(tr.querySelector('.item-price').value) || 0;
+            tr.querySelector('.item-total').textContent = (qty * price).toFixed(2);
+        }
+
         document.getElementById('deliveryForm').addEventListener('submit', function(e) {
-            var rows = document.querySelectorAll('#linesBody tr:not([colspan])');
-            var lines = [];
-            var valid = true;
+            const rows = document.querySelectorAll('#itemsBody tr');
+            const lines = [];
+            let valid = true;
 
             rows.forEach(function(row) {
-                var qtyInput = row.querySelector('.line-qty');
-                if (!qtyInput) return;
-                var qty = parseFloat(qtyInput.value) || 0;
-                if (qty <= 0) return;
-
+                const itemSelect = row.querySelector('.item-select');
+                const qtyInput = row.querySelector('.item-qty');
+                const priceInput = row.querySelector('.item-price');
+                const itemId = parseInt(itemSelect.value);
+                const qty = parseFloat(qtyInput.value) || 0;
+                const price = parseFloat(priceInput.value) || 0;
+                if (!itemId || qty <= 0) return;
                 lines.push({
-                    sales_order_line_id: parseInt(qtyInput.dataset.lineId),
-                    item_id: parseInt(qtyInput.dataset.itemId),
+                    item_id: itemId,
                     quantity: qty,
-                    unit_price: parseFloat(qtyInput.dataset.unitPrice) || 0,
-                    total: qty * (parseFloat(qtyInput.dataset.unitPrice) || 0),
+                    unit_price: price,
+                    total: qty * price,
                 });
             });
 
             if (lines.length === 0) {
-                alert('الرجاء إدخال كمية صالحة للتسليم على الأقل');
+                alert('الرجاء إدخال صنف واحد على الأقل');
                 e.preventDefault();
                 return;
             }
