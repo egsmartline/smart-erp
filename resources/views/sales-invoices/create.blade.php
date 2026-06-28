@@ -151,8 +151,15 @@
     </form>
 </x-app-layout>
 
+<div id="js-debug" style="margin: 10px 0; padding: 12px; border: 2px solid red; background: #fff3f3; border-radius: 8px; font-size: 14px;">
+    <strong>🔍 JavaScript Debug:</strong> <span id="js-status">⏳ جاري التحميل...</span>
+</div>
+
 <script>
 (function() {
+    var dbg = document.getElementById('js-status');
+    if (!dbg) { alert('NO DEBUG ELEMENT'); return; }
+
     var lineIdx = 0;
     var itemsData = <?php echo json_encode($items->map(fn($i) => [
         'id' => $i->id,
@@ -162,10 +169,14 @@
         'tax' => $i->tax_rate ?? 15,
     ])->values()->all()); ?>;
 
+    dbg.textContent = '✅ Script loaded. Items: ' + itemsData.length + ' | IDs: ' + itemsData.map(function(x){return x.id}).join(',');
+
     var tbody = document.getElementById('lines-tbody');
-    if (!tbody) return;
+    if (!tbody) { dbg.textContent += ' | ❌ tbody NOT FOUND!'; return; }
+    dbg.textContent += ' | ✅ tbody found';
 
     function addLine() {
+        try {
         var idx = lineIdx++;
         var tr = document.createElement('tr');
         tr.className = 'border-b border-gray-100';
@@ -257,6 +268,7 @@
         tr.appendChild(td7);
         tr.appendChild(td8);
         tbody.appendChild(tr);
+        } catch(e) { dbg.textContent = '❌ addLine error: ' + e.message; }
     }
 
     function getRow(el) {
@@ -307,53 +319,60 @@
         document.getElementById('tot-grand').textContent = grand.toFixed(2);
     }
 
-    document.getElementById('btn-add-line').addEventListener('click', function() {
-        addLine();
-    });
+    try {
+        document.getElementById('btn-add-line').addEventListener('click', function() {
+            dbg.textContent += ' | clicked add';
+            addLine();
+        });
 
-    document.getElementById('items-app').addEventListener('change', function(e) {
-        var target = e.target;
-        if (target.tagName === 'SELECT' && target.name.indexOf('[item_id]') > -1) {
-            var tr = getRow(target);
-            if (!tr) return;
-            var idx = parseInt(tr.dataset.idx);
-            var opt = target.options[target.selectedIndex];
-            if (opt && opt.value) {
-                var price = parseFloat(opt.dataset.price) || 0;
-                var tax = parseFloat(opt.dataset.tax) || 15;
-                tr.querySelector('[name$="[unit_price]"]').value = price;
-                tr.querySelector('[name$="[tax_rate]"]').value = tax;
-                tr.querySelector('[name$="[quantity]"]').value = '1';
+        document.getElementById('items-app').addEventListener('change', function(e) {
+            var target = e.target;
+            if (target.tagName === 'SELECT' && target.name.indexOf('[item_id]') > -1) {
+                var tr = getRow(target);
+                if (!tr) return;
+                var idx = parseInt(tr.dataset.idx);
+                var opt = target.options[target.selectedIndex];
+                if (opt && opt.value) {
+                    var price = parseFloat(opt.dataset.price) || 0;
+                    var tax = parseFloat(opt.dataset.tax) || 15;
+                    tr.querySelector('[name$="[unit_price]"]').value = price;
+                    tr.querySelector('[name$="[tax_rate]"]').value = tax;
+                    tr.querySelector('[name$="[quantity]"]').value = '1';
+                    calcRow(idx);
+                }
+            }
+        });
+
+        document.getElementById('items-app').addEventListener('input', function(e) {
+            var target = e.target;
+            if (target.tagName === 'INPUT' && target.type === 'number') {
+                var tr = getRow(target);
+                if (!tr) return;
+                var idx = parseInt(tr.dataset.idx);
                 calcRow(idx);
             }
-        }
-    });
+        });
 
-    document.getElementById('items-app').addEventListener('input', function(e) {
-        var target = e.target;
-        if (target.tagName === 'INPUT' && target.type === 'number') {
-            var tr = getRow(target);
-            if (!tr) return;
-            var idx = parseInt(tr.dataset.idx);
-            calcRow(idx);
-        }
-    });
+        document.getElementById('discount-amount').addEventListener('input', calcTotals);
+        document.getElementById('shipping-amount').addEventListener('input', calcTotals);
 
-    document.getElementById('discount-amount').addEventListener('input', calcTotals);
-    document.getElementById('shipping-amount').addEventListener('input', calcTotals);
+        document.getElementById('items-app').addEventListener('click', function(e) {
+            var target = e.target;
+            if (target.classList.contains('btn-del-line') || target.closest('.btn-del-line')) {
+                var btn = target.classList.contains('btn-del-line') ? target : target.closest('.btn-del-line');
+                var tr = getRow(btn);
+                if (!tr) return;
+                if (tbody.querySelectorAll('tr').length <= 1) return;
+                tr.parentNode.removeChild(tr);
+                calcTotals();
+            }
+        });
 
-    document.getElementById('items-app').addEventListener('click', function(e) {
-        var target = e.target;
-        if (target.classList.contains('btn-del-line') || target.closest('.btn-del-line')) {
-            var btn = target.classList.contains('btn-del-line') ? target : target.closest('.btn-del-line');
-            var tr = getRow(btn);
-            if (!tr) return;
-            if (tbody.querySelectorAll('tr').length <= 1) return;
-            tr.parentNode.removeChild(tr);
-            calcTotals();
-        }
-    });
-
-    addLine();
+        addLine();
+        dbg.textContent += ' | ✅ init complete';
+    } catch(e) {
+        dbg.textContent += ' | ❌ INIT ERROR: ' + e.message;
+        alert('JavaScript Error: ' + e.message);
+    }
 })();
 </script>
