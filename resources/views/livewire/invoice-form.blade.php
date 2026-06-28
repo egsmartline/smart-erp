@@ -8,7 +8,7 @@
             @if($type === 'sale')
                 <input type="text" wire:model.live="customerSearch" @focus="open = true"
                     placeholder="بحث عن عميل..." class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" autocomplete="off">
-                <input type="hidden" name="customer_id" :value="$wire.customerId">
+                <input type="hidden" name="customer_id">
                 @if(count($filteredCustomers) > 0)
                     <div class="absolute z-50 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-60 overflow-y-auto" x-show="open">
                         @foreach($filteredCustomers as $customer)
@@ -22,7 +22,7 @@
             @else
                 <input type="text" wire:model.live="supplierSearch" @focus="open = true"
                     placeholder="بحث عن مورد..." class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" autocomplete="off">
-                <input type="hidden" name="supplier_id" :value="$wire.supplierId">
+                <input type="hidden" name="supplier_id">
                 @if(count($filteredSuppliers) > 0)
                     <div class="absolute z-50 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-60 overflow-y-auto" x-show="open">
                         @foreach($filteredSuppliers as $supplier)
@@ -134,7 +134,7 @@
                                         </div>
                                     @endif
                                 </div>
-                                <input type="hidden" name="lines[{{ $index }}][item_id]" :value="$wire.lines[{{ $index }}].item_id">
+                                <input type="hidden" name="lines[{{ $index }}][item_id]">
                             @endif
                         </td>
                         <td class="px-3 py-2">
@@ -227,13 +227,13 @@
         </div>
     @endif
 
-    {{-- Hidden inputs for form POST (Alpine :value binds to Livewire $wire directly) --}}
+    {{-- Hidden inputs for form POST (synced from $wire before submit) --}}
     @foreach($lines as $index => $line)
-        <input type="hidden" name="lines[{{ $index }}][item_id]" :value="$wire.lines[{{ $index }}].item_id">
-        <input type="hidden" name="lines[{{ $index }}][description]" :value="$wire.lines[{{ $index }}].description">
-        <input type="hidden" name="lines[{{ $index }}][quantity]" :value="$wire.lines[{{ $index }}].quantity">
-        <input type="hidden" name="lines[{{ $index }}][unit_price]" :value="$wire.lines[{{ $index }}].unit_price">
-        <input type="hidden" name="lines[{{ $index }}][discount_percent]" :value="$wire.lines[{{ $index }}].discount_percent">
-        <input type="hidden" name="lines[{{ $index }}][tax_rate]" :value="$wire.lines[{{ $index }}].tax_rate">
+        <input type="hidden" name="lines[{{ $index }}][item_id]">
+        <input type="hidden" name="lines[{{ $index }}][description]">
+        <input type="hidden" name="lines[{{ $index }}][quantity]">
+        <input type="hidden" name="lines[{{ $index }}][unit_price]">
+        <input type="hidden" name="lines[{{ $index }}][discount_percent]">
+        <input type="hidden" name="lines[{{ $index }}][tax_rate]">
     @endforeach
 </div>
