@@ -115,7 +115,7 @@
                                     <option value="">اختر صنف</option>
                                     @foreach($allItems as $item)
                                         <option value="{{ $item->id }}" {{ ($line['item_id'] ?? '') == $item->id ? 'selected' : '' }}>
-                                            {{ $item->name }} - {{ $item->sku ?? '' }} | @if($type === 'sale') سعر البيع: {{ number_format($item->selling_price ?? 0, 2) }} @else سعر التكلفة: {{ number_format($item->cost_price ?? 0, 2) }} @endif
+                                            {{ $item->name }} - {{ $item->sku ?? '' }} | @if($type === 'sale') سعر البيع: {{ number_format($item->selling_price ?? 0, 2) }} @else سعر التكلفة: {{ number_format($item->purchase_price ?? 0, 2) }} @endif
                                         </option>
                                     @endforeach
                                 </select>
