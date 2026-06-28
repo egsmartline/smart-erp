@@ -19,6 +19,8 @@ class SalesInvoice extends Model
         'cashier_id',
         'invoice_number',
         'date',
+        'due_date',
+        'shipping_amount',
         'subtotal',
         'discount_percent',
         'discount_amount',
@@ -40,6 +42,7 @@ class SalesInvoice extends Model
     {
         return [
             'date' => 'date',
+            'due_date' => 'date',
             'subtotal' => 'decimal:2',
             'discount_percent' => 'decimal:2',
             'discount_amount' => 'decimal:2',
