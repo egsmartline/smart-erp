@@ -238,19 +238,15 @@
     @endforeach
 </div>
 
-@push('scripts')
 <script>
     window.syncInvoiceForm = function(form) {
-        let wireEl = form.querySelector('[wire\\:id]');
-        if (!wireEl || !wireEl.__livewire) return true;
-        let lw = wireEl.__livewire;
         let s = function(name, val) {
             let el = form.querySelector('[name="' + name + '"]');
             if (el) el.value = val ?? '';
         };
-        s('customer_id', lw.customerId);
-        s('supplier_id', lw.supplierId);
-        let lines = lw.lines;
+        s('customer_id', $wire.customerId);
+        s('supplier_id', $wire.supplierId);
+        let lines = $wire.lines;
         for (let i = 0; i < lines.length; i++) {
             let ln = lines[i];
             s('lines[' + i + '][item_id]', ln.item_id);
@@ -263,4 +259,3 @@
         return true;
     };
 </script>
-@endpush
