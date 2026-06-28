@@ -169,8 +169,10 @@ class SalesInvoiceController extends TenantAwareController
         $salesInvoice->load('lines.item');
         $customers = $this->tenantQuery(Customer::class)->where('is_active', true)->get();
         $warehouses = $this->tenantQuery(Warehouse::class)->where('is_active', true)->get();
+        $items = Item::where('is_active', true)->get();
+        $currencies = Currency::where('is_active', true)->get();
 
-        return view('sales-invoices.edit', compact('salesInvoice', 'customers', 'warehouses'));
+        return view('sales-invoices.edit', compact('salesInvoice', 'customers', 'warehouses', 'items', 'currencies'));
     }
 
     public function update(Request $request, SalesInvoice $salesInvoice)
