@@ -1,0 +1,3 @@
+[submodule "acc"]
+	path = acc
+	url = git@github.com:egsmartline/smart-erp.git
