@@ -111,7 +111,7 @@
                         <td class="px-3 py-2 text-gray-500">{{ $index + 1 }}</td>
                         <td class="px-3 py-2">
                             @if($showItemSelect)
-                                <select wire:model.live="lines.{{ $index }}.item_id" class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                                <select name="lines[{{ $index }}][item_id]" wire:model.live="lines.{{ $index }}.item_id" class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                                     <option value="">اختر صنف</option>
                                     @foreach($allItems as $item)
                                         <option value="{{ $item->id }}" {{ ($line['item_id'] ?? '') == $item->id ? 'selected' : '' }}>
@@ -134,23 +134,22 @@
                                         </div>
                                     @endif
                                 </div>
-                                <input type="hidden" name="lines[{{ $index }}][item_id]">
                             @endif
                         </td>
                         <td class="px-3 py-2">
-                            <input type="number" wire:model.live="lines.{{ $index }}.quantity" value="{{ $line['quantity'] ?? 1 }}" step="0.01" min="0.01" wire:key="qty-{{ $index }}-{{ $line['quantity'] ?? 1 }}"
+                            <input type="number" name="lines[{{ $index }}][quantity]" wire:model.live="lines.{{ $index }}.quantity" value="{{ $line['quantity'] ?? 1 }}" step="0.01" min="0.01" wire:key="qty-{{ $index }}-{{ $line['quantity'] ?? 1 }}"
                                 class="w-20 rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         </td>
                         <td class="px-3 py-2">
-                            <input type="number" wire:model.live="lines.{{ $index }}.unit_price" value="{{ $line['unit_price'] ?? 0 }}" step="0.01" min="0" wire:key="price-{{ $index }}-{{ $line['unit_price'] ?? 0 }}"
+                            <input type="number" name="lines[{{ $index }}][unit_price]" wire:model.live="lines.{{ $index }}.unit_price" value="{{ $line['unit_price'] ?? 0 }}" step="0.01" min="0" wire:key="price-{{ $index }}-{{ $line['unit_price'] ?? 0 }}"
                                 class="w-24 rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         </td>
                         <td class="px-3 py-2">
-                            <input type="number" wire:model.live="lines.{{ $index }}.discount_percent" step="0.01" min="0" max="100"
+                            <input type="number" name="lines[{{ $index }}][discount_percent]" wire:model.live="lines.{{ $index }}.discount_percent" step="0.01" min="0" max="100"
                                 class="w-16 rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         </td>
                         <td class="px-3 py-2">
-                            <input type="number" wire:model.live="lines.{{ $index }}.tax_rate" step="0.01" min="0" max="100"
+                            <input type="number" name="lines[{{ $index }}][tax_rate]" wire:model.live="lines.{{ $index }}.tax_rate" step="0.01" min="0" max="100"
                                 class="w-16 rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         </td>
                         <td class="px-3 py-3 text-left font-mono text-sm font-medium text-gray-900">
@@ -227,35 +226,4 @@
         </div>
     @endif
 
-    {{-- Hidden inputs for form POST (synced from $wire before submit) --}}
-    @foreach($lines as $index => $line)
-        <input type="hidden" name="lines[{{ $index }}][item_id]">
-        <input type="hidden" name="lines[{{ $index }}][description]">
-        <input type="hidden" name="lines[{{ $index }}][quantity]">
-        <input type="hidden" name="lines[{{ $index }}][unit_price]">
-        <input type="hidden" name="lines[{{ $index }}][discount_percent]">
-        <input type="hidden" name="lines[{{ $index }}][tax_rate]">
-    @endforeach
 </div>
-
-<script>
-    window.syncInvoiceForm = function(form) {
-        let s = function(name, val) {
-            let el = form.querySelector('[name="' + name + '"]');
-            if (el) el.value = val ?? '';
-        };
-        s('customer_id', $wire.customerId);
-        s('supplier_id', $wire.supplierId);
-        let lines = $wire.lines;
-        for (let i = 0; i < lines.length; i++) {
-            let ln = lines[i];
-            s('lines[' + i + '][item_id]', ln.item_id);
-            s('lines[' + i + '][description]', ln.description);
-            s('lines[' + i + '][quantity]', ln.quantity);
-            s('lines[' + i + '][unit_price]', ln.unit_price);
-            s('lines[' + i + '][discount_percent]', ln.discount_percent);
-            s('lines[' + i + '][tax_rate]', ln.tax_rate);
-        }
-        return true;
-    };
-</script>

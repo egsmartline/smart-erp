@@ -8,7 +8,7 @@
         </div>
     </x-slot>
 
-    <form action="{{ route('quotations.update', $quotation) }}" method="POST" onsubmit="return syncInvoiceForm(this)">
+    <form action="{{ route('quotations.update', $quotation) }}" method="POST">
         @csrf
         @method('PUT')
         @livewire('invoice-form', ['type' => 'sale', 'invoiceId' => $quotation->id, 'customerId' => $quotation->customer_id, 'showCustomerSearch' => false, 'showItemSelect' => true])

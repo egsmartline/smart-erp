@@ -9,7 +9,7 @@
         </div>
     </x-slot>
 
-    <form action="{{ route('sales-invoices.store') }}" method="POST" id="invoiceForm" onsubmit="return syncInvoiceForm(this)">
+    <form action="{{ route('sales-invoices.store') }}" method="POST" id="invoiceForm">
         @csrf
         @livewire('invoice-form', ['type' => 'sale', 'warehouseId' => $warehouses->first()->id ?? null, 'showCustomerSearch' => false, 'showItemSelect' => true])
 
