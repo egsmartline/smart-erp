@@ -39,8 +39,8 @@
                     </div>
                     <div class="text-left">
                         <p class="text-xs text-gray-500">التاريخ والمستحق</p>
-                        <p class="font-medium text-gray-900">{{ $salesInvoice->date->format('Y-m-d') }}</p>
-                        <p class="text-sm text-gray-600">مستحق: {{ $salesInvoice->due_date->format('Y-m-d') }}</p>
+                        <p class="font-medium text-gray-900">{{ $salesInvoice->date ? $salesInvoice->date->format('Y-m-d') : '-' }}</p>
+                        <p class="text-sm text-gray-600">مستحق: {{ $salesInvoice->due_date ? $salesInvoice->due_date->format('Y-m-d') : '-' }}</p>
                     </div>
                 </div>
 
