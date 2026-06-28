@@ -8,7 +8,7 @@
             @if($type === 'sale')
                 <input type="text" wire:model.live="customerSearch" @focus="open = true"
                     placeholder="بحث عن عميل..." class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" autocomplete="off">
-                <input type="hidden" wire:model="customerId">
+                <input type="hidden" name="customer_id" :value="$wire.customerId">
                 @if(count($filteredCustomers) > 0)
                     <div class="absolute z-50 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-60 overflow-y-auto" x-show="open">
                         @foreach($filteredCustomers as $customer)
@@ -22,7 +22,7 @@
             @else
                 <input type="text" wire:model.live="supplierSearch" @focus="open = true"
                     placeholder="بحث عن مورد..." class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" autocomplete="off">
-                <input type="hidden" wire:model="supplierId">
+                <input type="hidden" name="supplier_id" :value="$wire.supplierId">
                 @if(count($filteredSuppliers) > 0)
                     <div class="absolute z-50 mt-1 w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-60 overflow-y-auto" x-show="open">
                         @foreach($filteredSuppliers as $supplier)
@@ -49,7 +49,7 @@
 
         <div>
             <label class="mb-1 block text-sm font-medium text-gray-700">المخزن <span class="text-red-500">*</span></label>
-            <select wire:model="warehouseId" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+            <select name="warehouse_id" wire:model="warehouseId" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 <option value="">اختر المخزن</option>
                 @foreach($warehouses as $warehouse)
                     <option value="{{ $warehouse->id }}">{{ $warehouse->name }}</option>
@@ -59,7 +59,7 @@
 
         <div>
             <label class="mb-1 block text-sm font-medium text-gray-700">العملة <span class="text-red-500">*</span></label>
-            <select wire:model="currencyId" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+            <select name="currency_id" wire:model="currencyId" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 <option value="">اختر العملة</option>
                 @foreach($currencies as $currency)
                     <option value="{{ $currency->id }}">{{ $currency->name }} - {{ $currency->symbol }}</option>
@@ -71,15 +71,15 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div>
             <label class="mb-1 block text-sm font-medium text-gray-700">تاريخ الفاتورة <span class="text-red-500">*</span></label>
-            <input type="date" wire:model="date" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+            <input type="date" name="date" wire:model="date" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
         </div>
         <div>
             <label class="mb-1 block text-sm font-medium text-gray-700">تاريخ الاستحقاق <span class="text-red-500">*</span></label>
-            <input type="date" wire:model="dueDate" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+            <input type="date" name="due_date" wire:model="dueDate" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
         </div>
         <div>
             <label class="mb-1 block text-sm font-medium text-gray-700">ملاحظات</label>
-            <input type="text" wire:model="notes" placeholder="ملاحظات إضافية..." class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+            <input type="text" name="notes" wire:model="notes" placeholder="ملاحظات إضافية..." class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
         </div>
     </div>
 
@@ -134,15 +134,15 @@
                                         </div>
                                     @endif
                                 </div>
-                                <input type="hidden" wire:model="lines.{{ $index }}.item_id">
+                                <input type="hidden" name="lines[{{ $index }}][item_id]" :value="$wire.lines[{{ $index }}].item_id">
                             @endif
                         </td>
                         <td class="px-3 py-2">
-                            <input type="number" wire:model.live="lines.{{ $index }}.quantity" step="0.01" min="0.01" wire:key="qty-{{ $index }}-{{ $line['quantity'] ?? 1 }}"
+                            <input type="number" wire:model.live="lines.{{ $index }}.quantity" value="{{ $line['quantity'] ?? 1 }}" step="0.01" min="0.01" wire:key="qty-{{ $index }}-{{ $line['quantity'] ?? 1 }}"
                                 class="w-20 rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         </td>
                         <td class="px-3 py-2">
-                            <input type="number" wire:model="lines.{{ $index }}.unit_price" step="0.01" min="0" wire:key="price-{{ $index }}-{{ $line['unit_price'] ?? 0 }}"
+                            <input type="number" wire:model.live="lines.{{ $index }}.unit_price" value="{{ $line['unit_price'] ?? 0 }}" step="0.01" min="0" wire:key="price-{{ $index }}-{{ $line['unit_price'] ?? 0 }}"
                                 class="w-24 rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         </td>
                         <td class="px-3 py-2">
@@ -181,12 +181,12 @@
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="mb-1 block text-xs font-medium text-gray-600">خصم إضافي</label>
-                    <input type="number" wire:model.live="discountAmount" step="0.01" min="0"
+                    <input type="number" name="discount_amount" wire:model.live="discountAmount" step="0.01" min="0"
                         class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
                 <div>
                     <label class="mb-1 block text-xs font-medium text-gray-600">مصاريف شحن</label>
-                    <input type="number" wire:model.live="shippingAmount" step="0.01" min="0"
+                    <input type="number" name="shipping_amount" wire:model.live="shippingAmount" step="0.01" min="0"
                         class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
             </div>
@@ -227,17 +227,13 @@
         </div>
     @endif
 
-    {{-- Hidden inputs for regular form POST --}}
-    <input type="hidden" name="warehouse_id" wire:model="warehouseId">
-    <input type="hidden" name="currency_id" wire:model="currencyId">
-    <input type="hidden" name="discount_amount" wire:model="discountAmount">
-    <input type="hidden" name="shipping_amount" wire:model="shippingAmount">
+    {{-- Hidden inputs for form POST (Alpine :value binds to Livewire $wire directly) --}}
     @foreach($lines as $index => $line)
-        <input type="hidden" name="lines[{{ $index }}][item_id]" wire:model="lines.{{ $index }}.item_id">
-        <input type="hidden" name="lines[{{ $index }}][description]" wire:model="lines.{{ $index }}.description">
-        <input type="hidden" name="lines[{{ $index }}][quantity]" wire:model="lines.{{ $index }}.quantity">
-        <input type="hidden" name="lines[{{ $index }}][unit_price]" wire:model="lines.{{ $index }}.unit_price">
-        <input type="hidden" name="lines[{{ $index }}][discount_percent]" wire:model="lines.{{ $index }}.discount_percent">
-        <input type="hidden" name="lines[{{ $index }}][tax_rate]" wire:model="lines.{{ $index }}.tax_rate">
+        <input type="hidden" name="lines[{{ $index }}][item_id]" :value="$wire.lines[{{ $index }}].item_id">
+        <input type="hidden" name="lines[{{ $index }}][description]" :value="$wire.lines[{{ $index }}].description">
+        <input type="hidden" name="lines[{{ $index }}][quantity]" :value="$wire.lines[{{ $index }}].quantity">
+        <input type="hidden" name="lines[{{ $index }}][unit_price]" :value="$wire.lines[{{ $index }}].unit_price">
+        <input type="hidden" name="lines[{{ $index }}][discount_percent]" :value="$wire.lines[{{ $index }}].discount_percent">
+        <input type="hidden" name="lines[{{ $index }}][tax_rate]" :value="$wire.lines[{{ $index }}].tax_rate">
     @endforeach
 </div>
