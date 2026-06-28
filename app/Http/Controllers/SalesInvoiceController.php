@@ -7,6 +7,7 @@ use App\Models\SalesInvoiceLine;
 use App\Models\Customer;
 use App\Models\Item;
 use App\Models\Warehouse;
+use App\Models\Currency;
 use App\Models\ItemWarehouse;
 use App\Models\StockMovement;
 use App\Models\JournalEntry;
@@ -49,9 +50,11 @@ class SalesInvoiceController extends TenantAwareController
     {
         $customers = $this->tenantQuery(Customer::class)->where('is_active', true)->get();
         $warehouses = $this->tenantQuery(Warehouse::class)->where('is_active', true)->get();
+        $items = Item::where('is_active', true)->get();
+        $currencies = Currency::where('is_active', true)->get();
         $invoiceNumber = $this->generateInvoiceNumber();
 
-        return view('sales-invoices.create', compact('customers', 'warehouses', 'invoiceNumber'));
+        return view('sales-invoices.create', compact('customers', 'warehouses', 'items', 'currencies', 'invoiceNumber'));
     }
 
     public function store(Request $request)
