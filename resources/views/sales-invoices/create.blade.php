@@ -9,7 +9,7 @@
         </div>
     </x-slot>
 
-    <form action="{{ route('sales-invoices.store') }}" method="POST">
+    <form action="{{ route('sales-invoices.store') }}" method="POST" id="invoiceForm">
         @csrf
 
         <div class="rounded-xl border border-gray-200 bg-white p-6">
@@ -67,10 +67,10 @@
                 </div>
             </div>
 
-            <div id="invoice-items">
+            <div id="items-app">
                 <div class="mb-4 flex items-center justify-between">
                     <h3 class="text-lg font-bold text-gray-800">أصناف الفاتورة</h3>
-                    <button type="button" onclick="addLine()"
+                    <button type="button" id="btn-add-line"
                         class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 transition cursor-pointer">
                         <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                         إضافة صنف
@@ -101,12 +101,12 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="mb-1 block text-xs font-medium text-gray-600">خصم إضافي</label>
-                                <input type="number" id="discount-amount" name="discount_amount" value="0" step="0.01" min="0" oninput="calcTotals()"
+                                <input type="number" id="discount-amount" name="discount_amount" value="0" step="0.01" min="0"
                                     class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                             </div>
                             <div>
                                 <label class="mb-1 block text-xs font-medium text-gray-600">مصاريف شحن</label>
-                                <input type="number" id="shipping-amount" name="shipping_amount" value="0" step="0.01" min="0" oninput="calcTotals()"
+                                <input type="number" id="shipping-amount" name="shipping_amount" value="0" step="0.01" min="0"
                                     class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                             </div>
                         </div>
@@ -152,81 +152,143 @@
 </x-app-layout>
 
 <script>
+(function() {
     var lineIdx = 0;
-    var items = @json($items->map(fn($i) => [
+    var itemsData = <?php echo json_encode($items->map(fn($i) => [
         'id' => $i->id,
         'name' => $i->name,
         'sku' => $i->sku,
         'price' => $i->selling_price,
         'tax' => $i->tax_rate ?? 15,
-    ]));
+    ])->values()->all()); ?>;
+
+    var tbody = document.getElementById('lines-tbody');
+    if (!tbody) return;
 
     function addLine() {
         var idx = lineIdx++;
-        var tbody = document.getElementById('lines-tbody');
         var tr = document.createElement('tr');
         tr.className = 'border-b border-gray-100';
-        tr.innerHTML =
-            '<td class="px-3 py-2 text-gray-500">' + (idx + 1) + '</td>' +
-            '<td class="px-3 py-2"><select name="lines[' + idx + '][item_id]" onchange="selectItem(this,' + idx + ')" required class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">' +
-            '<option value="">اختر صنف</option>' +
-            items.map(function(i) {
-                return '<option value="' + i.id + '" data-price="' + i.price + '" data-tax="' + i.tax + '">' + i.name + ' - ' + (i.sku || '') + '</option>';
-            }).join('') +
-            '</select></td>' +
-            '<td class="px-3 py-2"><input type="number" name="lines[' + idx + '][quantity]" value="1" step="0.01" min="0.01" required oninput="calcLine(' + idx + ')" class="w-20 rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500"></td>' +
-            '<td class="px-3 py-2"><input type="number" name="lines[' + idx + '][unit_price]" value="0" step="0.01" min="0" required oninput="calcLine(' + idx + ')" class="w-24 rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500"></td>' +
-            '<td class="px-3 py-2"><input type="number" name="lines[' + idx + '][discount_percent]" value="0" step="0.01" min="0" max="100" oninput="calcLine(' + idx + ')" class="w-16 rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500"></td>' +
-            '<td class="px-3 py-2"><input type="number" name="lines[' + idx + '][tax_rate]" value="15" step="0.01" min="0" max="100" oninput="calcLine(' + idx + ')" class="w-16 rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500"></td>' +
-            '<td class="px-3 py-3 text-left font-mono text-sm font-medium text-gray-900 line-total">0.00</td>' +
-            '<td class="px-3 py-2 text-center"><button type="button" onclick="removeLine(this,' + idx + ')" class="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600 transition cursor-pointer"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button></td>';
+        tr.dataset.idx = idx;
+
+        var td1 = document.createElement('td');
+        td1.className = 'px-3 py-2 text-gray-500';
+        td1.textContent = idx + 1;
+
+        var td2 = document.createElement('td');
+        td2.className = 'px-3 py-2';
+        var select = document.createElement('select');
+        select.name = 'lines[' + idx + '][item_id]';
+        select.required = true;
+        select.className = 'w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500';
+        var emptyOpt = document.createElement('option');
+        emptyOpt.value = '';
+        emptyOpt.textContent = 'اختر صنف';
+        select.appendChild(emptyOpt);
+        for (var i = 0; i < itemsData.length; i++) {
+            var item = itemsData[i];
+            var opt = document.createElement('option');
+            opt.value = item.id;
+            opt.dataset.price = item.price;
+            opt.dataset.tax = item.tax;
+            opt.textContent = (item.name || '') + ' - ' + (item.sku || '');
+            select.appendChild(opt);
+        }
+        td2.appendChild(select);
+
+        var makeInput = function(name, val, extra) {
+            var inp = document.createElement('input');
+            inp.type = 'number';
+            inp.name = 'lines[' + idx + '][' + name + ']';
+            inp.value = val;
+            inp.step = '0.01';
+            inp.className = 'w-20 rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500';
+            if (extra) {
+                for (var k in extra) inp[k] = extra[k];
+            }
+            return inp;
+        };
+
+        var td3 = document.createElement('td');
+        td3.className = 'px-3 py-2';
+        var inpQty = makeInput('quantity', '1', { min: '0.01' });
+        inpQty.required = true;
+        inpQty.className = inpQty.className.replace('w-20', 'w-20');
+        td3.appendChild(inpQty);
+
+        var td4 = document.createElement('td');
+        td4.className = 'px-3 py-2';
+        var inpPrice = makeInput('unit_price', '0', { min: '0' });
+        inpPrice.required = true;
+        inpPrice.className = inpPrice.className.replace('w-20', 'w-24');
+        td4.appendChild(inpPrice);
+
+        var td5 = document.createElement('td');
+        td5.className = 'px-3 py-2';
+        var inpDisc = makeInput('discount_percent', '0', { min: '0', max: '100' });
+        inpDisc.className = inpDisc.className.replace('w-20', 'w-16');
+        td5.appendChild(inpDisc);
+
+        var td6 = document.createElement('td');
+        td6.className = 'px-3 py-2';
+        var inpTax = makeInput('tax_rate', '15', { min: '0', max: '100' });
+        inpTax.className = inpTax.className.replace('w-20', 'w-16');
+        td6.appendChild(inpTax);
+
+        var td7 = document.createElement('td');
+        td7.className = 'px-3 py-3 text-left font-mono text-sm font-medium text-gray-900';
+        td7.id = 'total-' + idx;
+        td7.textContent = '0.00';
+
+        var td8 = document.createElement('td');
+        td8.className = 'px-3 py-2 text-center';
+        var delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600 transition cursor-pointer btn-del-line';
+        delBtn.innerHTML = '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
+        td8.appendChild(delBtn);
+
+        tr.appendChild(td1);
+        tr.appendChild(td2);
+        tr.appendChild(td3);
+        tr.appendChild(td4);
+        tr.appendChild(td5);
+        tr.appendChild(td6);
+        tr.appendChild(td7);
+        tr.appendChild(td8);
         tbody.appendChild(tr);
     }
 
-    function selectItem(select, idx) {
-        var opt = select.options[select.selectedIndex];
-        if (!opt || !opt.value) return;
-        var price = parseFloat(opt.dataset.price) || 0;
-        var tax = parseFloat(opt.dataset.tax) || 15;
-        var tr = select.closest('tr');
-        tr.querySelector('[name="lines[' + idx + '][unit_price]"]').value = price;
-        tr.querySelector('[name="lines[' + idx + '][tax_rate]"]').value = tax;
-        tr.querySelector('[name="lines[' + idx + '][quantity]"]').value = 1;
-        calcLine(idx);
+    function getRow(el) {
+        while (el && el.tagName !== 'TR') el = el.parentElement;
+        return el;
     }
 
-    function calcLine(idx) {
-        var tr = document.querySelector('[name="lines[' + idx + '][quantity]"]');
+    function calcRow(idx) {
+        var tr = tbody.querySelector('[data-idx="' + idx + '"]');
         if (!tr) return;
-        tr = tr.closest('tr');
-        var qty = parseFloat(tr.querySelector('[name="lines[' + idx + '][quantity]"]').value) || 0;
-        var price = parseFloat(tr.querySelector('[name="lines[' + idx + '][unit_price]"]').value) || 0;
-        var discPct = parseFloat(tr.querySelector('[name="lines[' + idx + '][discount_percent]"]').value) || 0;
-        var taxPct = parseFloat(tr.querySelector('[name="lines[' + idx + '][tax_rate]"]').value) || 0;
+        var qty = parseFloat(tr.querySelector('[name$="[quantity]"]').value) || 0;
+        var price = parseFloat(tr.querySelector('[name$="[unit_price]"]').value) || 0;
+        var discPct = parseFloat(tr.querySelector('[name$="[discount_percent]"]').value) || 0;
+        var taxPct = parseFloat(tr.querySelector('[name$="[tax_rate]"]').value) || 0;
         var ls = qty * price;
         var ld = ls * (discPct / 100);
         var la = ls - ld;
         var lt = la * (taxPct / 100);
-        tr.querySelector('.line-total').textContent = (la + lt).toFixed(2);
-        calcTotals();
-    }
-
-    function removeLine(btn, idx) {
-        var rows = document.querySelectorAll('#lines-tbody tr');
-        if (rows.length <= 1) return;
-        var tr = btn.closest('tr');
-        tr.parentNode.removeChild(tr);
+        var totalEl = document.getElementById('total-' + idx);
+        if (totalEl) totalEl.textContent = (la + lt).toFixed(2);
         calcTotals();
     }
 
     function calcTotals() {
         var subtotal = 0, totalDisc = 0, totalTax = 0;
-        var rows = document.querySelectorAll('#lines-tbody tr');
-        rows.forEach(function(tr) {
-            var qty = parseFloat(tr.querySelector('input[name$="[quantity]"]').value) || 0;
-            var price = parseFloat(tr.querySelector('input[name$="[unit_price]"]').value) || 0;
-            var discPct = parseFloat(tr.querySelector('input[name$="[discount_percent]"]').value) || 0;
-            var taxPct = parseFloat(tr.querySelector('input[name$="[tax_rate]"]').value) || 0;
+        var rows = tbody.querySelectorAll('tr');
+        for (var i = 0; i < rows.length; i++) {
+            var tr = rows[i];
+            var qty = parseFloat(tr.querySelector('[name$="[quantity]"]').value) || 0;
+            var price = parseFloat(tr.querySelector('[name$="[unit_price]"]').value) || 0;
+            var discPct = parseFloat(tr.querySelector('[name$="[discount_percent]"]').value) || 0;
+            var taxPct = parseFloat(tr.querySelector('[name$="[tax_rate]"]').value) || 0;
             var ls = qty * price;
             var ld = ls * (discPct / 100);
             var la = ls - ld;
@@ -234,7 +296,7 @@
             subtotal += ls;
             totalDisc += ld;
             totalTax += lt;
-        });
+        }
         var discAmt = parseFloat(document.getElementById('discount-amount').value) || 0;
         var shipAmt = parseFloat(document.getElementById('shipping-amount').value) || 0;
         var grand = subtotal - totalDisc - discAmt + totalTax + shipAmt;
@@ -245,5 +307,53 @@
         document.getElementById('tot-grand').textContent = grand.toFixed(2);
     }
 
+    document.getElementById('btn-add-line').addEventListener('click', function() {
+        addLine();
+    });
+
+    document.getElementById('items-app').addEventListener('change', function(e) {
+        var target = e.target;
+        if (target.tagName === 'SELECT' && target.name.indexOf('[item_id]') > -1) {
+            var tr = getRow(target);
+            if (!tr) return;
+            var idx = parseInt(tr.dataset.idx);
+            var opt = target.options[target.selectedIndex];
+            if (opt && opt.value) {
+                var price = parseFloat(opt.dataset.price) || 0;
+                var tax = parseFloat(opt.dataset.tax) || 15;
+                tr.querySelector('[name$="[unit_price]"]').value = price;
+                tr.querySelector('[name$="[tax_rate]"]').value = tax;
+                tr.querySelector('[name$="[quantity]"]').value = '1';
+                calcRow(idx);
+            }
+        }
+    });
+
+    document.getElementById('items-app').addEventListener('input', function(e) {
+        var target = e.target;
+        if (target.tagName === 'INPUT' && target.type === 'number') {
+            var tr = getRow(target);
+            if (!tr) return;
+            var idx = parseInt(tr.dataset.idx);
+            calcRow(idx);
+        }
+    });
+
+    document.getElementById('discount-amount').addEventListener('input', calcTotals);
+    document.getElementById('shipping-amount').addEventListener('input', calcTotals);
+
+    document.getElementById('items-app').addEventListener('click', function(e) {
+        var target = e.target;
+        if (target.classList.contains('btn-del-line') || target.closest('.btn-del-line')) {
+            var btn = target.classList.contains('btn-del-line') ? target : target.closest('.btn-del-line');
+            var tr = getRow(btn);
+            if (!tr) return;
+            if (tbody.querySelectorAll('tr').length <= 1) return;
+            tr.parentNode.removeChild(tr);
+            calcTotals();
+        }
+    });
+
     addLine();
+})();
 </script>
