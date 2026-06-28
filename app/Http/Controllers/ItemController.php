@@ -50,8 +50,8 @@ class ItemController extends TenantAwareController
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'name_ar' => 'nullable|string|max:255',
-            'sku' => 'nullable|string|max:255',
-            'barcode' => 'nullable|string|max:255',
+            'sku' => 'nullable|string|max:255|unique:items,sku,NULL,id,tenant_id,' . $this->getTenantId(),
+            'barcode' => 'nullable|string|max:255|unique:items,barcode,NULL,id,tenant_id,' . $this->getTenantId(),
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'category_id' => 'nullable|exists:item_categories,id',
             'unit_id' => 'nullable|exists:item_units,id',
@@ -118,8 +118,8 @@ class ItemController extends TenantAwareController
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'name_ar' => 'nullable|string|max:255',
-            'sku' => 'nullable|string|max:255',
-            'barcode' => 'nullable|string|max:255',
+            'sku' => 'nullable|string|max:255|unique:items,sku,' . $item->id . ',id,tenant_id,' . $this->getTenantId(),
+            'barcode' => 'nullable|string|max:255|unique:items,barcode,' . $item->id . ',id,tenant_id,' . $this->getTenantId(),
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'category_id' => 'nullable|exists:item_categories,id',
             'unit_id' => 'nullable|exists:item_units,id',
