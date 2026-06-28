@@ -8,16 +8,7 @@
         </div>
     </x-slot>
 
-    <form action="{{ route('quotations.update', $quotation) }}" method="POST" x-data @submit.prevent="
-        let f = this; let s = (n, v) => { let e = f.querySelector('[name=&quot;'+n+'&quot;]'); if(e) e.value = v??''; };
-        s('customer_id', $wire.customerId);
-        let lines = $wire.lines;
-        for(let i=0;i<lines.length;i++){ let l=lines[i];
-            s('lines['+i+'][item_id]',l.item_id); s('lines['+i+'][description]',l.description);
-            s('lines['+i+'][quantity]',l.quantity); s('lines['+i+'][unit_price]',l.unit_price);
-            s('lines['+i+'][discount_percent]',l.discount_percent); s('lines['+i+'][tax_rate]',l.tax_rate);
-        } f.submit();
-    ">
+    <form action="{{ route('quotations.update', $quotation) }}" method="POST" onsubmit="return syncInvoiceForm(this)">
         @csrf
         @method('PUT')
         @livewire('invoice-form', ['type' => 'sale', 'invoiceId' => $quotation->id, 'customerId' => $quotation->customer_id, 'showCustomerSearch' => false, 'showItemSelect' => true])

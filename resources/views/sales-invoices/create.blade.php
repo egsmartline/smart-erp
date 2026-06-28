@@ -9,22 +9,7 @@
         </div>
     </x-slot>
 
-    <form action="{{ route('sales-invoices.store') }}" method="POST" id="invoiceForm" x-data @submit.prevent="
-        let f = this;
-        let setVal = (n, v) => { let el = f.querySelector('[name=&quot;' + n + '&quot;]'); if (el) el.value = v ?? ''; };
-        setVal('customer_id', $wire.customerId);
-        let lines = $wire.lines;
-        for (let i = 0; i < lines.length; i++) {
-            let ln = lines[i];
-            setVal('lines[' + i + '][item_id]', ln.item_id);
-            setVal('lines[' + i + '][description]', ln.description);
-            setVal('lines[' + i + '][quantity]', ln.quantity);
-            setVal('lines[' + i + '][unit_price]', ln.unit_price);
-            setVal('lines[' + i + '][discount_percent]', ln.discount_percent);
-            setVal('lines[' + i + '][tax_rate]', ln.tax_rate);
-        }
-        f.submit();
-    ">
+    <form action="{{ route('sales-invoices.store') }}" method="POST" id="invoiceForm" onsubmit="return syncInvoiceForm(this)">
         @csrf
         @livewire('invoice-form', ['type' => 'sale', 'warehouseId' => $warehouses->first()->id ?? null, 'showCustomerSearch' => false, 'showItemSelect' => true])
 

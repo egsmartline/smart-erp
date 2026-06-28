@@ -237,3 +237,30 @@
         <input type="hidden" name="lines[{{ $index }}][tax_rate]">
     @endforeach
 </div>
+
+@push('scripts')
+<script>
+    window.syncInvoiceForm = function(form) {
+        let wireEl = form.querySelector('[wire\\:id]');
+        if (!wireEl || !wireEl.__livewire) return true;
+        let lw = wireEl.__livewire;
+        let s = function(name, val) {
+            let el = form.querySelector('[name="' + name + '"]');
+            if (el) el.value = val ?? '';
+        };
+        s('customer_id', lw.customerId);
+        s('supplier_id', lw.supplierId);
+        let lines = lw.lines;
+        for (let i = 0; i < lines.length; i++) {
+            let ln = lines[i];
+            s('lines[' + i + '][item_id]', ln.item_id);
+            s('lines[' + i + '][description]', ln.description);
+            s('lines[' + i + '][quantity]', ln.quantity);
+            s('lines[' + i + '][unit_price]', ln.unit_price);
+            s('lines[' + i + '][discount_percent]', ln.discount_percent);
+            s('lines[' + i + '][tax_rate]', ln.tax_rate);
+        }
+        return true;
+    };
+</script>
+@endpush
