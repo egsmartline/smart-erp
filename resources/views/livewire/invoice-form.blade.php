@@ -107,7 +107,7 @@
             </thead>
             <tbody>
                 @foreach($lines as $index => $line)
-                    <tr class="border-b border-gray-100">
+                    <tr class="border-b border-gray-100" wire:key="line-row-{{ $index }}">
                         <td class="px-3 py-2 text-gray-500">{{ $index + 1 }}</td>
                         <td class="px-3 py-2">
                             @if($showItemSelect)
@@ -115,7 +115,7 @@
                                     <option value="">اختر صنف</option>
                                     @foreach($allItems as $item)
                                         <option value="{{ $item->id }}" {{ ($line['item_id'] ?? '') == $item->id ? 'selected' : '' }}>
-                                            {{ $item->name }} - {{ $item->sku ?? '' }} | {{ $type === 'sale' ? 'بيع' : 'تكلفة' }}: {{ number_format($type === 'sale' ? $item->selling_price : $item->cost_price, 2) }}
+                                            {{ $item->name }} - {{ $item->sku ?? '' }} | @if($type === 'sale') سعر البيع: {{ number_format($item->selling_price ?? 0, 2) }} @else سعر التكلفة: {{ number_format($item->cost_price ?? 0, 2) }} @endif
                                         </option>
                                     @endforeach
                                 </select>
