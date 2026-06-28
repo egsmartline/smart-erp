@@ -11,7 +11,7 @@
     <form action="{{ route('quotations.update', $quotation) }}" method="POST">
         @csrf
         @method('PUT')
-        @livewire('invoice-form', ['type' => 'sale', 'invoiceId' => $quotation->id, 'customerId' => $quotation->customer_id])
+        @livewire('invoice-form', ['type' => 'sale', 'invoiceId' => $quotation->id, 'customerId' => $quotation->customer_id, 'showCustomerSearch' => false, 'showItemSelect' => true])
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
             <div>
