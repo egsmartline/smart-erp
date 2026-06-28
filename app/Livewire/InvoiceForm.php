@@ -272,6 +272,7 @@ class InvoiceForm extends Component
             $this->lines[$index]['item_id'] = $item->id;
             $this->lines[$index]['item_name'] = $item->name;
             $this->lines[$index]['description'] = $item->name_ar ?? $item->name;
+            $this->lines[$index]['quantity'] = 1;
             $this->lines[$index]['unit_price'] = $this->type === 'sale' ? $item->selling_price : $item->cost_price;
             $this->lines[$index]['tax_rate'] = $item->tax_rate ?? 15;
         }

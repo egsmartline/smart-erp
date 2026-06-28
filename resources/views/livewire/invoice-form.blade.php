@@ -138,11 +138,11 @@
                             @endif
                         </td>
                         <td class="px-3 py-2">
-                            <input type="number" wire:model.live="lines.{{ $index }}.quantity" step="0.01" min="0.01"
+                            <input type="number" wire:model.live="lines.{{ $index }}.quantity" value="{{ $line['quantity'] ?? 1 }}" step="0.01" min="0.01"
                                 class="w-20 rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         </td>
                         <td class="px-3 py-2">
-                            <input type="number" wire:model.live="lines.{{ $index }}.unit_price" step="0.01" min="0"
+                            <input type="number" wire:model.live="lines.{{ $index }}.unit_price" value="{{ $line['unit_price'] ?? 0 }}" step="0.01" min="0"
                                 class="w-24 rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         </td>
                         <td class="px-3 py-2">
