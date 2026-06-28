@@ -265,6 +265,15 @@ class InvoiceForm extends Component
         }
     }
 
+    public function updated($propertyName, $value): void
+    {
+        if (str_starts_with($propertyName, 'lines.') && str_ends_with($propertyName, '.item_id') && $value) {
+            $parts = explode('.', $propertyName);
+            $index = (int) $parts[1];
+            $this->selectItem((int) $value, $index);
+        }
+    }
+
     public function selectItem(int $itemId, int $index): void
     {
         $item = Item::find($itemId);
