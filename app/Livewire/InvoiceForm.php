@@ -157,18 +157,12 @@ class InvoiceForm extends Component
         }
     }
 
-    public function updatedLines(): void
+    public function updated($property, $value): void
     {
-        $this->calculateTotals();
-    }
-
-    public function updatedDiscountAmount(): void
-    {
-        $this->calculateTotals();
-    }
-
-    public function updatedShippingAmount(): void
-    {
+        if (preg_match('/^lines\.(\d+)\.item_id$/', $property, $matches)) {
+            $this->selectItem((int)$value, (int)$matches[1]);
+            return;
+        }
         $this->calculateTotals();
     }
 
@@ -271,13 +265,13 @@ class InvoiceForm extends Component
         if ($item) {
             $this->lines[$index]['item_id'] = $item->id;
             $this->lines[$index]['item_name'] = $item->name;
-            $this->lines[$index]['description'] = $item->name_ar ?? $item->name;
+            $this->lines[$index]['description'] = $item->name_en ?? $item->name;
             $this->lines[$index]['quantity'] = 1;
             $this->lines[$index]['unit_price'] = $this->type === 'sale' ? $item->selling_price : $item->purchase_price;
             $this->lines[$index]['tax_rate'] = $item->tax_rate ?? 15;
+            $this->itemSearches[$index] = $item->name ?? '';
         }
 
-        $this->itemSearches[$index] = $item->name ?? '';
         $this->filteredItems = [];
         $this->searchingLineIndex = null;
         $this->calculateTotals();

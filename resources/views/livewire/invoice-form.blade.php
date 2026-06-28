@@ -111,7 +111,7 @@
                         <td class="px-3 py-2 text-gray-500">{{ $index + 1 }}</td>
                         <td class="px-3 py-2">
                             @if($showItemSelect)
-                                <select wire:change="selectItem($event.target.value, {{ $index }})" class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                                <select wire:model.live="lines.{{ $index }}.item_id" class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                                     <option value="">اختر صنف</option>
                                     @foreach($allItems as $item)
                                         <option value="{{ $item->id }}" {{ ($line['item_id'] ?? '') == $item->id ? 'selected' : '' }}>
@@ -142,7 +142,7 @@
                                 class="w-20 rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         </td>
                         <td class="px-3 py-2">
-                            <input type="number" wire:model.live="lines.{{ $index }}.unit_price" step="0.01" min="0" wire:key="price-{{ $index }}-{{ $line['unit_price'] ?? 0 }}"
+                            <input type="number" wire:model="lines.{{ $index }}.unit_price" step="0.01" min="0" wire:key="price-{{ $index }}-{{ $line['unit_price'] ?? 0 }}"
                                 class="w-24 rounded-lg border border-gray-300 px-2 py-1.5 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         </td>
                         <td class="px-3 py-2">
