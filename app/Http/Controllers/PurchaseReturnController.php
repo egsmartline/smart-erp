@@ -141,7 +141,9 @@ class PurchaseReturnController extends TenantAwareController
                 'user_id' => auth()->id(),
             ]);
 
+            $tenantId = $this->getTenantId();
             foreach ($lineData as $data) {
+                $data['tenant_id'] = $tenantId;
                 $data['purchase_return_id'] = $return->id;
                 PurchaseReturnLine::create($data);
             }
