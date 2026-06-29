@@ -162,6 +162,7 @@
                         </form>
                     @elseif($purchaseInvoice->status === 'posted')
                         <button @click="$root.closest('[x-data]')?.__x?.$data.printModalOpen = true" class="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition cursor-pointer">طباعة الفاتورة</button>
+                        <a href="{{ route('purchase-invoices.edit', $purchaseInvoice) }}" class="block w-full rounded-lg bg-gray-200 px-4 py-2 text-center text-sm font-medium text-gray-700 hover:bg-gray-300 transition">تعديل الفاتورة</a>
                         <form action="{{ route('purchase-invoices.void', $purchaseInvoice) }}" method="POST">
                             @csrf
                             <button type="submit" class="w-full rounded-lg bg-red-100 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-200 transition cursor-pointer" onclick="return confirm('هل أنت متأكد من الإلغاء؟ سيتم خصم المخزون.')">
