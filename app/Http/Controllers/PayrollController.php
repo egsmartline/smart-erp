@@ -13,7 +13,6 @@ class PayrollController extends TenantAwareController
     public function index()
     {
         $payrolls = Payroll::where('tenant_id', $this->getTenantId())
-            ->with('creator')
             ->latest()
             ->paginate(20);
 
