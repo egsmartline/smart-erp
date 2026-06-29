@@ -78,9 +78,15 @@
 
 <style>
     @media print {
-        #printArea, #printArea * { display: block !important; }
         #printArea { position: absolute; left: 0; top: 0; width: 100%; padding: 20px !important; margin: 0 !important; box-shadow: none !important; border: none !important; border-radius: 0 !important; }
-        #printArea .no-print { display: none !important; }
+        #printArea .no-print, .no-print { display: none !important; }
+        #printArea span { display: inline !important; }
+        #printArea table { display: table !important; }
+        #printArea thead { display: table-header-group !important; }
+        #printArea tbody { display: table-row-group !important; }
+        #printArea tfoot { display: table-footer-group !important; }
+        #printArea tr { display: table-row !important; }
+        #printArea td, #printArea th { display: table-cell !important; }
     }
 </style>
 </x-app-layout>
