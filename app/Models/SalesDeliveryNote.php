@@ -16,7 +16,7 @@ class SalesDeliveryNote extends Model
         'tenant_id',
         'delivery_number',
         'date',
-
+        'sales_order_id',
         'customer_id',
         'warehouse_id',
         'user_id',

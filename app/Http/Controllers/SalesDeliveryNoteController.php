@@ -63,6 +63,7 @@ class SalesDeliveryNoteController extends TenantAwareController
                 'date' => $validated['date'],
                 'customer_id' => $validated['customer_id'],
                 'warehouse_id' => $validated['warehouse_id'],
+                'sales_order_id' => null,
                 'user_id' => Auth::id(),
                 'status' => 'confirmed',
                 'notes' => $validated['notes'] ?? null,
