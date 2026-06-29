@@ -13,12 +13,24 @@
     </x-slot>
 
     <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6">
+        <div class="mb-4 flex items-center gap-4">
+            <form action="{{ route('backups.upload') }}" method="POST" enctype="multipart/form-data" class="flex items-center gap-2">
+                @csrf
+                <input type="file" name="backup_file" accept=".sqlite,.db,.sql" required class="block w-60 text-xs text-gray-700 file:mr-2 file:rounded file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-blue-700 hover:file:bg-blue-100">
+                <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-medium text-white hover:bg-emerald-700 transition">
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+                    رفع واستعادة
+                </button>
+            </form>
+        </div>
+
         <div class="overflow-x-auto">
             <table class="w-full text-right text-sm">
                 <thead>
                     <tr class="border-b-2 border-gray-300 bg-gray-50">
                         <th class="px-4 py-3 font-semibold">الملف</th>
                         <th class="px-4 py-3 font-semibold">التاريخ</th>
+                        <th class="px-4 py-3 font-semibold text-center">الحجم</th>
                         <th class="px-4 py-3 font-semibold text-center">الحالة</th>
                         <th class="px-4 py-3 font-semibold text-center">إجراءات</th>
                     </tr>
@@ -28,6 +40,15 @@
                         <tr class="border-b border-gray-100 hover:bg-gray-50">
                             <td class="px-4 py-3 font-mono text-xs">{{ $backup->filename }}</td>
                             <td class="px-4 py-3">{{ $backup->created_at->format('Y/m/d H:i:s') }}</td>
+                            <td class="px-4 py-3 text-center text-xs text-gray-500">
+                                @if($backup->size > 1048576)
+                                    {{ number_format($backup->size / 1048576, 2) }} MB
+                                @elseif($backup->size > 1024)
+                                    {{ number_format($backup->size / 1024, 1) }} KB
+                                @else
+                                    {{ $backup->size }} B
+                                @endif
+                            </td>
                             <td class="px-4 py-3 text-center">
                                 <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $backup->status === 'completed' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                     {{ $backup->status === 'completed' ? 'مكتمل' : 'فشل' }}
@@ -35,6 +56,9 @@
                             </td>
                             <td class="px-4 py-3 text-center">
                                 <div class="inline-flex items-center gap-1">
+                                    <a href="{{ route('backups.download', $backup) }}" class="rounded p-1 text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition cursor-pointer" title="تحميل">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                    </a>
                                     <form action="{{ route('backups.restore', $backup) }}" method="POST" class="inline" onsubmit="return confirm('هل أنت متأكد من استعادة هذه النسخة الاحتياطية؟')">
                                         @csrf
                                         <button type="submit" class="rounded p-1 text-gray-500 hover:bg-emerald-50 hover:text-emerald-600 transition cursor-pointer" title="استعادة">
@@ -52,7 +76,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">لا توجد نسخ احتياطية</td></tr>
+                        <tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">لا توجد نسخ احتياطية</td></tr>
                     @endforelse
                 </tbody>
             </table>

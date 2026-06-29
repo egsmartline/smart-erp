@@ -5,7 +5,7 @@
     <div class="w-full max-w-2xl">
         <div class="text-center mb-8">
             <h2 class="text-3xl font-bold text-gray-800">اختر الشركة</h2>
-            <p class="text-blue-700 mt-2 font-medium">اختر الشركة التي تريد العمل بها</p>
+            <p class="text-white mt-2 font-medium">اختر الشركة التي تريد العمل بها</p>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -78,6 +78,52 @@ class BackupController extends TenantAwareController
         }
     }
 
+    public function download(BackupLog $backupLog)
+    {
+        $this->authorizeTenant($backupLog);
+
+        if (!file_exists($backupLog->path)) {
+            return back()->withErrors(['error' => 'ملف النسخة الاحتياطية غير موجود']);
+        }
+
+        return response()->download($backupLog->path, $backupLog->filename);
+    }
+
+    public function upload(Request $request)
+    {
+        $request->validate([
+            'backup_file' => 'required|file|mimes:sqlite,db,sql',
+        ]);
+
+        try {
+            $file = $request->file('backup_file');
+            $filename = 'uploaded_' . $this->getTenantId() . '_' . now()->format('Y-m-d_His') . '.' . $file->getClientOriginalExtension();
+            $path = storage_path('app/backups');
+
+            if (!file_exists($path)) {
+                mkdir($path, 0755, true);
+            }
+
+            $fullPath = $path . '/' . $filename;
+            $file->move($path, $filename);
+
+            $size = filesize($fullPath);
+
+            $backupLog = BackupLog::create([
+                'tenant_id' => $this->getTenantId(),
+                'filename' => $filename,
+                'path' => $fullPath,
+                'status' => 'completed',
+                'user_id' => auth()->id(),
+                'size' => $size,
+            ]);
+
+            return redirect()->route('backups.index')->with('success', 'تم رفع النسخة الاحتياطية بنجاح');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'حدث خطأ أثناء الرفع: ' . $e->getMessage()]);
+        }
+    }
+
     public function destroy(BackupLog $backupLog)
     {
         $this->authorizeTenant($backupLog);

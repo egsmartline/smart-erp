@@ -156,6 +156,8 @@ Route::middleware(['auth', 'tenant'])->group(function () {
 
     Route::get('/backups', [BackupController::class, 'index'])->name('backups.index');
     Route::post('/backups', [BackupController::class, 'create'])->name('backups.create');
+    Route::post('/backups/upload', [BackupController::class, 'upload'])->name('backups.upload');
+    Route::get('/backups/{backupLog}/download', [BackupController::class, 'download'])->name('backups.download');
     Route::post('/backups/{backupLog}/restore', [BackupController::class, 'restore'])->name('backups.restore');
     Route::delete('/backups/{backupLog}', [BackupController::class, 'destroy'])->name('backups.destroy');
 
