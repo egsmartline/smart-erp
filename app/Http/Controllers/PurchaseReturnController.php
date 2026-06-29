@@ -182,22 +182,20 @@ class PurchaseReturnController extends TenantAwareController
 
                 if ($itemWarehouse) {
                     $itemWarehouse->decrement('quantity', $line->quantity);
-                    $itemWarehouse->decrement('available_quantity', $line->quantity);
                 }
 
                 StockMovement::create([
+                    'tenant_id' => $this->getTenantId(),
                     'item_id' => $line->item_id,
                     'warehouse_id' => $purchaseReturn->warehouse_id,
-                    'stockable_type' => PurchaseReturn::class,
-                    'stockable_id' => $purchaseReturn->id,
-                    'type' => 'out',
+                    'reference_type' => PurchaseReturn::class,
+                    'reference_id' => $purchaseReturn->id,
+                    'type' => 'return_out',
                     'quantity' => $line->quantity,
-                    'unit_cost' => $line->unit_cost,
+                    'unit_cost' => $line->unit_price,
                     'total_cost' => $line->total,
-                    'reference_number' => $purchaseReturn->return_number,
-                    'date' => now()->toDateString(),
-                    'notes' => 'خروج مخزون - مرتجع مشتريات',
-                    'created_by' => auth()->id(),
+                    'description' => 'خروج مخزون - مرتجع مشتريات',
+                    'user_id' => auth()->id(),
                 ]);
             }
 
