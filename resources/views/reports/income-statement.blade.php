@@ -37,7 +37,7 @@
                         @foreach($revenueAccounts as $account)
                             <tr class="border-b border-gray-100">
                                 <td class="px-4 py-2">{{ $account->code }} - {{ $account->name }}</td>
-                                <td class="px-4 py-2 text-left font-mono">{{ number_format($account->current_balance, 2) }}</td>
+                                <td class="px-4 py-2 text-left font-mono">{{ number_format($account->balance, 2) }}</td>
                             </tr>
                         @endforeach
                         <tr class="bg-emerald-50 font-bold">
@@ -55,7 +55,7 @@
                         @foreach($expenseAccounts as $account)
                             <tr class="border-b border-gray-100">
                                 <td class="px-4 py-2">{{ $account->code }} - {{ $account->name }}</td>
-                                <td class="px-4 py-2 text-left font-mono">{{ number_format($account->current_balance, 2) }}</td>
+                                <td class="px-4 py-2 text-left font-mono">{{ number_format($account->balance, 2) }}</td>
                             </tr>
                         @endforeach
                         <tr class="bg-red-50 font-bold">

@@ -33,7 +33,7 @@
                         @foreach($assetAccounts as $account)
                             <tr class="border-b border-gray-100">
                                 <td class="px-3 py-2 text-xs">{{ $account->code }} - {{ $account->name }}</td>
-                                <td class="px-3 py-2 text-left font-mono text-xs">{{ number_format($account->current_balance, 2) }}</td>
+                                <td class="px-3 py-2 text-left font-mono text-xs">{{ number_format($account->balance, 2) }}</td>
                             </tr>
                         @endforeach
                         <tr class="bg-blue-50 font-bold">
@@ -51,7 +51,7 @@
                         @foreach($liabilityAccounts as $account)
                             <tr class="border-b border-gray-100">
                                 <td class="px-3 py-2 text-xs">{{ $account->code }} - {{ $account->name }}</td>
-                                <td class="px-3 py-2 text-left font-mono text-xs">{{ number_format($account->current_balance, 2) }}</td>
+                                <td class="px-3 py-2 text-left font-mono text-xs">{{ number_format($account->balance, 2) }}</td>
                             </tr>
                         @endforeach
                         <tr class="bg-red-50 font-bold">
@@ -69,7 +69,7 @@
                         @foreach($equityAccounts as $account)
                             <tr class="border-b border-gray-100">
                                 <td class="px-3 py-2 text-xs">{{ $account->code }} - {{ $account->name }}</td>
-                                <td class="px-3 py-2 text-left font-mono text-xs">{{ number_format($account->current_balance, 2) }}</td>
+                                <td class="px-3 py-2 text-left font-mono text-xs">{{ number_format($account->balance, 2) }}</td>
                             </tr>
                         @endforeach
                         <tr class="bg-purple-50 font-bold">
