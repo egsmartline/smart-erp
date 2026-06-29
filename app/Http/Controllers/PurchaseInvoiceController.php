@@ -178,8 +178,8 @@ class PurchaseInvoiceController extends TenantAwareController
 
     public function update(Request $request, PurchaseInvoice $purchaseInvoice)
     {
-        if ($purchaseInvoice->status !== 'draft') {
-            return back()->with('error', 'لا يمكن تعديل فاتورة غير مسودة');
+        if (!in_array($purchaseInvoice->status, ['draft', 'posted'])) {
+            return back()->with('error', 'لا يمكن تعديل هذه الفاتورة');
         }
 
         $validated = $request->validate([

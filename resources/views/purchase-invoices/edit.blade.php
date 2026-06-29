@@ -107,7 +107,7 @@
                             </div>
                             <div>
                                 <label class="mb-1 block text-xs font-medium text-gray-600">مصاريف شحن</label>
-                                <input type="number" id="shipping-amount" name="shipping_amount" value="0" step="0.01" min="0"
+                                <input type="number" id="shipping-amount" name="shipping_amount" value="{{ old('shipping_amount', $purchaseInvoice->shipping_amount ?? '0') }}" step="0.01" min="0"
                                     class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                             </div>
                         </div>
