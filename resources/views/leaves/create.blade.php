@@ -35,7 +35,7 @@
                         <option value="annual">إجازة سنوية</option>
                         <option value="sick">إجازة مرضية</option>
                         <option value="maternity">إجازة أمومة</option>
-                        <option value="paternity">إجازة أبوة</option>
+                        <option value="personal">إجازة شخصية</option>
                         <option value="unpaid">إجازة بدون راتب</option>
                         <option value="other">أخرى</option>
                     </select>

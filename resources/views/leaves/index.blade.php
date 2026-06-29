@@ -43,10 +43,10 @@
                     @forelse($leaves as $leave)
                         <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
                             <td class="px-4 py-3 font-medium text-gray-900">{{ $leave->employee->full_name ?? '-' }}</td>
-                            <td class="px-4 py-3 text-gray-600">{{ $leave->type }}</td>
-                            <td class="px-4 py-3 text-gray-600">{{ $leave->start_date->format('Y/m/d') }}</td>
-                            <td class="px-4 py-3 text-gray-600">{{ $leave->end_date->format('Y/m/d') }}</td>
-                            <td class="px-4 py-3 text-center font-mono">{{ $leave->days }}</td>
+                            <td class="px-4 py-3 text-gray-600">{{ $leave->leave_type }}</td>
+                            <td class="px-4 py-3 text-gray-600">{{ $leave->date_from->format('Y/m/d') }}</td>
+                            <td class="px-4 py-3 text-gray-600">{{ $leave->date_to->format('Y/m/d') }}</td>
+                            <td class="px-4 py-3 text-center font-mono">{{ $leave->total_days }}</td>
                             <td class="px-4 py-3 text-center">
                                 @if($leave->status == 'approved')
                                     <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">موافق عليها</span>

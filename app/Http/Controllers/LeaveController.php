@@ -21,7 +21,7 @@ class LeaveController extends TenantAwareController
             $query->where('status', $request->status);
         }
 
-        $leaves = $query->latest('start_date')->paginate(20)->withQueryString();
+        $leaves = $query->latest('date_from')->paginate(20)->withQueryString();
         $employees = Employee::where('tenant_id', $this->getTenantId())->active()->orderBy('first_name')->get();
 
         return view('leaves.index', compact('leaves', 'employees'));
@@ -38,7 +38,7 @@ class LeaveController extends TenantAwareController
     {
         $validated = $request->validate([
             'employee_id' => 'required|exists:employees,id',
-            'type' => 'required|in:annual,sick,maternity,paternity,unpaid,other',
+            'type' => 'required|in:annual,sick,maternity,personal,unpaid,other',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'reason' => 'nullable|string|max:500',
@@ -46,11 +46,16 @@ class LeaveController extends TenantAwareController
 
         $days = Carbon::parse($validated['start_date'])->diffInDays(Carbon::parse($validated['end_date'])) + 1;
 
-        $validated['tenant_id'] = $this->getTenantId();
-        $validated['days'] = $days;
-        $validated['status'] = 'pending';
-
-        Leave::create($validated);
+        Leave::create([
+            'tenant_id' => $this->getTenantId(),
+            'employee_id' => $validated['employee_id'],
+            'leave_type' => $validated['type'],
+            'date_from' => $validated['start_date'],
+            'date_to' => $validated['end_date'],
+            'total_days' => $days,
+            'reason' => $validated['reason'] ?? '',
+            'status' => 'pending',
+        ]);
 
         return redirect()->route('leaves.index')->with('success', 'تم تقديم طلب الإجازة بنجاح');
     }
