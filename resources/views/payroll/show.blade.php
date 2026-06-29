@@ -67,8 +67,8 @@
                     <tr class="border-t-2 border-gray-300 bg-gray-50 font-bold">
                         <td class="px-4 py-3">الإجمالي</td>
                         <td class="px-4 py-3 text-center font-mono">{{ number_format($payroll->payslips->sum('basic_salary'), 2) }}</td>
-                        <td class="px-4 py-3 text-center font-mono text-green-600">{{ number_format($payroll->payslips->sum('allowances'), 2) }}</td>
-                        <td class="px-4 py-3 text-center font-mono text-red-600">{{ number_format($payroll->payslips->sum('deductions'), 2) }}</td>
+                        <td class="px-4 py-3 text-center font-mono text-green-600">{{ number_format($payroll->payslips->sum('total_allowances'), 2) }}</td>
+                        <td class="px-4 py-3 text-center font-mono text-red-600">{{ number_format($payroll->payslips->sum('total_deductions'), 2) }}</td>
                         <td class="px-4 py-3 text-center font-mono">{{ number_format($payroll->payslips->sum('net_salary'), 2) }}</td>
                     </tr>
                 </tfoot>
