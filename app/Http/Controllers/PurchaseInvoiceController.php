@@ -68,7 +68,7 @@ class PurchaseInvoiceController extends TenantAwareController
             'lines.*.item_id' => 'required|exists:items,id',
             'lines.*.description' => 'nullable|string',
             'lines.*.quantity' => 'required|numeric|min:0.01',
-            'lines.*.unit_cost' => 'required|numeric|min:0',
+            'lines.*.unit_cost' => 'nullable|numeric|min:0',
             'lines.*.discount_percent' => 'nullable|numeric|min:0|max:100',
             'lines.*.tax_rate' => 'nullable|numeric|min:0|max:100',
             'lines.*.expiry_date' => 'nullable|date',
@@ -83,7 +83,8 @@ class PurchaseInvoiceController extends TenantAwareController
 
             $lineData = [];
             foreach ($validated['lines'] as $line) {
-                $lineSubtotal = $line['quantity'] * $line['unit_cost'];
+                $unitCost = $line['unit_cost'] ?? 0;
+                $lineSubtotal = $line['quantity'] * $unitCost;
                 $lineDiscount = $lineSubtotal * (($line['discount_percent'] ?? 0) / 100);
                 $lineAfterDiscount = $lineSubtotal - $lineDiscount;
                 $lineTax = $lineAfterDiscount * (($line['tax_rate'] ?? 0) / 100);
@@ -98,7 +99,7 @@ class PurchaseInvoiceController extends TenantAwareController
                     'item_id' => $line['item_id'],
                     'description' => $line['description'] ?? null,
                     'quantity' => $line['quantity'],
-                    'unit_cost' => $line['unit_cost'],
+                    'unit_cost' => $unitCost,
                     'discount_percent' => $line['discount_percent'] ?? 0,
                     'discount_amount' => $lineDiscount,
                     'tax_rate' => $line['tax_rate'] ?? 0,
@@ -118,7 +119,7 @@ class PurchaseInvoiceController extends TenantAwareController
                 'supplier_id' => $validated['supplier_id'],
                 'warehouse_id' => $validated['warehouse_id'],
                 'currency_id' => $validated['currency_id'] ?? null,
-                'user_id' => auth()->id(),
+                'received_by' => auth()->id(),
                 'invoice_number' => $this->generateInvoiceNumber(),
                 'date' => $validated['date'],
                 'due_date' => $validated['due_date'],
@@ -126,7 +127,7 @@ class PurchaseInvoiceController extends TenantAwareController
                 'discount_amount' => $totalDiscount + $overallDiscount,
                 'discount_percent' => 0,
                 'tax_amount' => $totalTax,
-                'shipping_amount' => $validated['shipping_amount'] ?? 0,
+                'shipping_cost' => $validated['shipping_amount'] ?? 0,
                 'total' => $grandTotal,
                 'paid_amount' => 0,
                 'due_amount' => $grandTotal,
@@ -190,7 +191,7 @@ class PurchaseInvoiceController extends TenantAwareController
             'lines.*.item_id' => 'required|exists:items,id',
             'lines.*.description' => 'nullable|string',
             'lines.*.quantity' => 'required|numeric|min:0.01',
-            'lines.*.unit_cost' => 'required|numeric|min:0',
+            'lines.*.unit_cost' => 'nullable|numeric|min:0',
             'lines.*.discount_percent' => 'nullable|numeric|min:0|max:100',
             'lines.*.tax_rate' => 'nullable|numeric|min:0|max:100',
             'lines.*.expiry_date' => 'nullable|date',
@@ -205,7 +206,8 @@ class PurchaseInvoiceController extends TenantAwareController
 
             $lineData = [];
             foreach ($validated['lines'] as $line) {
-                $lineSubtotal = $line['quantity'] * $line['unit_cost'];
+                $unitCost = $line['unit_cost'] ?? 0;
+                $lineSubtotal = $line['quantity'] * $unitCost;
                 $lineDiscount = $lineSubtotal * (($line['discount_percent'] ?? 0) / 100);
                 $lineAfterDiscount = $lineSubtotal - $lineDiscount;
                 $lineTax = $lineAfterDiscount * (($line['tax_rate'] ?? 0) / 100);
@@ -220,7 +222,7 @@ class PurchaseInvoiceController extends TenantAwareController
                     'item_id' => $line['item_id'],
                     'description' => $line['description'] ?? null,
                     'quantity' => $line['quantity'],
-                    'unit_cost' => $line['unit_cost'],
+                    'unit_cost' => $unitCost,
                     'discount_percent' => $line['discount_percent'] ?? 0,
                     'discount_amount' => $lineDiscount,
                     'tax_rate' => $line['tax_rate'] ?? 0,
@@ -244,7 +246,7 @@ class PurchaseInvoiceController extends TenantAwareController
                 'subtotal' => $subtotal,
                 'discount_amount' => $totalDiscount + $overallDiscount,
                 'tax_amount' => $totalTax,
-                'shipping_amount' => $validated['shipping_amount'] ?? 0,
+                'shipping_cost' => $validated['shipping_amount'] ?? 0,
                 'total' => $grandTotal,
                 'due_amount' => $grandTotal - $purchaseInvoice->paid_amount,
                 'notes' => $validated['notes'] ?? null,
@@ -306,11 +308,10 @@ class PurchaseInvoiceController extends TenantAwareController
             foreach ($purchaseInvoice->lines as $line) {
                 $itemWarehouse = ItemWarehouse::firstOrCreate(
                     ['item_id' => $line->item_id, 'warehouse_id' => $purchaseInvoice->warehouse_id],
-                    ['quantity' => 0, 'reserved_quantity' => 0, 'available_quantity' => 0, 'average_cost' => 0]
+                    ['tenant_id' => $this->getTenantId(), 'quantity' => 0, 'reserved_quantity' => 0, 'average_cost' => 0]
                 );
 
                 $itemWarehouse->increment('quantity', $line->quantity);
-                $itemWarehouse->increment('available_quantity', $line->quantity);
 
                 if ($itemWarehouse->quantity > 0) {
                     $totalCost = ($itemWarehouse->quantity - $line->quantity) * $itemWarehouse->average_cost + $line->quantity * $line->unit_cost;
@@ -318,18 +319,17 @@ class PurchaseInvoiceController extends TenantAwareController
                 }
 
                 StockMovement::create([
+                    'tenant_id' => $this->getTenantId(),
                     'item_id' => $line->item_id,
                     'warehouse_id' => $purchaseInvoice->warehouse_id,
-                    'stockable_type' => PurchaseInvoice::class,
-                    'stockable_id' => $purchaseInvoice->id,
-                    'type' => 'in',
+                    'type' => 'purchase',
                     'quantity' => $line->quantity,
                     'unit_cost' => $line->unit_cost,
                     'total_cost' => $line->total,
-                    'reference_number' => $purchaseInvoice->invoice_number,
-                    'date' => now()->toDateString(),
-                    'notes' => 'إدخال مخزون - فاتورة مشتريات',
-                    'created_by' => auth()->id(),
+                    'reference_type' => PurchaseInvoice::class,
+                    'reference_id' => $purchaseInvoice->id,
+                    'description' => 'إدخال مخزون - فاتورة مشتريات ' . $purchaseInvoice->invoice_number,
+                    'user_id' => auth()->id(),
                 ]);
             }
 
@@ -373,22 +373,20 @@ class PurchaseInvoiceController extends TenantAwareController
 
                 if ($itemWarehouse) {
                     $itemWarehouse->decrement('quantity', $line->quantity);
-                    $itemWarehouse->decrement('available_quantity', $line->quantity);
                 }
 
                 StockMovement::create([
+                    'tenant_id' => $this->getTenantId(),
                     'item_id' => $line->item_id,
                     'warehouse_id' => $purchaseInvoice->warehouse_id,
-                    'stockable_type' => PurchaseInvoice::class,
-                    'stockable_id' => $purchaseInvoice->id,
-                    'type' => 'out',
+                    'type' => 'return_out',
                     'quantity' => $line->quantity,
                     'unit_cost' => $line->unit_cost,
                     'total_cost' => $line->total,
-                    'reference_number' => $purchaseInvoice->invoice_number,
-                    'date' => now()->toDateString(),
-                    'notes' => 'خروج مخزون - إلغاء فاتورة مشتريات',
-                    'created_by' => auth()->id(),
+                    'reference_type' => PurchaseInvoice::class,
+                    'reference_id' => $purchaseInvoice->id,
+                    'description' => 'إلغاء فاتورة مشتريات - ' . $purchaseInvoice->invoice_number,
+                    'user_id' => auth()->id(),
                 ]);
             }
 

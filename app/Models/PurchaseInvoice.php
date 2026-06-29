@@ -20,6 +20,7 @@ class PurchaseInvoice extends Model
         'received_by',
         'invoice_number',
         'date',
+        'due_date',
         'subtotal',
         'discount_percent',
         'discount_amount',
