@@ -7,7 +7,7 @@
     </x-slot>
 
     <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
             <div>
                 <label class="mb-1 block text-sm font-medium text-gray-500">رقم الإذن</label>
                 <p class="text-gray-900 text-sm font-bold">{{ $salesDeliveryNote->delivery_number }}</p>
@@ -40,7 +40,7 @@
                 <label class="mb-1 block text-sm font-medium text-gray-500">بواسطة</label>
                 <p class="text-gray-900 text-sm">{{ $salesDeliveryNote->user->name ?? '-' }}</p>
             </div>
-            <div class="md:col-span-2">
+            <div class="md:col-span-6">
                 <label class="mb-1 block text-sm font-medium text-gray-500">ملاحظات</label>
                 <p class="text-gray-900 text-sm">{{ $salesDeliveryNote->notes ?? '-' }}</p>
             </div>
