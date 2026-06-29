@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
@@ -38,17 +38,36 @@ class AuthController extends Controller
     public function showSelectCompany()
     {
         $user = auth()->user();
-        $tenants = $user->getAccessibleTenants();
 
-        if ($tenants->count() === 0) {
-            if ($user->tenant_id) {
-                session(['current_tenant_id' => $user->tenant_id]);
-                return new \Illuminate\Http\RedirectResponse('/');
-            }
+        if (!$user->tenant_id) {
             return new \Illuminate\Http\RedirectResponse(route('setup.index'));
         }
 
-        return view('auth.select-company', compact('tenants'));
+        session(['current_tenant_id' => $user->tenant_id]);
+
+        $companies = Company::where('tenant_id', $user->tenant_id)
+            ->where('is_active', true)
+            ->get();
+
+        if ($companies->count() === 1) {
+            session(['current_company_id' => $companies->first()->id]);
+            return new \Illuminate\Http\RedirectResponse('/');
+        }
+
+        return view('auth.select-company', compact('companies'));
+    }
+
+    public function switchCompany(Request $request, $companyId)
+    {
+        $user = auth()->user();
+        $company = Company::where('tenant_id', $user->tenant_id)
+            ->where('is_active', true)
+            ->findOrFail($companyId);
+
+        session(['current_company_id' => $company->id]);
+
+        return redirect()->route('dashboard')
+            ->with('success', 'تم التبديل إلى ' . ($company->name ?? $company->name_en));
     }
 
     public function logout(Request $request)

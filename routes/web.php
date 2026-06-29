@@ -59,6 +59,7 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/select-company', [AuthController::class, 'showSelectCompany'])->middleware('auth')->name('select-company');
+Route::post('/switch-company/{companyId}', [AuthController::class, 'switchCompany'])->middleware('auth')->name('switch-company');
 
 Route::middleware(['auth', 'tenant'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');

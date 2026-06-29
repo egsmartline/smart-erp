@@ -9,8 +9,8 @@
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            @foreach($tenants as $tenant)
-                <form action="{{ route('switch-tenant', $tenant->id) }}" method="POST">
+            @foreach($companies as $company)
+                <form action="{{ route('switch-company', $company->id) }}" method="POST">
                     @csrf
                     <button type="submit" class="w-full text-right rounded-xl border-2 border-gray-200 bg-white p-6 hover:border-blue-500 hover:shadow-lg transition-all cursor-pointer group">
                         <div class="flex items-center gap-4">
@@ -20,9 +20,9 @@
                                 </svg>
                             </div>
                             <div class="flex-1 text-right">
-                                <h3 class="text-lg font-bold text-gray-800">{{ $tenant->name }}</h3>
-                                @if($tenant->commercial_registration)
-                                    <p class="text-xs text-gray-500 mt-0.5">سجل تجاري: {{ $tenant->commercial_registration }}</p>
+                                <h3 class="text-lg font-bold text-gray-800">{{ $company->name }}</h3>
+                                @if($company->tax_number)
+                                    <p class="text-xs text-gray-500 mt-0.5">رقم ضريبي: {{ $company->tax_number }}</p>
                                 @endif
                             </div>
                             <svg class="h-5 w-5 text-gray-300 group-hover:text-blue-500 transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
