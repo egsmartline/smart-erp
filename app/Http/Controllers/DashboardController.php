@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Account;
+use App\Models\JournalEntry;
 use App\Models\SalesInvoice;
 use App\Models\PurchaseInvoice;
 use App\Models\Customer;
@@ -37,7 +39,17 @@ class DashboardController extends TenantAwareController
             ->take(5)
             ->get();
 
-        return view('dashboard', compact('stats', 'recentSales', 'recentPurchases'));
+        $accountsCount = Account::where('tenant_id', $tenantId)->count();
+        $journalEntriesCount = JournalEntry::where('tenant_id', $tenantId)->count();
+        $draftJournalEntriesCount = JournalEntry::where('tenant_id', $tenantId)->where('is_posted', false)->count();
+        $postedJournalEntriesCount = JournalEntry::where('tenant_id', $tenantId)->where('is_posted', true)->count();
+        $recentJournalEntries = JournalEntry::where('tenant_id', $tenantId)->with('creator')->latest()->take(5)->get();
+
+        return view('dashboard', compact(
+            'stats', 'recentSales', 'recentPurchases',
+            'accountsCount', 'journalEntriesCount', 'draftJournalEntriesCount',
+            'postedJournalEntriesCount', 'recentJournalEntries'
+        ));
     }
 
     public function switchTenant(Request $request, $tenantId)
