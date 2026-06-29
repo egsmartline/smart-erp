@@ -13,43 +13,28 @@
     </x-slot>
 
     <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6" id="printArea">
-        <div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
-            <div>
-                <label class="mb-1 block text-sm font-medium text-gray-500">رقم الإذن</label>
-                <p class="text-gray-900 text-sm font-bold">{{ $salesDeliveryNote->delivery_number }}</p>
-            </div>
-            <div>
-                <label class="mb-1 block text-sm font-medium text-gray-500">التاريخ</label>
-                <p class="text-gray-900 text-sm">{{ $salesDeliveryNote->date->format('Y/m/d') }}</p>
-            </div>
-            <div>
-                <label class="mb-1 block text-sm font-medium text-gray-500">الحالة</label>
-                <p class="text-gray-900 text-sm">
-                    @if($salesDeliveryNote->status === 'confirmed')
-                        <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">مؤكد</span>
-                    @elseif($salesDeliveryNote->status === 'draft')
-                        <span class="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">مسودة</span>
-                    @else
-                        <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">ملغي</span>
-                    @endif
-                </p>
-            </div>
-            <div>
-                <label class="mb-1 block text-sm font-medium text-gray-500">العميل</label>
-                <p class="text-gray-900 text-sm">{{ $salesDeliveryNote->customer->name ?? '-' }}</p>
-            </div>
-            <div>
-                <label class="mb-1 block text-sm font-medium text-gray-500">المخزن</label>
-                <p class="text-gray-900 text-sm">{{ $salesDeliveryNote->warehouse->name ?? '-' }}</p>
-            </div>
-            <div>
-                <label class="mb-1 block text-sm font-medium text-gray-500">بواسطة</label>
-                <p class="text-gray-900 text-sm">{{ $salesDeliveryNote->user->name ?? '-' }}</p>
-            </div>
-            <div class="md:col-span-6">
-                <label class="mb-1 block text-sm font-medium text-gray-500">ملاحظات</label>
-                <p class="text-gray-900 text-sm">{{ $salesDeliveryNote->notes ?? '-' }}</p>
-            </div>
+        <div class="mb-4 leading-relaxed">
+            <span class="text-gray-900 text-sm"><strong>رقم الإذن:</strong> {{ $salesDeliveryNote->delivery_number }}</span>
+            <span class="mx-3 text-gray-300">|</span>
+            <span class="text-gray-900 text-sm"><strong>التاريخ:</strong> {{ $salesDeliveryNote->date->format('Y/m/d') }}</span>
+            <span class="mx-3 text-gray-300">|</span>
+            <span class="text-gray-900 text-sm"><strong>الحالة:</strong>
+                @if($salesDeliveryNote->status === 'confirmed')
+                    <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">مؤكد</span>
+                @elseif($salesDeliveryNote->status === 'draft')
+                    <span class="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800">مسودة</span>
+                @else
+                    <span class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">ملغي</span>
+                @endif
+            </span>
+            <span class="mx-3 text-gray-300">|</span>
+            <span class="text-gray-900 text-sm"><strong>العميل:</strong> {{ $salesDeliveryNote->customer->name ?? '-' }}</span>
+            <br>
+            <span class="text-gray-900 text-sm"><strong>المخزن:</strong> {{ $salesDeliveryNote->warehouse->name ?? '-' }}</span>
+            <span class="mx-3 text-gray-300">|</span>
+            <span class="text-gray-900 text-sm"><strong>بواسطة:</strong> {{ $salesDeliveryNote->user->name ?? '-' }}</span>
+            <span class="mx-3 text-gray-300">|</span>
+            <span class="text-gray-900 text-sm"><strong>ملاحظات:</strong> {{ $salesDeliveryNote->notes ?? '-' }}</span>
         </div>
 
         <div class="border-t border-gray-200 pt-6">
