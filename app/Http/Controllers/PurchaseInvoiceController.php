@@ -10,6 +10,7 @@ use App\Models\Warehouse;
 use App\Models\ItemWarehouse;
 use App\Models\StockMovement;
 use App\Models\JournalEntry;
+use App\Models\Currency;
 use App\Services\JournalService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
