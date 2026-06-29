@@ -3,8 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Company;
+use App\Models\Tenant;
 use App\Models\Currency;
+use App\Models\Account;
+use App\Models\FiscalYear;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CompanyController extends TenantAwareController
 {
@@ -36,19 +40,67 @@ class CompanyController extends TenantAwareController
             'is_active' => 'boolean',
         ]);
 
-        $validated['tenant_id'] = $this->getTenantId();
+        DB::beginTransaction();
 
-        if ($request->hasFile('logo')) {
-            $validated['logo'] = $request->file('logo')->store('logos', 'public');
+        try {
+            $tenant = Tenant::create([
+                'name' => $validated['name'],
+                'slug' => 'company-' . strtolower(preg_replace('/[^a-zA-Z0-9]/', '-', $validated['name'])) . '-' . uniqid(),
+                'is_active' => true,
+            ]);
+
+            $currency = Currency::where('is_active', true)->first();
+            $currencyId = $currency?->id;
+
+            if ($validated['currency_code'] ?? null) {
+                $dbCurrency = Currency::where('code', $validated['currency_code'])->first();
+                if ($dbCurrency) {
+                    $currencyId = $dbCurrency->id;
+                }
+            }
+
+            $currencyId ??= 1;
+
+            $companyData = array_merge($validated, ['tenant_id' => $tenant->id]);
+
+            if ($request->hasFile('logo')) {
+                $companyData['logo'] = $request->file('logo')->store('logos', 'public');
+            }
+
+            if (!isset($companyData['is_active'])) {
+                $companyData['is_active'] = true;
+            }
+
+            unset($companyData['secondary_currency_id']);
+            if ($validated['secondary_currency_id'] ?? null) {
+                $companyData['secondary_currency_id'] = $validated['secondary_currency_id'];
+            }
+
+            Company::create($companyData);
+
+            $this->createDefaultAccounts($tenant->id, $currencyId);
+
+            FiscalYear::create([
+                'tenant_id' => $tenant->id,
+                'name' => date('Y'),
+                'start_date' => date('Y-01-01'),
+                'end_date' => date('Y-12-31'),
+                'is_current' => true,
+            ]);
+
+            $user = auth()->user();
+            $user->tenants()->attach($tenant->id, ['role' => $user->role]);
+
+            session(['current_tenant_id' => $tenant->id]);
+            session(['current_company_id' => Company::where('tenant_id', $tenant->id)->first()->id]);
+
+            DB::commit();
+
+            return redirect()->route('dashboard')->with('success', 'تم إنشاء الشركة بنجاح');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => 'حدث خطأ أثناء إنشاء الشركة: ' . $e->getMessage()])->withInput();
         }
-
-        if (!isset($validated['is_active'])) {
-            $validated['is_active'] = true;
-        }
-
-        Company::create($validated);
-
-        return redirect()->route('companies.index')->with('success', 'تم إنشاء الشركة بنجاح');
     }
 
     public function show(Company $company)
@@ -96,5 +148,33 @@ class CompanyController extends TenantAwareController
     {
         $company->delete();
         return redirect()->route('companies.index')->with('success', 'تم حذف الشركة بنجاح');
+    }
+
+    private function createDefaultAccounts($tenantId, $currencyId)
+    {
+        $accounts = [
+            ['code' => '1000', 'name' => 'الصندوق', 'type' => 'asset', 'is_header' => false, 'parent_code' => null],
+            ['code' => '1100', 'name' => 'البنوك', 'type' => 'asset', 'is_header' => false, 'parent_code' => null],
+            ['code' => '1200', 'name' => 'العملاء', 'type' => 'asset', 'is_header' => false, 'parent_code' => null],
+            ['code' => '1300', 'name' => 'المخزون', 'type' => 'asset', 'is_header' => false, 'parent_code' => null],
+            ['code' => '2000', 'name' => 'الموردون', 'type' => 'liability', 'is_header' => false, 'parent_code' => null],
+            ['code' => '2100', 'name' => 'ضريبة القيمة المضافة', 'type' => 'liability', 'is_header' => false, 'parent_code' => null],
+            ['code' => '3000', 'name' => 'رأس المال', 'type' => 'equity', 'is_header' => false, 'parent_code' => null],
+            ['code' => '4000', 'name' => 'إيرادات المبيعات', 'type' => 'revenue', 'is_header' => false, 'parent_code' => null],
+            ['code' => '5000', 'name' => 'تكلفة البضاعة المباعة', 'type' => 'expense', 'is_header' => false, 'parent_code' => null],
+            ['code' => '6000', 'name' => 'المصروفات', 'type' => 'expense', 'is_header' => false, 'parent_code' => null],
+        ];
+
+        foreach ($accounts as $account) {
+            Account::create([
+                'tenant_id' => $tenantId,
+                'name' => $account['name'],
+                'code' => $account['code'],
+                'type' => $account['type'],
+                'currency_id' => $currencyId,
+                'is_header' => $account['is_header'],
+                'is_active' => true,
+            ]);
+        }
     }
 }

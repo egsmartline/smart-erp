@@ -43,14 +43,16 @@ class AuthController extends Controller
             return new \Illuminate\Http\RedirectResponse(route('setup.index'));
         }
 
-        session(['current_tenant_id' => $user->tenant_id]);
+        $tenantIds = $user->getAccessibleTenants()->pluck('id');
 
-        $companies = Company::where('tenant_id', $user->tenant_id)
+        $companies = Company::whereIn('tenant_id', $tenantIds)
             ->where('is_active', true)
             ->get();
 
         if ($companies->count() === 1) {
-            session(['current_company_id' => $companies->first()->id]);
+            $company = $companies->first();
+            session(['current_tenant_id' => $company->tenant_id]);
+            session(['current_company_id' => $company->id]);
             return new \Illuminate\Http\RedirectResponse('/');
         }
 
@@ -60,10 +62,13 @@ class AuthController extends Controller
     public function switchCompany(Request $request, $companyId)
     {
         $user = auth()->user();
-        $company = Company::where('tenant_id', $user->tenant_id)
+        $tenantIds = $user->getAccessibleTenants()->pluck('id');
+
+        $company = Company::whereIn('tenant_id', $tenantIds)
             ->where('is_active', true)
             ->findOrFail($companyId);
 
+        session(['current_tenant_id' => $company->tenant_id]);
         session(['current_company_id' => $company->id]);
 
         return redirect()->route('dashboard')
