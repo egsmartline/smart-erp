@@ -17,6 +17,8 @@
             <span class="text-gray-900 text-sm"><strong>رقم الإذن:</strong> {{ $salesDeliveryNote->delivery_number }}</span>
             <span class="mx-3 text-gray-300">|</span>
             <span class="text-gray-900 text-sm"><strong>التاريخ:</strong> {{ $salesDeliveryNote->date->format('Y/m/d') }}</span>
+            <br>
+            <span class="text-gray-900 text-sm"><strong>العميل:</strong> {{ $salesDeliveryNote->customer->name ?? '-' }}</span>
             <span class="mx-3 text-gray-300">|</span>
             <span class="text-gray-900 text-sm"><strong>الحالة:</strong>
                 @if($salesDeliveryNote->status === 'confirmed')
@@ -27,12 +29,8 @@
                     <span class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">ملغي</span>
                 @endif
             </span>
-            <span class="mx-3 text-gray-300">|</span>
-            <span class="text-gray-900 text-sm"><strong>العميل:</strong> {{ $salesDeliveryNote->customer->name ?? '-' }}</span>
             <br>
             <span class="text-gray-900 text-sm"><strong>المخزن:</strong> {{ $salesDeliveryNote->warehouse->name ?? '-' }}</span>
-            <span class="mx-3 text-gray-300">|</span>
-            <span class="text-gray-900 text-sm"><strong>بواسطة:</strong> {{ $salesDeliveryNote->user->name ?? '-' }}</span>
             <span class="mx-3 text-gray-300">|</span>
             <span class="text-gray-900 text-sm"><strong>ملاحظات:</strong> {{ $salesDeliveryNote->notes ?? '-' }}</span>
         </div>
