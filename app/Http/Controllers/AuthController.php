@@ -40,6 +40,14 @@ class AuthController extends Controller
         $user = auth()->user();
         $tenants = $user->getAccessibleTenants();
 
+        if ($tenants->count() === 0) {
+            if ($user->tenant_id) {
+                session(['current_tenant_id' => $user->tenant_id]);
+                return new \Illuminate\Http\RedirectResponse('/');
+            }
+            return new \Illuminate\Http\RedirectResponse(route('setup.index'));
+        }
+
         if ($tenants->count() === 1) {
             session(['current_tenant_id' => $tenants->first()->id]);
             return new \Illuminate\Http\RedirectResponse('/');

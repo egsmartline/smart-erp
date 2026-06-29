@@ -61,7 +61,14 @@ class User extends Authenticatable
         if ($this->isSuperAdmin()) {
             return Tenant::where('is_active', true)->get();
         }
-        return $this->tenants()->where('is_active', true)->get();
+
+        $tenants = $this->tenants()->where('is_active', true)->get();
+
+        if ($this->tenant && $this->tenant->is_active) {
+            $tenants = $tenants->push($this->tenant)->unique('id');
+        }
+
+        return $tenants;
     }
 
     public function journalEntries()
