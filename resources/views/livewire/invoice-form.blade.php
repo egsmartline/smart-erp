@@ -38,12 +38,21 @@
         @else
         <div>
             <label class="mb-1 block text-sm font-medium text-gray-700">{{ $type === 'sale' ? 'العميل' : 'المورد' }} <span class="text-red-500">*</span></label>
-            <select name="customer_id" wire:model="customerId" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                <option value="">اختر {{ $type === 'sale' ? 'العميل' : 'المورد' }}</option>
-                @foreach($customers as $customer)
-                    <option value="{{ $customer->id }}">{{ $customer->name }}{{ $customer->phone ? ' ('.$customer->phone.')' : '' }}</option>
-                @endforeach
-            </select>
+            @if($type === 'sale')
+                <select name="customer_id" wire:model="customerId" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <option value="">اختر العميل</option>
+                    @foreach($customers as $customer)
+                        <option value="{{ $customer->id }}">{{ $customer->name }}{{ $customer->phone ? ' ('.$customer->phone.')' : '' }}</option>
+                    @endforeach
+                </select>
+            @else
+                <select name="supplier_id" wire:model="supplierId" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <option value="">اختر المورد</option>
+                    @foreach($suppliers as $supplier)
+                        <option value="{{ $supplier->id }}">{{ $supplier->name }}{{ $supplier->phone ? ' ('.$supplier->phone.')' : '' }}</option>
+                    @endforeach
+                </select>
+            @endif
         </div>
         @endif
 

@@ -55,21 +55,23 @@ class InvoiceForm extends Component
         $this->date = date('Y-m-d');
         $this->dueDate = date('Y-m-d', strtotime('+30 days'));
 
-        $this->warehouses = Warehouse::where('is_active', true)->get();
-        $this->currencies = Currency::where('is_active', true)->get();
+        $tenantId = session('current_tenant_id') ?? auth()->user()->tenant_id;
+
+        $this->warehouses = Warehouse::where('tenant_id', $tenantId)->where('is_active', true)->get();
+        $this->currencies = Currency::where('tenant_id', $tenantId)->where('is_active', true)->get();
         $defaultCurrency = $this->currencies->firstWhere('is_default', true) ?? $this->currencies->first();
         $this->currencyId = $defaultCurrency ? $defaultCurrency->id : '';
 
         if ($type === 'sale') {
-            $this->customers = Customer::where('is_active', true)->get();
+            $this->customers = Customer::where('tenant_id', $tenantId)->where('is_active', true)->get();
             if ($customerId) $this->customerId = $customerId;
         } else {
-            $this->suppliers = Supplier::where('is_active', true)->get();
+            $this->suppliers = Supplier::where('tenant_id', $tenantId)->where('is_active', true)->get();
             if ($supplierId) $this->supplierId = $supplierId;
         }
 
         if ($this->showItemSelect) {
-            $this->allItems = Item::where('is_active', true)->get();
+            $this->allItems = Item::where('tenant_id', $tenantId)->where('is_active', true)->get();
         }
 
         if ($warehouseId) {
@@ -189,7 +191,8 @@ class InvoiceForm extends Component
     public function updatedCustomerSearch(): void
     {
         if (strlen($this->customerSearch) >= 1) {
-            $this->filteredCustomers = Customer::where('is_active', true)
+            $tenantId = session('current_tenant_id') ?? auth()->user()->tenant_id;
+            $this->filteredCustomers = Customer::where('tenant_id', $tenantId)->where('is_active', true)
                 ->where(function ($q) {
                     $q->where('name', 'like', "%{$this->customerSearch}%")
                       ->orWhere('name_ar', 'like', "%{$this->customerSearch}%")
@@ -236,7 +239,8 @@ class InvoiceForm extends Component
     public function updatedSupplierSearch(): void
     {
         if (strlen($this->supplierSearch) >= 1) {
-            $this->filteredSuppliers = Supplier::where('is_active', true)
+            $tenantId = session('current_tenant_id') ?? auth()->user()->tenant_id;
+            $this->filteredSuppliers = Supplier::where('tenant_id', $tenantId)->where('is_active', true)
                 ->where(function ($q) {
                     $q->where('name', 'like', "%{$this->supplierSearch}%")
                       ->orWhere('name_ar', 'like', "%{$this->supplierSearch}%")
@@ -298,7 +302,15 @@ class InvoiceForm extends Component
             'notes' => $this->notes,
             'discount_amount' => $this->discountAmount,
             'shipping_amount' => $this->shippingAmount,
-            'lines' => $this->lines,
+            'lines' => array_map(fn($l) => [
+                'item_id' => $l['item_id'],
+                'description' => $l['description'] ?? '',
+                'quantity' => $l['quantity'],
+                'unit_price' => $l['unit_price'],
+                'unit_cost' => $l['unit_price'],
+                'discount_percent' => $l['discount_percent'] ?? 0,
+                'tax_rate' => $l['tax_rate'] ?? 0,
+            ], $this->lines),
         ];
     }
 
