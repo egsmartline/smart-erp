@@ -50,16 +50,16 @@ class AuditLog extends Model
     public function getUrlAttribute(): ?string
     {
         return match ($this->model) {
-            SalesInvoice::class => route('sales-invoices.show', $this->model_id, false),
-            PurchaseInvoice::class => route('purchase-invoices.show', $this->model_id, false),
-            Customer::class => route('customers.show', $this->model_id, false),
-            Supplier::class => route('suppliers.show', $this->model_id, false),
-            Item::class => route('items.show', $this->model_id, false),
-            Payment::class => route('payments.show', $this->model_id, false),
-            Expense::class => route('expenses.show', $this->model_id, false),
-            Quotation::class => route('quotations.show', $this->model_id, false),
-            SalesReturn::class => route('sales-returns.show', $this->model_id, false),
-            PurchaseReturn::class => route('purchase-returns.show', $this->model_id, false),
+            SalesInvoice::class => route('sales-invoices.show', $this->model_id),
+            PurchaseInvoice::class => route('purchase-invoices.show', $this->model_id),
+            Customer::class => route('customers.show', $this->model_id),
+            Supplier::class => route('suppliers.show', $this->model_id),
+            Item::class => route('items.show', $this->model_id),
+            Payment::class => route('payments.show', $this->model_id),
+            Expense::class => route('expenses.show', $this->model_id),
+            Quotation::class => route('quotations.show', $this->model_id),
+            SalesReturn::class => route('sales-returns.show', $this->model_id),
+            PurchaseReturn::class => route('purchase-returns.show', $this->model_id),
             default => null,
         };
     }
