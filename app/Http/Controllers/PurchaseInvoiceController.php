@@ -47,9 +47,11 @@ class PurchaseInvoiceController extends TenantAwareController
     {
         $suppliers = $this->tenantQuery(Supplier::class)->where('is_active', true)->get();
         $warehouses = $this->tenantQuery(Warehouse::class)->where('is_active', true)->get();
+        $items = Item::where('is_active', true)->get();
+        $currencies = Currency::where('is_active', true)->get();
         $invoiceNumber = $this->generateInvoiceNumber();
 
-        return view('purchase-invoices.create', compact('suppliers', 'warehouses', 'invoiceNumber'));
+        return view('purchase-invoices.create', compact('suppliers', 'warehouses', 'items', 'currencies', 'invoiceNumber'));
     }
 
     public function store(Request $request)
@@ -167,8 +169,10 @@ class PurchaseInvoiceController extends TenantAwareController
         $purchaseInvoice->load('lines.item');
         $suppliers = $this->tenantQuery(Supplier::class)->where('is_active', true)->get();
         $warehouses = $this->tenantQuery(Warehouse::class)->where('is_active', true)->get();
+        $items = Item::where('is_active', true)->get();
+        $currencies = Currency::where('is_active', true)->get();
 
-        return view('purchase-invoices.edit', compact('purchaseInvoice', 'suppliers', 'warehouses'));
+        return view('purchase-invoices.edit', compact('purchaseInvoice', 'suppliers', 'warehouses', 'items', 'currencies'));
     }
 
     public function update(Request $request, PurchaseInvoice $purchaseInvoice)

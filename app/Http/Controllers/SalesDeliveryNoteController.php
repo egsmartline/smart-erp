@@ -80,25 +80,23 @@ class SalesDeliveryNoteController extends TenantAwareController
 
                 $itemWarehouse = ItemWarehouse::firstOrCreate(
                     ['item_id' => $line['item_id'], 'warehouse_id' => $validated['warehouse_id']],
-                    ['quantity' => 0, 'reserved_quantity' => 0, 'available_quantity' => 0, 'average_cost' => 0]
+                    ['tenant_id' => $tenantId, 'quantity' => 0, 'reserved_quantity' => 0, 'average_cost' => 0]
                 );
 
                 $itemWarehouse->decrement('quantity', $line['quantity']);
-                $itemWarehouse->decrement('available_quantity', $line['quantity']);
 
                 StockMovement::create([
+                    'tenant_id' => $tenantId,
                     'item_id' => $line['item_id'],
                     'warehouse_id' => $validated['warehouse_id'],
-                    'stockable_type' => SalesDeliveryNote::class,
-                    'stockable_id' => $deliveryNote->id,
-                    'type' => 'out',
+                    'type' => 'sale',
                     'quantity' => $line['quantity'],
                     'unit_cost' => $line['unit_price'],
                     'total_cost' => $line['total'],
-                    'reference_number' => $deliveryNote->delivery_number,
-                    'date' => $validated['date'],
-                    'notes' => 'تسليم مبيعات - ' . $deliveryNote->delivery_number,
-                    'created_by' => Auth::id(),
+                    'reference_type' => SalesDeliveryNote::class,
+                    'reference_id' => $deliveryNote->id,
+                    'description' => 'تسليم مبيعات - ' . $deliveryNote->delivery_number,
+                    'user_id' => Auth::id(),
                 ]);
             }
 
