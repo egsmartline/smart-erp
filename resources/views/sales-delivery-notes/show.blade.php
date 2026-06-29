@@ -2,11 +2,17 @@
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <h2 class="text-xl font-bold text-gray-800">إذن تسليم - {{ $salesDeliveryNote->delivery_number }}</h2>
-            <a href="{{ route('sales-delivery-notes.index') }}" class="inline-flex items-center gap-2 rounded-lg bg-gray-600 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition">العودة للقائمة</a>
+            <div class="flex items-center gap-2">
+                <button @click="$root.closest('[x-data]')?.__x?.$data.printModalOpen = true" class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-300 transition no-print">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                    طباعة
+                </button>
+                <a href="{{ route('sales-delivery-notes.index') }}" class="inline-flex items-center gap-2 rounded-lg bg-gray-600 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition">العودة للقائمة</a>
+            </div>
         </div>
     </x-slot>
 
-    <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6">
+    <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6" id="printArea">
         <div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
             <div>
                 <label class="mb-1 block text-sm font-medium text-gray-500">رقم الإذن</label>
@@ -79,5 +85,17 @@
                 </table>
             </div>
         </div>
+
+        <div class="mt-6 flex justify-center border-t border-gray-200 pt-6 no-print">
+            <button @click="$root.closest('[x-data]')?.__x?.$data.printModalOpen = true" class="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition cursor-pointer">طباعة الإذن</button>
+        </div>
     </div>
+
+<style>
+    @media print {
+        #printArea, #printArea * { display: block !important; }
+        #printArea { position: absolute; left: 0; top: 0; width: 100%; padding: 20px !important; margin: 0 !important; box-shadow: none !important; border: none !important; border-radius: 0 !important; }
+        #printArea .no-print { display: none !important; }
+    }
+</style>
 </x-app-layout>
