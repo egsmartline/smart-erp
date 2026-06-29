@@ -22,10 +22,12 @@
                     <div>
                         @if($purchaseInvoice->status === 'draft')
                             <span class="inline-flex items-center rounded-full bg-yellow-100 px-3 py-1 text-sm font-medium text-yellow-800">مسودة</span>
-                        @elseif($purchaseInvoice->status === 'approved')
+                        @elseif($purchaseInvoice->status === 'posted')
                             <span class="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">مرحل</span>
-                        @else
+                        @elseif($purchaseInvoice->status === 'voided')
                             <span class="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-sm font-medium text-red-800">ملغي</span>
+                        @else
+                            <span class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-800">{{ $purchaseInvoice->status }}</span>
                         @endif
                     </div>
                 </div>
@@ -143,7 +145,7 @@
                                 حذف الفاتورة
                             </button>
                         </form>
-                    @elseif($purchaseInvoice->status === 'approved')
+                    @elseif($purchaseInvoice->status === 'posted')
                         <button @click="$root.closest('[x-data]')?.__x?.$data.printModalOpen = true" class="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition cursor-pointer">طباعة الفاتورة</button>
                         <form action="{{ route('purchase-invoices.void', $purchaseInvoice) }}" method="POST">
                             @csrf

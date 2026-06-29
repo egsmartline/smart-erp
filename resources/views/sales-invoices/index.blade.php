@@ -38,8 +38,8 @@
                 <select name="status" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     <option value="">الكل</option>
                     <option value="draft" {{ request('status') === 'draft' ? 'selected' : '' }}>مسودة</option>
-                    <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>مرحل</option>
-                    <option value="cancelled" {{ request('status') === 'cancelled' ? 'selected' : '' }}>ملغي</option>
+                    <option value="posted" {{ request('status') === 'posted' ? 'selected' : '' }}>مرحل</option>
+                    <option value="voided" {{ request('status') === 'voided' ? 'selected' : '' }}>ملغي</option>
                 </select>
             </div>
             <button type="submit" class="rounded-lg bg-gray-600 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition">بحث</button>
@@ -76,10 +76,12 @@
                             <td class="px-4 py-3 text-center">
                                 @if($invoice->status === 'draft')
                                     <span class="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">مسودة</span>
-                                @elseif($invoice->status === 'approved')
+                                @elseif($invoice->status === 'posted')
                                     <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">مرحل</span>
-                                @else
+                                @elseif($invoice->status === 'voided')
                                     <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">ملغي</span>
+                                @else
+                                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">{{ $invoice->status }}</span>
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-center">
