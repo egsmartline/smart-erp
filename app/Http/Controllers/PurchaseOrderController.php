@@ -169,7 +169,7 @@ class PurchaseOrderController extends TenantAwareController
         $warehouses = $this->tenantQuery(Warehouse::class)->where('is_active', true)->get();
         $items = $this->tenantQuery(Item::class)->where('is_active', true)->get();
         $paymentTerms = $this->tenantQuery(PaymentTerm::class)->get();
-        $currencies = collect(['SAR', 'USD', 'EUR']);
+        $currencies = $this->tenantQuery(Currency::class)->where('is_active', true)->get();
 
         return view('purchase-orders.edit', compact('purchaseOrder', 'suppliers', 'warehouses', 'items', 'paymentTerms', 'currencies'));
     }
@@ -186,7 +186,7 @@ class PurchaseOrderController extends TenantAwareController
             'date' => 'required|date',
             'expected_date' => 'nullable|date|after_or_equal:date',
             'payment_term_id' => 'nullable|exists:payment_terms,id',
-            'currency_code' => 'nullable|string|max:10',
+            'currency_id' => 'nullable|exists:currencies,id',
             'notes' => 'nullable|string',
             'terms' => 'nullable|string',
             'lines' => 'required|array|min:1',
@@ -244,7 +244,7 @@ class PurchaseOrderController extends TenantAwareController
                 'discount_amount' => $totalDiscount,
                 'tax_amount' => $totalTax,
                 'total' => $grandTotal,
-                'currency_code' => $validated['currency_code'] ?? 'SAR',
+                'currency_id' => $validated['currency_id'] ?? null,
                 'payment_term_id' => $validated['payment_term_id'] ?? null,
                 'notes' => $validated['notes'] ?? null,
                 'terms' => $validated['terms'] ?? null,

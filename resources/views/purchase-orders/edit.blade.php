@@ -65,9 +65,9 @@
                         </div>
                         <div>
                             <label class="mb-1 block text-sm font-medium text-gray-700">العملة</label>
-                            <select name="currency_code" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                            <select name="currency_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                                 @foreach($currencies as $currency)
-                                    <option value="{{ $currency }}" {{ old('currency_code', $purchaseOrder->currency_code) == $currency ? 'selected' : '' }}>{{ $currency }}</option>
+                                    <option value="{{ $currency->id }}" {{ old('currency_id', $purchaseOrder->currency_id) == $currency->id ? 'selected' : '' }}>{{ $currency->name }} - {{ $currency->symbol }}</option>
                                 @endforeach
                             </select>
                         </div>
