@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Payroll;
 use App\Models\Payslip;
 use App\Models\Employee;
+use App\Models\Loan;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -40,6 +41,8 @@ class PayrollController extends TenantAwareController
 
         $employees = Employee::where('tenant_id', $this->getTenantId())->active()->get();
         $totalBasic = 0;
+        $totalAllowances = 0;
+        $totalDeductions = 0;
         $totalNet = 0;
 
         $dateFrom = Carbon::create($validated['year'], $validated['month'], 1);
@@ -62,6 +65,11 @@ class PayrollController extends TenantAwareController
 
         foreach ($employees as $employee) {
             $basic = $employee->gross_salary ?? 0;
+            $loanDeduction = Loan::where('employee_id', $employee->id)
+                ->where('status', 'active')
+                ->where('remaining', '>', 0)
+                ->sum('monthly_deduction');
+            $net = $basic - $loanDeduction;
             $payslip = Payslip::create([
                 'tenant_id' => $this->getTenantId(),
                 'payroll_id' => $payroll->id,
@@ -69,17 +77,19 @@ class PayrollController extends TenantAwareController
                 'basic_salary' => $basic,
                 'allowances' => null,
                 'total_allowances' => 0,
-                'deductions' => null,
-                'total_deductions' => 0,
+                'deductions' => $loanDeduction > 0 ? [['type' => 'loan', 'amount' => $loanDeduction]] : null,
+                'total_deductions' => $loanDeduction,
                 'overtime_pay' => 0,
-                'net_salary' => $basic,
+                'net_salary' => $net,
             ]);
             $totalBasic += $basic;
-            $totalNet += $payslip->net_salary;
+            $totalDeductions += $loanDeduction;
+            $totalNet += $net;
         }
 
         $payroll->update([
             'total_basic' => $totalBasic,
+            'total_deductions' => $totalDeductions,
             'total_net' => $totalNet,
         ]);
 
@@ -97,6 +107,31 @@ class PayrollController extends TenantAwareController
     public function confirm(Payroll $payroll)
     {
         if ($payroll->tenant_id !== $this->getTenantId()) abort(403);
+        $payroll->load('payslips');
+
+        foreach ($payroll->payslips as $payslip) {
+            $loanDeduction = Loan::where('employee_id', $payslip->employee_id)
+                ->where('status', 'active')
+                ->where('remaining', '>', 0)
+                ->sum('monthly_deduction');
+
+            if ($loanDeduction > 0) {
+                $loans = Loan::where('employee_id', $payslip->employee_id)
+                    ->where('status', 'active')
+                    ->where('remaining', '>', 0)
+                    ->get();
+
+                foreach ($loans as $loan) {
+                    $actualDeduction = min($loan->monthly_deduction, $loan->remaining);
+                    $loan->increment('total_paid', $actualDeduction);
+                    $loan->decrement('remaining', $actualDeduction);
+                    if ($loan->remaining <= 0) {
+                        $loan->update(['status' => 'completed']);
+                    }
+                }
+            }
+        }
+
         $payroll->update([
             'state' => 'confirmed',
             'confirmed_at' => Carbon::now(),
