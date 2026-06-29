@@ -170,16 +170,14 @@ class SalesReturnController extends TenantAwareController
                     'tenant_id' => $this->getTenantId(),
                     'item_id' => $line->item_id,
                     'warehouse_id' => $salesReturn->warehouse_id,
-                    'stockable_type' => SalesReturn::class,
-                    'stockable_id' => $salesReturn->id,
-                    'type' => 'in',
+                    'type' => 'return_in',
                     'quantity' => $line->quantity,
                     'unit_cost' => $line->unit_price,
                     'total_cost' => $line->total,
-                    'reference_number' => $salesReturn->return_number,
-                    'date' => now()->toDateString(),
-                    'notes' => 'إدخال مخزون - مرتجع مبيعات',
-                    'created_by' => auth()->id(),
+                    'reference_type' => SalesReturn::class,
+                    'reference_id' => $salesReturn->id,
+                    'description' => 'إدخال مخزون - مرتجع مبيعات',
+                    'user_id' => auth()->id(),
                 ]);
             }
 

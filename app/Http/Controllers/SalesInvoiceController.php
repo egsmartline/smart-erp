@@ -319,16 +319,14 @@ class SalesInvoiceController extends TenantAwareController
                     'tenant_id' => $this->getTenantId(),
                     'item_id' => $line->item_id,
                     'warehouse_id' => $salesInvoice->warehouse_id,
-                    'stockable_type' => SalesInvoice::class,
-                    'stockable_id' => $salesInvoice->id,
-                    'type' => 'out',
+                    'type' => 'sale',
                     'quantity' => $line->quantity,
                     'unit_cost' => $line->unit_price,
                     'total_cost' => $line->total,
-                    'reference_number' => $salesInvoice->invoice_number,
-                    'date' => now()->toDateString(),
-                    'notes' => 'خروج مخزون - فاتورة مبيعات',
-                    'created_by' => auth()->id(),
+                    'reference_type' => SalesInvoice::class,
+                    'reference_id' => $salesInvoice->id,
+                    'description' => 'خروج مخزون - فاتورة مبيعات',
+                    'user_id' => auth()->id(),
                 ]);
             }
 
@@ -376,16 +374,14 @@ class SalesInvoiceController extends TenantAwareController
                     'tenant_id' => $this->getTenantId(),
                     'item_id' => $line->item_id,
                     'warehouse_id' => $salesInvoice->warehouse_id,
-                    'stockable_type' => SalesInvoice::class,
-                    'stockable_id' => $salesInvoice->id,
-                    'type' => 'in',
+                    'type' => 'return_in',
                     'quantity' => $line->quantity,
                     'unit_cost' => $line->unit_price,
                     'total_cost' => $line->total,
-                    'reference_number' => $salesInvoice->invoice_number,
-                    'date' => now()->toDateString(),
-                    'notes' => 'إدخال مخزون - إلغاء فاتورة مبيعات',
-                    'created_by' => auth()->id(),
+                    'reference_type' => SalesInvoice::class,
+                    'reference_id' => $salesInvoice->id,
+                    'description' => 'إدخال مخزون - إلغاء فاتورة مبيعات',
+                    'user_id' => auth()->id(),
                 ]);
             }
 

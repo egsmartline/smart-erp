@@ -301,16 +301,14 @@ class PurchaseOrderController extends TenantAwareController
                     'tenant_id' => $this->getTenantId(),
                     'item_id' => $line->item_id,
                     'warehouse_id' => $purchaseOrder->warehouse_id,
-                    'stockable_type' => PurchaseOrder::class,
-                    'stockable_id' => $purchaseOrder->id,
-                    'type' => 'in',
+                    'type' => 'purchase',
                     'quantity' => $line->quantity,
                     'unit_cost' => $line->unit_cost,
                     'total_cost' => $line->total,
-                    'reference_number' => $purchaseOrder->order_number,
-                    'date' => now()->toDateString(),
-                    'notes' => 'إدخال مخزون - استلام أمر شراء',
-                    'created_by' => auth()->id(),
+                    'reference_type' => PurchaseOrder::class,
+                    'reference_id' => $purchaseOrder->id,
+                    'description' => 'إدخال مخزون - استلام أمر شراء',
+                    'user_id' => auth()->id(),
                 ]);
             }
 

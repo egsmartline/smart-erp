@@ -96,16 +96,14 @@ class PurchaseReceiptNoteController extends TenantAwareController
                     'tenant_id' => $this->getTenantId(),
                     'item_id' => $line['item_id'],
                     'warehouse_id' => $purchaseOrder->warehouse_id,
-                    'stockable_type' => PurchaseReceiptNote::class,
-                    'stockable_id' => $receiptNote->id,
-                    'type' => 'in',
+                    'type' => 'purchase',
                     'quantity' => $line['quantity'],
                     'unit_cost' => $line['unit_price'],
                     'total_cost' => $line['total'],
-                    'reference_number' => $receiptNote->receipt_number,
-                    'date' => $validated['date'],
-                    'notes' => 'استلام مشتريات - ' . $receiptNote->receipt_number,
-                    'created_by' => Auth::id(),
+                    'reference_type' => PurchaseReceiptNote::class,
+                    'reference_id' => $receiptNote->id,
+                    'description' => 'استلام مشتريات - ' . $receiptNote->receipt_number,
+                    'user_id' => Auth::id(),
                 ]);
             }
 
