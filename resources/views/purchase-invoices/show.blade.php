@@ -107,6 +107,21 @@
                     </div>
                 @endif
 
+                <div class="mt-4 border-t border-gray-200 pt-4 text-center">
+                    <p class="text-xs text-gray-600 leading-relaxed">تعتبر هذه البضاعة أمانة لدى المصنع وتحت يده ولا يحق للمصنع التصرف فيها بأي شكل من الأشكال إلا بعد سداد كامل ثمنها للبائع وتظل ملكية البضاعة الخالصة تابعة للشركة ولا تنتقل ملكيتها القانونية أوالفعلية للمصنع إلا بعد سداد القيمة المالية كاملة.</p>
+                </div>
+
+                <div class="mt-6 flex justify-between items-end">
+                    <div class="text-center">
+                        <p class="text-sm font-bold text-gray-700 mb-8">توقيع المستلم</p>
+                        <div class="border-t border-gray-400 w-40"></div>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-sm font-bold text-gray-700 mb-8">توقيع المسئول</p>
+                        <div class="border-t border-gray-400 w-40"></div>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-3 gap-4 border-t border-gray-200 pt-4">
                     @php $curSym = $purchaseInvoice->currency->symbol ?? ''; @endphp
                     <div>
@@ -181,8 +196,13 @@
 
 <style>
     @media print {
-        body * { display: none !important; }
-        #printArea, #printArea * { display: block !important; }
-        #printArea { position: absolute; left: 0; top: 0; width: 100%; }
+        #printArea .no-print { display: none !important; }
+        #printArea { padding: 10px !important; margin: 0 !important; box-shadow: none !important; border: none !important; border-radius: 0 !important; }
+        #printArea table { display: table !important; }
+        #printArea thead { display: table-header-group !important; }
+        #printArea tbody { display: table-row-group !important; }
+        #printArea tfoot { display: table-footer-group !important; }
+        #printArea tr { display: table-row !important; }
+        #printArea td, #printArea th { display: table-cell !important; }
     }
 </style>
