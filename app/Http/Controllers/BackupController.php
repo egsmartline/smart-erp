@@ -131,7 +131,9 @@ class BackupController extends TenantAwareController
 
             return redirect()->route('backups.index')->with('success', 'تم إنشاء النسخة الاحتياطية بنجاح');
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'حدث خطأ: ' . $e->getMessage()]);
+            $driver = $this->getDriver();
+            $msg = '[' . $driver . '] ' . $e->getMessage();
+            return back()->withErrors(['error' => 'حدث خطأ: ' . $msg]);
         }
     }
 
