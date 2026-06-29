@@ -298,6 +298,7 @@ class PurchaseOrderController extends TenantAwareController
                 $itemWarehouse->increment('quantity', $line->quantity);
 
                 StockMovement::create([
+                    'tenant_id' => $this->getTenantId(),
                     'item_id' => $line->item_id,
                     'warehouse_id' => $purchaseOrder->warehouse_id,
                     'stockable_type' => PurchaseOrder::class,

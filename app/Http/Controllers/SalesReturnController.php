@@ -167,6 +167,7 @@ class SalesReturnController extends TenantAwareController
                 }
 
                 StockMovement::create([
+                    'tenant_id' => $this->getTenantId(),
                     'item_id' => $line->item_id,
                     'warehouse_id' => $salesReturn->warehouse_id,
                     'stockable_type' => SalesReturn::class,
