@@ -63,6 +63,17 @@
             <p class="text-xs text-gray-600 leading-relaxed">تعتبر هذه البضاعة أمانة لدى المصنع وتحت يده ولا يحق للمصنع التصرف فيها بأي شكل من الأشكال إلا بعد سداد كامل ثمنها للبائع وتظل ملكية البضاعة الخالصة تابعة للشركة ولا تنتقل ملكيتها القانونية أوالفعلية للمصنع إلا بعد سداد القيمة المالية كاملة.</p>
         </div>
 
+        <div class="mt-6 flex justify-between items-end">
+            <div class="text-center">
+                <p class="text-sm font-bold text-gray-700 mb-8">توقيع المستلم</p>
+                <div class="border-t border-gray-400 w-40"></div>
+            </div>
+            <div class="text-center">
+                <p class="text-sm font-bold text-gray-700 mb-8">توقيع المسئول</p>
+                <div class="border-t border-gray-400 w-40"></div>
+            </div>
+        </div>
+
         <div class="mt-6 flex justify-center border-t border-gray-200 pt-6 no-print">
             <button @click="$root.closest('[x-data]')?.__x?.$data.printModalOpen = true" class="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition cursor-pointer">طباعة الإذن</button>
         </div>
