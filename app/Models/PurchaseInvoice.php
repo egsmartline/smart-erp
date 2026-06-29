@@ -44,6 +44,7 @@ class PurchaseInvoice extends Model
     {
         return [
             'date' => 'date',
+            'due_date' => 'date',
             'subtotal' => 'decimal:2',
             'discount_percent' => 'decimal:2',
             'discount_amount' => 'decimal:2',
