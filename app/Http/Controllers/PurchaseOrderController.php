@@ -154,7 +154,7 @@ class PurchaseOrderController extends TenantAwareController
 
     public function show(PurchaseOrder $purchaseOrder)
     {
-        $purchaseOrder->load(['supplier', 'warehouse', 'user', 'lines.item', 'invoices', 'currency']);
+        $purchaseOrder->load(['supplier', 'warehouse', 'user', 'lines.item', 'currency']);
         return view('purchase-orders.show', compact('purchaseOrder'));
     }
 

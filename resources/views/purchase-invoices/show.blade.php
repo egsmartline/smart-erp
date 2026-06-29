@@ -39,7 +39,7 @@
                     <div class="text-left">
                         <p class="text-xs text-gray-500">التاريخ والمستحق</p>
                         <p class="font-medium text-gray-900">{{ $purchaseInvoice->date->format('Y-m-d') }}</p>
-                        <p class="text-sm text-gray-600">مستحق: {{ $purchaseInvoice->due_date->format('Y-m-d') }}</p>
+                        <p class="text-sm text-gray-600">مستحق: {{ $purchaseInvoice->due_date ? $purchaseInvoice->due_date->format('Y-m-d') : '-' }}</p>
                     </div>
                 </div>
 

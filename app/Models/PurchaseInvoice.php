@@ -37,7 +37,6 @@ class PurchaseInvoice extends Model
         'notes',
         'terms',
         'reference',
-        'purchase_order_id',
     ];
 
     protected function casts(): array

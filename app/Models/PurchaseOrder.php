@@ -98,11 +98,6 @@ class PurchaseOrder extends Model
         return $this->hasMany(PurchaseOrderLine::class);
     }
 
-    public function invoices(): HasMany
-    {
-        return $this->hasMany(PurchaseInvoice::class);
-    }
-
     public function canConfirm(): bool
     {
         return $this->status === 'draft';

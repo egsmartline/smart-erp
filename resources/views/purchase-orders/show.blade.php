@@ -223,7 +223,7 @@
                 </div>
             </div>
 
-            @if($purchaseOrder->invoices->count() > 0)
+            {{-- @if($purchaseOrder->invoices->count() > 0)
             <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-4">
                 <h4 class="text-sm font-bold text-gray-700 mb-3">الفواتير المرتبطة</h4>
                 <div class="space-y-2">
@@ -237,7 +237,7 @@
                     @endforeach
                 </div>
             </div>
-            @endif
+            @endif --}}
         </div>
     </div>
 </x-app-layout>
