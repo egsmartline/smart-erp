@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\BackupLog;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Process;
+use Illuminate\Support\Facades\DB;
 
 class BackupController extends TenantAwareController
 {
@@ -17,7 +17,7 @@ class BackupController extends TenantAwareController
     public function create()
     {
         try {
-            $filename = 'backup_' . $this->getTenantId() . '_' . now()->format('Y-m-d_His') . '.sql';
+            $filename = 'backup_' . $this->getTenantId() . '_' . now()->format('Y-m-d_His') . '.sqlite';
             $path = storage_path('app/backups');
 
             if (!file_exists($path)) {
@@ -25,6 +25,17 @@ class BackupController extends TenantAwareController
             }
 
             $fullPath = $path . '/' . $filename;
+            $dbPath = database_path('database.sqlite');
+
+            if (!file_exists($dbPath)) {
+                throw new \Exception('ملف قاعدة البيانات غير موجود');
+            }
+
+            if (!copy($dbPath, $fullPath)) {
+                throw new \Exception('فشل نسخ ملف قاعدة البيانات');
+            }
+
+            $size = filesize($fullPath);
 
             BackupLog::create([
                 'tenant_id' => $this->getTenantId(),
@@ -32,7 +43,7 @@ class BackupController extends TenantAwareController
                 'path' => $fullPath,
                 'status' => 'completed',
                 'user_id' => auth()->id(),
-                'size' => 0,
+                'size' => $size,
             ]);
 
             return redirect()->route('backups.index')->with('success', 'تم إنشاء النسخة الاحتياطية بنجاح');
@@ -45,7 +56,26 @@ class BackupController extends TenantAwareController
     {
         $this->authorizeTenant($backupLog);
 
-        return back()->with('success', 'تم استعادة النسخة الاحتياطية بنجاح');
+        try {
+            $dbPath = database_path('database.sqlite');
+
+            if (!file_exists($backupLog->path)) {
+                return back()->withErrors(['error' => 'ملف النسخة الاحتياطية غير موجود']);
+            }
+
+            DB::statement('PRAGMA wal_checkpoint(FULL)');
+            DB::statement('PRAGMA journal_mode=OFF');
+
+            if (!copy($backupLog->path, $dbPath)) {
+                throw new \Exception('فشل استعادة ملف قاعدة البيانات');
+            }
+
+            DB::statement('PRAGMA journal_mode=WAL');
+
+            return redirect()->route('backups.index')->with('success', 'تم استعادة النسخة الاحتياطية بنجاح');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'حدث خطأ أثناء الاستعادة: ' . $e->getMessage()]);
+        }
     }
 
     public function destroy(BackupLog $backupLog)
