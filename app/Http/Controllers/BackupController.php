@@ -8,6 +8,90 @@ use Illuminate\Support\Facades\DB;
 
 class BackupController extends TenantAwareController
 {
+    protected function getDriver(): string
+    {
+        return config('database.default');
+    }
+
+    protected function runSqliteBackup(string $fullPath): void
+    {
+        $dbPath = database_path('database.sqlite');
+        if (!file_exists($dbPath)) {
+            throw new \Exception('ملف قاعدة البيانات غير موجود');
+        }
+        if (!copy($dbPath, $fullPath)) {
+            throw new \Exception('فشل نسخ ملف قاعدة البيانات');
+        }
+    }
+
+    protected function runSqliteRestore(string $backupPath): void
+    {
+        $dbPath = database_path('database.sqlite');
+        if (!file_exists($backupPath)) {
+            throw new \Exception('ملف النسخة الاحتياطية غير موجود');
+        }
+        DB::statement('PRAGMA wal_checkpoint(FULL)');
+        DB::statement('PRAGMA journal_mode=OFF');
+        if (!copy($backupPath, $dbPath)) {
+            throw new \Exception('فشل استعادة ملف قاعدة البيانات');
+        }
+        DB::statement('PRAGMA journal_mode=WAL');
+    }
+
+    protected function runMysqlBackup(string $fullPath): void
+    {
+        $host = config('database.connections.mysql.host');
+        $port = config('database.connections.mysql.port');
+        $database = config('database.connections.mysql.database');
+        $username = config('database.connections.mysql.username');
+        $password = config('database.connections.mysql.password');
+
+        $command = sprintf(
+            'mysqldump --host=%s --port=%s --user=%s --password=%s %s > %s 2>&1',
+            escapeshellarg($host),
+            escapeshellarg($port),
+            escapeshellarg($username),
+            escapeshellarg($password),
+            escapeshellarg($database),
+            escapeshellarg($fullPath)
+        );
+
+        $output = null;
+        $returnCode = null;
+        exec($command, $output, $returnCode);
+
+        if ($returnCode !== 0) {
+            throw new \Exception('فشل تصدير قاعدة البيانات: ' . implode("\n", $output));
+        }
+    }
+
+    protected function runMysqlRestore(string $backupPath): void
+    {
+        $host = config('database.connections.mysql.host');
+        $port = config('database.connections.mysql.port');
+        $database = config('database.connections.mysql.database');
+        $username = config('database.connections.mysql.username');
+        $password = config('database.connections.mysql.password');
+
+        $command = sprintf(
+            'mysql --host=%s --port=%s --user=%s --password=%s %s < %s 2>&1',
+            escapeshellarg($host),
+            escapeshellarg($port),
+            escapeshellarg($username),
+            escapeshellarg($password),
+            escapeshellarg($database),
+            escapeshellarg($backupPath)
+        );
+
+        $output = null;
+        $returnCode = null;
+        exec($command, $output, $returnCode);
+
+        if ($returnCode !== 0) {
+            throw new \Exception('فشل استيراد قاعدة البيانات: ' . implode("\n", $output));
+        }
+    }
+
     public function index()
     {
         $backups = $this->tenantQuery(BackupLog::class)->latest()->paginate(20);
@@ -17,7 +101,9 @@ class BackupController extends TenantAwareController
     public function create()
     {
         try {
-            $filename = 'backup_' . $this->getTenantId() . '_' . now()->format('Y-m-d_His') . '.sqlite';
+            $driver = $this->getDriver();
+            $ext = $driver === 'sqlite' ? 'sqlite' : 'sql';
+            $filename = 'backup_' . $this->getTenantId() . '_' . now()->format('Y-m-d_His') . '.' . $ext;
             $path = storage_path('app/backups');
 
             if (!file_exists($path)) {
@@ -25,14 +111,11 @@ class BackupController extends TenantAwareController
             }
 
             $fullPath = $path . '/' . $filename;
-            $dbPath = database_path('database.sqlite');
 
-            if (!file_exists($dbPath)) {
-                throw new \Exception('ملف قاعدة البيانات غير موجود');
-            }
-
-            if (!copy($dbPath, $fullPath)) {
-                throw new \Exception('فشل نسخ ملف قاعدة البيانات');
+            if ($driver === 'sqlite') {
+                $this->runSqliteBackup($fullPath);
+            } else {
+                $this->runMysqlBackup($fullPath);
             }
 
             $size = filesize($fullPath);
@@ -57,20 +140,17 @@ class BackupController extends TenantAwareController
         $this->authorizeTenant($backupLog);
 
         try {
-            $dbPath = database_path('database.sqlite');
-
             if (!file_exists($backupLog->path)) {
                 return back()->withErrors(['error' => 'ملف النسخة الاحتياطية غير موجود']);
             }
 
-            DB::statement('PRAGMA wal_checkpoint(FULL)');
-            DB::statement('PRAGMA journal_mode=OFF');
+            $driver = $this->getDriver();
 
-            if (!copy($backupLog->path, $dbPath)) {
-                throw new \Exception('فشل استعادة ملف قاعدة البيانات');
+            if ($driver === 'sqlite') {
+                $this->runSqliteRestore($backupLog->path);
+            } else {
+                $this->runMysqlRestore($backupLog->path);
             }
-
-            DB::statement('PRAGMA journal_mode=WAL');
 
             return redirect()->route('backups.index')->with('success', 'تم استعادة النسخة الاحتياطية بنجاح');
         } catch (\Exception $e) {
@@ -92,7 +172,7 @@ class BackupController extends TenantAwareController
     public function upload(Request $request)
     {
         $request->validate([
-            'backup_file' => 'required|file|mimes:sqlite,db,sql',
+            'backup_file' => 'required|file|mimes:sqlite,db,sql,txt',
         ]);
 
         try {
@@ -118,7 +198,7 @@ class BackupController extends TenantAwareController
                 'size' => $size,
             ]);
 
-            return redirect()->route('backups.index')->with('success', 'تم رفع النسخة الاحتياطية بنجاح');
+            return redirect()->route('backups.index')->with('success', 'تم رفع النسخة الاحتياطية بنجاح. يمكنك استخدام زر الاستعادة لتطبيقها.');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => 'حدث خطأ أثناء الرفع: ' . $e->getMessage()]);
         }
