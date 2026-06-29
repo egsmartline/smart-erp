@@ -5,11 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PurchaseReturnLine extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
         'tenant_id',
@@ -19,7 +18,6 @@ class PurchaseReturnLine extends Model
         'unit_price',
         'tax_percent',
         'tax_amount',
-        'total',
         'total',
         'reason',
     ];

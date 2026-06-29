@@ -46,6 +46,7 @@ class PurchaseReturnController extends TenantAwareController
     {
         $suppliers = $this->tenantQuery(Supplier::class)->where('is_active', true)->get();
         $warehouses = $this->tenantQuery(Warehouse::class)->where('is_active', true)->get();
+        $items = Item::where('is_active', true)->get();
         $invoices = $this->tenantQuery(PurchaseInvoice::class)
             ->where('status', 'posted')
             ->with('supplier')
@@ -61,7 +62,7 @@ class PurchaseReturnController extends TenantAwareController
                 ->first();
         }
 
-        return view('purchase-returns.create', compact('suppliers', 'warehouses', 'invoices', 'returnNumber', 'selectedInvoice'));
+        return view('purchase-returns.create', compact('suppliers', 'warehouses', 'items', 'invoices', 'returnNumber', 'selectedInvoice'));
     }
 
     public function store(Request $request)
@@ -76,7 +77,7 @@ class PurchaseReturnController extends TenantAwareController
             'lines' => 'required|array|min:1',
             'lines.*.item_id' => 'required|exists:items,id',
             'lines.*.quantity' => 'required|numeric|min:0.01',
-            'lines.*.unit_cost' => 'required|numeric|min:0',
+            'lines.*.unit_cost' => 'nullable|numeric|min:0',
             'lines.*.tax_percent' => 'nullable|numeric|min:0|max:100',
             'lines.*.reason' => 'nullable|string',
         ]);
@@ -89,7 +90,8 @@ class PurchaseReturnController extends TenantAwareController
 
             $lineData = [];
             foreach ($validated['lines'] as $line) {
-                $lineSubtotal = $line['quantity'] * $line['unit_cost'];
+                $unitPrice = $line['unit_cost'] ?? 0;
+                $lineSubtotal = $line['quantity'] * $unitPrice;
                 $lineTax = $lineSubtotal * (($line['tax_percent'] ?? 0) / 100);
 
                 $subtotal += $lineSubtotal;
@@ -98,10 +100,9 @@ class PurchaseReturnController extends TenantAwareController
                 $lineData[] = [
                     'item_id' => $line['item_id'],
                     'quantity' => $line['quantity'],
-                    'unit_cost' => $line['unit_cost'],
+                    'unit_price' => $unitPrice,
                     'tax_percent' => $line['tax_percent'] ?? 0,
                     'tax_amount' => $lineTax,
-                    'subtotal' => $lineSubtotal,
                     'total' => $lineSubtotal + $lineTax,
                     'reason' => $line['reason'] ?? null,
                 ];

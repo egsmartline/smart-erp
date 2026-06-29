@@ -29,9 +29,9 @@
                 <label class="mb-1 block text-sm font-medium text-gray-700">فاتورة المشتريات <span class="text-red-500">*</span></label>
                 <select name="purchase_invoice_id" x-model="invoiceId" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     <option value="">اختر الفاتورة</option>
-                    @foreach($invoices as $invoice)
-                        <option value="{{ $invoice->id }}" data-supplier="{{ $invoice->supplier_id }}">{{ $invoice->invoice_number }} - {{ $invoice->supplier->name }}</option>
-                    @endforeach
+                    <template x-for="inv in filteredInvoices" :key="inv.id">
+                        <option :value="inv.id" x-text="inv.number + ' - ' + inv.supplier_name"></option>
+                    </template>
                 </select>
             </div>
         </div>
@@ -83,8 +83,11 @@
                             <tr class="border-b border-gray-100">
                                 <td class="px-3 py-2 text-gray-500" x-text="index + 1"></td>
                                 <td class="px-3 py-2">
-                                    <select :name="'lines['+index+'][item_id]'" x-model="line.item_id" required class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                                    <select :name="'lines['+index+'][item_id]'" x-model="line.item_id" @change="onItemChange(line)" required class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                                         <option value="">اختر الصنف</option>
+                                        <template x-for="item in itemsData" :key="item.id">
+                                            <option :value="item.id" x-text="item.name + ' - ' + (item.sku || '')"></option>
+                                        </template>
                                     </select>
                                 </td>
                                 <td class="px-3 py-2">
@@ -120,17 +123,26 @@
 
     @php
         $selectedInvoiceLines = $selectedInvoice
-            ? $selectedInvoice->lines->map(fn($l) => ['item_id' => $l->item_id, 'quantity' => $l->quantity, 'unit_cost' => $l->unit_cost, 'tax_rate' => $l->tax_rate ?? 15])->toArray()
+            ? $selectedInvoice->lines->map(fn($l) => ['item_id' => $l->item_id, 'quantity' => $l->quantity, 'unit_cost' => $l->unit_cost, 'tax_rate' => $l->tax_rate ?? 15])->values()->toArray()
             : [['item_id' => '', 'quantity' => 1, 'unit_cost' => 0, 'tax_rate' => 15]];
     @endphp
 
     @push('scripts')
     <script>
+        var itemsData = <?php echo json_encode($items->map(fn($i) => ['id' => $i->id, 'name' => $i->name, 'sku' => $i->sku, 'price' => $i->cost_price, 'tax' => $i->tax_rate ?? 15])->values()->all()); ?>;
+        var invoicesData = <?php echo json_encode($invoices->map(fn($inv) => ['id' => $inv->id, 'supplier_id' => $inv->supplier_id, 'number' => $inv->invoice_number, 'supplier_name' => $inv->supplier->name])->values()->all()); ?>;
+
         function purchaseReturnForm() {
             return {
                 supplierId: '{{ $selectedInvoice->supplier_id ?? '' }}',
                 invoiceId: '{{ $selectedInvoice->id ?? '' }}',
-                lines: @json($selectedInvoiceLines),
+                lines: <?php echo json_encode($selectedInvoiceLines); ?>,
+                get filteredInvoices() {
+                    if (!this.supplierId) return invoicesData;
+                    return invoicesData.filter(function(inv) {
+                        return String(inv.supplier_id) === String(this.supplierId);
+                    }.bind(this));
+                },
                 addLine() {
                     this.lines.push({ item_id: '', quantity: 1, unit_cost: 0, tax_rate: 15 });
                 },
@@ -144,6 +156,14 @@
                 },
                 formatNumber(num) {
                     return num.toFixed(2);
+                },
+                onItemChange(line) {
+                    var item = itemsData.find(function(i) { return String(i.id) === String(line.item_id); });
+                    if (item) {
+                        line.unit_cost = item.price || 0;
+                        line.tax_rate = item.tax || 15;
+                        line.quantity = 1;
+                    }
                 }
             }
         }
