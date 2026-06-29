@@ -5,11 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Traits\Auditable;
-
 class SalesInvoiceLine extends Model
 {
-    use HasFactory, Auditable;
+    use HasFactory;
 
     protected $fillable = [
         'tenant_id',
@@ -56,12 +54,5 @@ class SalesInvoiceLine extends Model
     public function warehouse(): BelongsTo
     {
         return $this->belongsTo(Warehouse::class);
-    }
-
-    public function auditLabel(): string
-    {
-        $itemName = $this->item?->name ?? $this->item?->name_ar ?? '#' . $this->item_id;
-        $invNum = $this->salesInvoice?->invoice_number ?? '#' . $this->sales_invoice_id;
-        return "بند فاتورة مبيعات {$invNum} - {$itemName} × {$this->quantity}";
     }
 }
