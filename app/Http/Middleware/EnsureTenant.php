@@ -17,6 +17,10 @@ class EnsureTenant
 
         $user = auth()->user();
 
+        if ($request->routeIs('select-company')) {
+            return $next($request);
+        }
+
         if (!$user->tenant_id) {
             if ($request->routeIs('setup.*')) {
                 return $next($request);

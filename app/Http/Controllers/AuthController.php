@@ -27,19 +27,25 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
 
-            $user = Auth::user();
-
-            if ($user->tenant_id) {
-                session(['current_tenant_id' => $user->tenant_id]);
-            }
-
-            $intended = session()->pull('url.intended', '/');
-            return new \Illuminate\Http\RedirectResponse($intended);
+            return new \Illuminate\Http\RedirectResponse(route('select-company'));
         }
 
         return back()->withErrors([
             'name' => 'بيانات تسجيل الدخول غير صحيحة',
         ])->onlyInput('name');
+    }
+
+    public function showSelectCompany()
+    {
+        $user = auth()->user();
+        $tenants = $user->getAccessibleTenants();
+
+        if ($tenants->count() === 1) {
+            session(['current_tenant_id' => $tenants->first()->id]);
+            return new \Illuminate\Http\RedirectResponse('/');
+        }
+
+        return view('auth.select-company', compact('tenants'));
     }
 
     public function logout(Request $request)
