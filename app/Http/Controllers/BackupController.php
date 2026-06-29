@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\BackupLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Process;
 
 class BackupController extends TenantAwareController
 {
@@ -47,7 +48,7 @@ class BackupController extends TenantAwareController
         $password = config('database.connections.mysql.password');
 
         $command = sprintf(
-            'mysqldump --host=%s --port=%s --user=%s --password=%s %s > %s 2>&1',
+            'mysqldump --host=%s --port=%s --user=%s --password=%s %s > %s',
             escapeshellarg($host),
             escapeshellarg($port),
             escapeshellarg($username),
@@ -56,12 +57,10 @@ class BackupController extends TenantAwareController
             escapeshellarg($fullPath)
         );
 
-        $output = null;
-        $returnCode = null;
-        exec($command, $output, $returnCode);
+        $result = Process::run($command);
 
-        if ($returnCode !== 0) {
-            throw new \Exception('فشل تصدير قاعدة البيانات: ' . implode("\n", $output));
+        if (!$result->successful()) {
+            throw new \Exception('فشل تصدير قاعدة البيانات: ' . $result->errorOutput());
         }
     }
 
@@ -74,7 +73,7 @@ class BackupController extends TenantAwareController
         $password = config('database.connections.mysql.password');
 
         $command = sprintf(
-            'mysql --host=%s --port=%s --user=%s --password=%s %s < %s 2>&1',
+            'mysql --host=%s --port=%s --user=%s --password=%s %s < %s',
             escapeshellarg($host),
             escapeshellarg($port),
             escapeshellarg($username),
@@ -83,12 +82,10 @@ class BackupController extends TenantAwareController
             escapeshellarg($backupPath)
         );
 
-        $output = null;
-        $returnCode = null;
-        exec($command, $output, $returnCode);
+        $result = Process::run($command);
 
-        if ($returnCode !== 0) {
-            throw new \Exception('فشل استيراد قاعدة البيانات: ' . implode("\n", $output));
+        if (!$result->successful()) {
+            throw new \Exception('فشل استيراد قاعدة البيانات: ' . $result->errorOutput());
         }
     }
 
