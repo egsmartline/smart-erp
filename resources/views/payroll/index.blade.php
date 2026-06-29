@@ -25,10 +25,10 @@
                 <tbody>
                     @forelse($payrolls as $pay)
                         <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
-                            <td class="px-4 py-3 font-medium text-gray-900"><a href="{{ route('payroll.show', $pay) }}" class="hover:text-blue-600 font-mono">{{ $pay->reference }}</a></td>
+                            <td class="px-4 py-3 font-medium text-gray-900"><a href="{{ route('payroll.show', $pay) }}" class="hover:text-blue-600 font-mono">{{ $pay->payroll_number }}</a></td>
                             <td class="px-4 py-3 text-gray-600">{{ $pay->month }}</td>
                             <td class="px-4 py-3 text-gray-600">{{ $pay->year }}</td>
-                            <td class="px-4 py-3 text-center font-mono font-bold">{{ number_format($pay->total_amount, 2) }}</td>
+                            <td class="px-4 py-3 text-center font-mono font-bold">{{ number_format($pay->total_net, 2) }}</td>
                             <td class="px-4 py-3 text-center">
                                 @if($pay->state == 'draft')
                                     <span class="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">مسودة</span>

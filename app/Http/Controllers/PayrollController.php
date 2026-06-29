@@ -36,37 +36,53 @@ class PayrollController extends TenantAwareController
         ]);
 
         $lastPayroll = Payroll::where('tenant_id', $this->getTenantId())->latest('id')->first();
-        $nextNumber = $lastPayroll ? (int) substr($lastPayroll->reference, -4) + 1 : 1;
-        $reference = 'PAY-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+        $nextNumber = $lastPayroll ? (int) substr($lastPayroll->payroll_number, -4) + 1 : 1;
+        $payrollNumber = 'PAY-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
 
         $employees = Employee::where('tenant_id', $this->getTenantId())->active()->get();
-        $totalAmount = 0;
+        $totalBasic = 0;
+        $totalNet = 0;
+
+        $dateFrom = Carbon::create($validated['year'], $validated['month'], 1);
+        $dateTo = $dateFrom->copy()->lastOfMonth();
 
         $payroll = Payroll::create([
             'tenant_id' => $this->getTenantId(),
-            'reference' => $reference,
+            'payroll_number' => $payrollNumber,
             'month' => $validated['month'],
             'year' => $validated['year'],
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo,
             'state' => 'draft',
+            'total_basic' => 0,
+            'total_allowances' => 0,
+            'total_deductions' => 0,
+            'total_net' => 0,
             'notes' => $validated['notes'] ?? null,
-            'created_by' => auth()->id(),
-            'total_amount' => 0,
         ]);
 
         foreach ($employees as $employee) {
+            $basic = $employee->gross_salary ?? 0;
             $payslip = Payslip::create([
                 'tenant_id' => $this->getTenantId(),
                 'payroll_id' => $payroll->id,
                 'employee_id' => $employee->id,
-                'basic_salary' => $employee->basic_salary,
-                'allowances' => 0,
-                'deductions' => 0,
-                'net_salary' => $employee->basic_salary,
+                'basic_salary' => $basic,
+                'allowances' => null,
+                'total_allowances' => 0,
+                'deductions' => null,
+                'total_deductions' => 0,
+                'overtime_pay' => 0,
+                'net_salary' => $basic,
             ]);
-            $totalAmount += $payslip->net_salary;
+            $totalBasic += $basic;
+            $totalNet += $payslip->net_salary;
         }
 
-        $payroll->update(['total_amount' => $totalAmount]);
+        $payroll->update([
+            'total_basic' => $totalBasic,
+            'total_net' => $totalNet,
+        ]);
 
         return redirect()->route('payroll.show', $payroll)->with('success', 'تم إنشاء كشف الرواتب بنجاح');
     }
@@ -74,7 +90,7 @@ class PayrollController extends TenantAwareController
     public function show(Payroll $payroll)
     {
         if ($payroll->tenant_id !== $this->getTenantId()) abort(403);
-        $payroll->load(['creator', 'payslips.employee']);
+        $payroll->load(['payslips.employee']);
 
         return view('payroll.show', compact('payroll'));
     }
