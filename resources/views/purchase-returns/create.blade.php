@@ -27,7 +27,7 @@
             </div>
             <div>
                 <label class="mb-1 block text-sm font-medium text-gray-700">فاتورة المشتريات <span class="text-red-500">*</span></label>
-                <select name="purchase_invoice_id" x-model="invoiceId" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                <select name="purchase_invoice_id" x-model="invoiceId" x-on:change="onInvoiceChange()" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     <option value="">اختر الفاتورة</option>
                     <template x-for="inv in filteredInvoices" :key="inv.id">
                         <option :value="inv.id" x-text="inv.number + ' - ' + inv.supplier_name"></option>
@@ -131,6 +131,7 @@
     <script>
         var itemsData = <?php echo json_encode($items->map(fn($i) => ['id' => $i->id, 'name' => $i->name, 'sku' => $i->sku, 'price' => $i->cost_price, 'tax' => $i->tax_rate ?? 15])->values()->all()); ?>;
         var invoicesData = <?php echo json_encode($invoices->map(fn($inv) => ['id' => $inv->id, 'supplier_id' => $inv->supplier_id, 'number' => $inv->invoice_number, 'supplier_name' => $inv->supplier->name])->values()->all()); ?>;
+        var invoicesLinesData = <?php echo json_encode($invoiceLines); ?>;
 
         function purchaseReturnForm() {
             return {
@@ -163,6 +164,14 @@
                         line.unit_cost = item.price || 0;
                         line.tax_rate = item.tax || 15;
                         line.quantity = 1;
+                    }
+                },
+                onInvoiceChange() {
+                    var lines = invoicesLinesData[this.invoiceId] || [];
+                    if (lines.length > 0) {
+                        this.lines = JSON.parse(JSON.stringify(lines));
+                    } else {
+                        this.lines = [{ item_id: '', quantity: 1, unit_cost: 0, tax_rate: 15 }];
                     }
                 }
             }

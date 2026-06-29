@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\PurchaseReturn;
 use App\Models\PurchaseReturnLine;
 use App\Models\PurchaseInvoice;
+use App\Models\PurchaseInvoiceLine;
 use App\Models\Supplier;
 use App\Models\Item;
 use App\Models\Warehouse;
@@ -62,7 +63,21 @@ class PurchaseReturnController extends TenantAwareController
                 ->first();
         }
 
-        return view('purchase-returns.create', compact('suppliers', 'warehouses', 'items', 'invoices', 'returnNumber', 'selectedInvoice'));
+        $invoiceLines = PurchaseInvoiceLine::whereIn('purchase_invoice_id', $invoices->pluck('id'))
+            ->select('id', 'purchase_invoice_id', 'item_id', 'quantity', 'unit_cost', 'tax_rate')
+            ->get()
+            ->groupBy('purchase_invoice_id')
+            ->map(fn($lines) => $lines->map(fn($l) => [
+                'item_id' => $l->item_id,
+                'quantity' => $l->quantity,
+                'unit_cost' => $l->unit_cost,
+                'tax_rate' => $l->tax_rate ?? 15,
+            ])->values()->toArray());
+
+        return view('purchase-returns.create', compact(
+            'suppliers', 'warehouses', 'items', 'invoices', 'returnNumber',
+            'selectedInvoice', 'invoiceLines'
+        ));
     }
 
     public function store(Request $request)
