@@ -313,7 +313,6 @@ class SalesInvoiceController extends TenantAwareController
 
                 if ($itemWarehouse) {
                     $itemWarehouse->decrement('quantity', $line->quantity);
-                    $itemWarehouse->decrement('available_quantity', $line->quantity);
                 }
 
                 StockMovement::create([
@@ -370,7 +369,6 @@ class SalesInvoiceController extends TenantAwareController
 
                 if ($itemWarehouse) {
                     $itemWarehouse->increment('quantity', $line->quantity);
-                    $itemWarehouse->increment('available_quantity', $line->quantity);
                 }
 
                 StockMovement::create([

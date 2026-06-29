@@ -292,11 +292,10 @@ class PurchaseOrderController extends TenantAwareController
 
                 $itemWarehouse = ItemWarehouse::firstOrCreate(
                     ['item_id' => $line->item_id, 'warehouse_id' => $purchaseOrder->warehouse_id],
-                    ['quantity' => 0, 'reserved_quantity' => 0, 'available_quantity' => 0, 'average_cost' => 0]
+                    ['quantity' => 0, 'reserved_quantity' => 0, 'average_cost' => 0]
                 );
 
                 $itemWarehouse->increment('quantity', $line->quantity);
-                $itemWarehouse->increment('available_quantity', $line->quantity);
 
                 StockMovement::create([
                     'item_id' => $line->item_id,
