@@ -102,4 +102,10 @@ class SalesInvoice extends Model
     {
         return $this->hasMany(Payment::class);
     }
+
+    public function auditLabel(): string
+    {
+        $customerName = $this->customer?->name ?? $this->customer?->name_ar ?? '#' . $this->customer_id;
+        return "فاتورة مبيعات #{$this->invoice_number} - {$customerName} - " . number_format($this->total, 2);
+    }
 }

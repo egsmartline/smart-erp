@@ -57,4 +57,11 @@ class SalesInvoiceLine extends Model
     {
         return $this->belongsTo(Warehouse::class);
     }
+
+    public function auditLabel(): string
+    {
+        $itemName = $this->item?->name ?? $this->item?->name_ar ?? '#' . $this->item_id;
+        $invNum = $this->salesInvoice?->invoice_number ?? '#' . $this->sales_invoice_id;
+        return "بند فاتورة مبيعات {$invNum} - {$itemName} × {$this->quantity}";
+    }
 }

@@ -37,7 +37,7 @@
                         <th class="px-4 py-3 font-semibold">العملية</th>
                         <th class="px-4 py-3 font-semibold">الجدول</th>
                         <th class="px-4 py-3 font-semibold">السجل</th>
-                        <th class="px-4 py-3 font-semibold">الوصف</th>
+                        <th class="px-4 py-3 font-semibold">البيانات</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -57,20 +57,60 @@
                                         #{{ $log->model_id }}
                                     </a>
                                 @else
-                                    #{{ $log->model_id }}
+                                    <span class="text-gray-500">#{{ $log->model_id }}</span>
                                 @endif
                             </td>
-                            <td class="px-4 py-2 text-xs text-gray-600 max-w-[300px] truncate">
-                                {{ $log->description }}
-                                @if($log->old_values || $log->new_values)
-                                    <button onclick="toggleJson({{ $log->id }})" class="mr-2 text-blue-500 hover:underline text-[11px]">عرض التفاصيل</button>
-                                    <pre id="json-{{ $log->id }}" class="hidden mt-1 p-2 bg-gray-50 rounded text-[10px] overflow-auto max-h-40 whitespace-pre-wrap">
-@if($log->old_values){{ json_encode($log->old_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}@endif
-@if($log->new_values && $log->old_values)
----
-@endif
-@if($log->new_values){{ json_encode($log->new_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}@endif
-                                    </pre>
+                            <td class="px-4 py-2 text-xs max-w-[350px]">
+                                <p class="text-gray-700">{{ $log->description }}</p>
+                                @php
+                                    $data = $log->action === 'create' ? $log->formatted_new : ($log->action === 'delete' ? $log->formatted_old : null);
+                                    $showOld = $log->action === 'update' && $log->formatted_old;
+                                    $showNew = $log->action === 'update' && $log->formatted_new;
+                                @endphp
+                                @if($data || $showOld || $showNew)
+                                    <button onclick="toggleDetails({{ $log->id }})" class="mt-1 text-blue-500 hover:underline text-[11px]">عرض التفاصيل</button>
+                                    <div id="details-{{ $log->id }}" class="hidden mt-2">
+                                        @if($data)
+                                            <table class="w-full text-[11px] border border-gray-200">
+                                                @foreach($data as $item)
+                                                    <tr class="border-b border-gray-100">
+                                                        <td class="px-2 py-1 text-gray-500 font-medium whitespace-nowrap">{{ $item['label'] }}</td>
+                                                        <td class="px-2 py-1 text-gray-800">{{ $item['value'] }}</td>
+                                                    </tr>
+                                                @endforeach
+                                            </table>
+                                        @endif
+                                        @if($showOld || $showNew)
+                                            <div class="mt-2 grid grid-cols-2 gap-2">
+                                                @if($showOld)
+                                                    <div>
+                                                        <p class="text-[11px] font-medium text-red-600 mb-1">قبل التعديل</p>
+                                                        <table class="w-full text-[11px] border border-red-200">
+                                                            @foreach($log->formatted_old as $item)
+                                                                <tr class="border-b border-red-100">
+                                                                    <td class="px-2 py-1 text-gray-500 whitespace-nowrap">{{ $item['label'] }}</td>
+                                                                    <td class="px-2 py-1 text-gray-800">{{ $item['value'] }}</td>
+                                                                </tr>
+                                                            @endforeach
+                                                        </table>
+                                                    </div>
+                                                @endif
+                                                @if($showNew)
+                                                    <div>
+                                                        <p class="text-[11px] font-medium text-green-600 mb-1">بعد التعديل</p>
+                                                        <table class="w-full text-[11px] border border-green-200">
+                                                            @foreach($log->formatted_new as $item)
+                                                                <tr class="border-b border-green-100">
+                                                                    <td class="px-2 py-1 text-gray-500 whitespace-nowrap">{{ $item['label'] }}</td>
+                                                                    <td class="px-2 py-1 text-gray-800">{{ $item['value'] }}</td>
+                                                                </tr>
+                                                            @endforeach
+                                                        </table>
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        @endif
+                                    </div>
                                 @endif
                             </td>
                         </tr>
@@ -85,8 +125,8 @@
 
     @push('scripts')
     <script>
-        function toggleJson(id) {
-            document.getElementById('json-' + id).classList.toggle('hidden');
+        function toggleDetails(id) {
+            document.getElementById('details-' + id).classList.toggle('hidden');
         }
     </script>
     @endpush

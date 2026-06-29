@@ -106,4 +106,10 @@ class PurchaseInvoice extends Model
     {
         return $this->hasMany(Payment::class);
     }
+
+    public function auditLabel(): string
+    {
+        $supplierName = $this->supplier?->name ?? $this->supplier?->name_ar ?? '#' . $this->supplier_id;
+        return "فاتورة مشتريات #{$this->invoice_number} - {$supplierName} - " . number_format($this->total, 2);
+    }
 }

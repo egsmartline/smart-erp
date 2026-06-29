@@ -78,7 +78,7 @@ trait Auditable
     protected function getAuditDescription(string $action): string
     {
         $modelName = class_basename(static::class);
-        $label = method_exists($this, 'auditLabel') ? $this->auditLabel() : "{$modelName}#{$this->getKey()}";
+        $label = method_exists($this, 'auditLabel') ? $this->auditLabel() : "{$modelName} #{$this->getKey()}";
         return match ($action) {
             'create' => "تم إنشاء {$label}",
             'update' => "تم تحديث {$label}",
