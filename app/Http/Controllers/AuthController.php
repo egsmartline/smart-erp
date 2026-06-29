@@ -48,11 +48,6 @@ class AuthController extends Controller
             return new \Illuminate\Http\RedirectResponse(route('setup.index'));
         }
 
-        if ($tenants->count() === 1) {
-            session(['current_tenant_id' => $tenants->first()->id]);
-            return new \Illuminate\Http\RedirectResponse('/');
-        }
-
         return view('auth.select-company', compact('tenants'));
     }
 
