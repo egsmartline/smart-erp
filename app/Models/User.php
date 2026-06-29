@@ -58,7 +58,7 @@ class User extends Authenticatable
 
     public function getAccessibleTenants()
     {
-        if ($this->isSuperAdmin()) {
+        if ($this->isSuperAdmin() || $this->isAdmin()) {
             return Tenant::where('is_active', true)->get();
         }
 
