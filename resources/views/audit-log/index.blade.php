@@ -35,9 +35,8 @@
                         <th class="px-4 py-3 font-semibold">التاريخ والوقت</th>
                         <th class="px-4 py-3 font-semibold">المستخدم</th>
                         <th class="px-4 py-3 font-semibold">العملية</th>
-                        <th class="px-4 py-3 font-semibold">الجدول</th>
-                        <th class="px-4 py-3 font-semibold">السجل</th>
-                        <th class="px-4 py-3 font-semibold">البيانات</th>
+                        <th class="px-4 py-3 font-semibold">الوصف</th>
+                        <th class="px-4 py-3 font-semibold">عرض</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -50,84 +49,25 @@
                                     {{ $log->action === 'create' ? 'إنشاء' : ($log->action === 'update' ? 'تعديل' : ($log->action === 'restore' ? 'استعادة' : 'حذف')) }}
                                 </span>
                             </td>
-                            <td class="px-4 py-2 text-xs">{{ $models[$log->model] ?? class_basename($log->model) }}</td>
+                            <td class="px-4 py-2 text-xs text-gray-700 max-w-[400px]">
+                                <p>{{ $log->description }}</p>
+                            </td>
                             <td class="px-4 py-2 text-xs">
                                 @if($log->url)
-                                    <a href="{{ $log->url }}" class="text-blue-600 hover:underline font-medium" target="_blank">
-                                        #{{ $log->model_id }}
+                                    <a href="{{ $log->url }}" target="_blank" class="inline-flex items-center rounded-md bg-blue-50 px-3 py-1.5 text-blue-700 hover:bg-blue-100 transition font-medium">
+                                        عرض
                                     </a>
                                 @else
-                                    <span class="text-gray-500">#{{ $log->model_id }}</span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-2 text-xs max-w-[350px]">
-                                <p class="text-gray-700">{{ $log->description }}</p>
-                                @php
-                                    $data = $log->action === 'create' ? $log->formatted_new : ($log->action === 'delete' ? $log->formatted_old : null);
-                                    $showOld = $log->action === 'update' && $log->formatted_old;
-                                    $showNew = $log->action === 'update' && $log->formatted_new;
-                                @endphp
-                                @if($data || $showOld || $showNew)
-                                    <button onclick="toggleDetails({{ $log->id }})" class="mt-1 text-blue-500 hover:underline text-[11px]">عرض التفاصيل</button>
-                                    <div id="details-{{ $log->id }}" class="hidden mt-2">
-                                        @if($data)
-                                            <table class="w-full text-[11px] border border-gray-200">
-                                                @foreach($data as $item)
-                                                    <tr class="border-b border-gray-100">
-                                                        <td class="px-2 py-1 text-gray-500 font-medium whitespace-nowrap">{{ $item['label'] }}</td>
-                                                        <td class="px-2 py-1 text-gray-800">{{ $item['value'] }}</td>
-                                                    </tr>
-                                                @endforeach
-                                            </table>
-                                        @endif
-                                        @if($showOld || $showNew)
-                                            <div class="mt-2 grid grid-cols-2 gap-2">
-                                                @if($showOld)
-                                                    <div>
-                                                        <p class="text-[11px] font-medium text-red-600 mb-1">قبل التعديل</p>
-                                                        <table class="w-full text-[11px] border border-red-200">
-                                                            @foreach($log->formatted_old as $item)
-                                                                <tr class="border-b border-red-100">
-                                                                    <td class="px-2 py-1 text-gray-500 whitespace-nowrap">{{ $item['label'] }}</td>
-                                                                    <td class="px-2 py-1 text-gray-800">{{ $item['value'] }}</td>
-                                                                </tr>
-                                                            @endforeach
-                                                        </table>
-                                                    </div>
-                                                @endif
-                                                @if($showNew)
-                                                    <div>
-                                                        <p class="text-[11px] font-medium text-green-600 mb-1">بعد التعديل</p>
-                                                        <table class="w-full text-[11px] border border-green-200">
-                                                            @foreach($log->formatted_new as $item)
-                                                                <tr class="border-b border-green-100">
-                                                                    <td class="px-2 py-1 text-gray-500 whitespace-nowrap">{{ $item['label'] }}</td>
-                                                                    <td class="px-2 py-1 text-gray-800">{{ $item['value'] }}</td>
-                                                                </tr>
-                                                            @endforeach
-                                                        </table>
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        @endif
-                                    </div>
+                                    <span class="text-gray-400">-</span>
                                 @endif
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="px-4 py-8 text-center text-gray-500">لا توجد سجلات</td></tr>
+                        <tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">لا توجد سجلات</td></tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
         <div class="mt-4">{{ $logs->withQueryString()->links() }}</div>
     </div>
-
-    @push('scripts')
-    <script>
-        function toggleDetails(id) {
-            document.getElementById('details-' + id).classList.toggle('hidden');
-        }
-    </script>
-    @endpush
 </x-app-layout>
