@@ -46,4 +46,21 @@ class AuditLog extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function getUrlAttribute(): ?string
+    {
+        return match ($this->model) {
+            SalesInvoice::class => route('sales-invoices.show', $this->model_id, false),
+            PurchaseInvoice::class => route('purchase-invoices.show', $this->model_id, false),
+            Customer::class => route('customers.show', $this->model_id, false),
+            Supplier::class => route('suppliers.show', $this->model_id, false),
+            Item::class => route('items.show', $this->model_id, false),
+            Payment::class => route('payments.show', $this->model_id, false),
+            Expense::class => route('expenses.show', $this->model_id, false),
+            Quotation::class => route('quotations.show', $this->model_id, false),
+            SalesReturn::class => route('sales-returns.show', $this->model_id, false),
+            PurchaseReturn::class => route('purchase-returns.show', $this->model_id, false),
+            default => null,
+        };
+    }
 }
