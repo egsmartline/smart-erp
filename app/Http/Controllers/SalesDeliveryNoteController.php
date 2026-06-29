@@ -73,7 +73,6 @@ class SalesDeliveryNoteController extends TenantAwareController
                 SalesDeliveryNoteLine::create([
                     'tenant_id' => $tenantId,
                     'sales_delivery_note_id' => $deliveryNote->id,
-                    'sales_order_id' => null,
                     'item_id' => $line['item_id'],
                     'quantity' => $line['quantity'],
                     'unit_price' => $line['unit_price'],
