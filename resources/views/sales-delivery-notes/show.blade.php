@@ -31,8 +31,6 @@
             </span>
             <br>
             <span class="text-gray-900 text-sm"><strong>المخزن:</strong> {{ $salesDeliveryNote->warehouse->name ?? '-' }}</span>
-            <span class="mx-3 text-gray-300">|</span>
-            <span class="text-gray-900 text-sm"><strong>ملاحظات:</strong> {{ $salesDeliveryNote->notes ?? '-' }}</span>
         </div>
 
         <div class="border-t border-gray-200 pt-6">
@@ -44,8 +42,7 @@
                             <th class="px-4 py-3 font-semibold">#</th>
                             <th class="px-4 py-3 font-semibold">الصنف</th>
                             <th class="px-4 py-3 font-semibold">الكمية</th>
-                            <th class="px-4 py-3 font-semibold">سعر الوحدة</th>
-                            <th class="px-4 py-3 font-semibold">الإجمالي</th>
+                            <th class="px-4 py-3 font-semibold">ملاحظات</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -54,17 +51,10 @@
                                 <td class="px-4 py-3">{{ $index + 1 }}</td>
                                 <td class="px-4 py-3">{{ $line->item->name ?? '-' }}</td>
                                 <td class="px-4 py-3">{{ number_format($line->quantity, 2) }}</td>
-                                <td class="px-4 py-3">{{ number_format($line->unit_price, 2) }}</td>
-                                <td class="px-4 py-3 font-bold">{{ number_format($line->total, 2) }}</td>
+                                <td class="px-4 py-3">{{ $line->notes ?? '-' }}</td>
                             </tr>
                         @endforeach
                     </tbody>
-                    <tfoot>
-                        <tr class="border-t-2 border-gray-300 bg-gray-50 font-bold">
-                            <td colspan="4" class="px-4 py-3 text-left">الإجمالي</td>
-                            <td class="px-4 py-3">{{ number_format($salesDeliveryNote->lines->sum('total'), 2) }}</td>
-                        </tr>
-                    </tfoot>
                 </table>
             </div>
         </div>
