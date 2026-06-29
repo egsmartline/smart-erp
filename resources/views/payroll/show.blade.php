@@ -16,21 +16,21 @@
 
     <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6 mb-6">
         <h3 class="text-lg font-bold text-gray-800 mb-4">بيانات كشف الرواتب</h3>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-3 text-sm">
-            <div><span class="text-gray-500">المرجع:</span><span class="mr-2 font-medium font-mono">{{ $payroll->payroll_number }}</span></div>
-            <div><span class="text-gray-500">الشهر:</span><span class="mr-2 font-medium">{{ $payroll->month }}</span></div>
-            <div><span class="text-gray-500">السنة:</span><span class="mr-2 font-medium">{{ $payroll->year }}</span></div>
-            <div><span class="text-gray-500">الإجمالي:</span><span class="mr-2 font-medium font-mono">{{ number_format($payroll->total_net, 2) }}</span></div>
-            <div><span class="text-gray-500">الحالة:</span>
+        <div class="flex flex-wrap gap-x-6 gap-y-3 text-sm">
+            <div class="w-[calc(50%-12px)] md:w-[calc(25%-18px)]"><span class="text-gray-500">المرجع:</span><span class="mr-2 font-medium font-mono">{{ $payroll->payroll_number }}</span></div>
+            <div class="w-[calc(50%-12px)] md:w-[calc(25%-18px)]"><span class="text-gray-500">الشهر:</span><span class="mr-2 font-medium">{{ $payroll->month }}</span></div>
+            <div class="w-[calc(50%-12px)] md:w-[calc(25%-18px)]"><span class="text-gray-500">السنة:</span><span class="mr-2 font-medium">{{ $payroll->year }}</span></div>
+            <div class="w-[calc(50%-12px)] md:w-[calc(25%-18px)]"><span class="text-gray-500">الإجمالي:</span><span class="mr-2 font-medium font-mono">{{ number_format($payroll->total_net, 2) }}</span></div>
+            <div class="w-[calc(50%-12px)] md:w-[calc(25%-18px)]"><span class="text-gray-500">الحالة:</span>
                 @if($payroll->state == 'draft')
                     <span class="mr-2 inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">مسودة</span>
                 @else
                     <span class="mr-2 inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">مؤكد</span>
                 @endif
             </div>
-            <div><span class="text-gray-500">أنشأه:</span><span class="mr-2 font-medium">{{ $payroll->payslips->first()->employee->full_name ?? auth()->user()->name }}</span></div>
+            <div class="w-[calc(50%-12px)] md:w-[calc(25%-18px)]"><span class="text-gray-500">أنشأه:</span><span class="mr-2 font-medium">{{ $payroll->payslips->first()->employee->full_name ?? auth()->user()->name }}</span></div>
             @if($payroll->notes)
-                <div class="col-span-2 md:col-span-4"><span class="text-gray-500">ملاحظات:</span><span class="mr-2 font-medium">{{ $payroll->notes }}</span></div>
+                <div class="w-full"><span class="text-gray-500">ملاحظات:</span><span class="mr-2 font-medium">{{ $payroll->notes }}</span></div>
             @endif
         </div>
     </div>
