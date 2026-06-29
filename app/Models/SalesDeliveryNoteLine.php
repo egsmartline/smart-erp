@@ -13,6 +13,7 @@ class SalesDeliveryNoteLine extends Model
     protected $fillable = [
         'tenant_id',
         'sales_delivery_note_id',
+        'sales_order_line_id',
         'item_id',
         'quantity',
         'unit_price',
