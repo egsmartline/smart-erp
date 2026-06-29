@@ -316,6 +316,7 @@ class SalesInvoiceController extends TenantAwareController
                 }
 
                 StockMovement::create([
+                    'tenant_id' => $this->getTenantId(),
                     'item_id' => $line->item_id,
                     'warehouse_id' => $salesInvoice->warehouse_id,
                     'stockable_type' => SalesInvoice::class,
@@ -372,6 +373,7 @@ class SalesInvoiceController extends TenantAwareController
                 }
 
                 StockMovement::create([
+                    'tenant_id' => $this->getTenantId(),
                     'item_id' => $line->item_id,
                     'warehouse_id' => $salesInvoice->warehouse_id,
                     'stockable_type' => SalesInvoice::class,
