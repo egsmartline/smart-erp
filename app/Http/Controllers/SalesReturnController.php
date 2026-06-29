@@ -164,7 +164,6 @@ class SalesReturnController extends TenantAwareController
 
                 if ($itemWarehouse) {
                     $itemWarehouse->increment('quantity', $line->quantity);
-                    $itemWarehouse->increment('available_quantity', $line->quantity);
                 }
 
                 StockMovement::create([
