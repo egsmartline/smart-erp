@@ -307,21 +307,6 @@
                         </ul>
                     </li>
 
-                    {{-- الشركات --}}
-                    <li x-data="{ open: {{ in_array(true, [request()->routeIs('companies.*')]) ? 'true' : 'false' }} }">
-                        <button @click="open = !open"
-                            class="menu-item w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl {{ request()->routeIs('companies.*') ? 'active' : 'hover:bg-primary-700' }} transition-all">
-                            <div class="flex items-center gap-3">
-                                <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                                <span x-show="sidebarOpen" class="whitespace-nowrap text-sm font-medium">الشركات</span>
-                            </div>
-                            <svg x-show="sidebarOpen" class="h-4 w-4 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                        </button>
-                        <ul x-show="open" x-collapse class="mt-1 mr-6 space-y-1">
-                            <li><a href="{{ route('companies.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('companies.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">إدارة الشركات</span></a></li>
-                        </ul>
-                    </li>
-
                     {{-- استيراد وتصدير --}}
                     <li>
                         <a href="{{ route('import.index') }}"
