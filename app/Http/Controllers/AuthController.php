@@ -49,11 +49,8 @@ class AuthController extends Controller
             ->where('is_active', true)
             ->get();
 
-        if ($companies->count() === 1) {
-            $company = $companies->first();
-            session(['current_tenant_id' => $company->tenant_id]);
-            session(['current_company_id' => $company->id]);
-            return new \Illuminate\Http\RedirectResponse(route('dashboard'));
+        if ($companies->isEmpty()) {
+            return new \Illuminate\Http\RedirectResponse(route('setup.index'));
         }
 
         return view('auth.select-company', compact('companies'));
