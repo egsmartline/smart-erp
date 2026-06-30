@@ -199,7 +199,7 @@ class SettingController extends TenantAwareController
             ]);
 
             DB::commit();
-            return redirect()->route('settings.index')->with('success', "تم تصفير الحسابات والبيانات بنجاح (معرف المستأجر: $tenantId، عدد السجلات المحذوفة: $totalDeleted، الحسابات المحدثة: $accountsUpdated)");
+            return redirect()->route('settings.index')->with('success', "تم تصفير الحسابات والبيانات بنجاح (معرف المستأجر: {$tenantId}، عدد السجلات المحذوفة: {$totalDeleted}، الحسابات المحدثة: {$accountsUpdated})");
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'حدث خطأ أثناء التصفير: ' . $e->getMessage());
