@@ -42,7 +42,7 @@
                         <th class="px-4 py-3 font-semibold text-gray-700 text-left">الكمية الحالية</th>
                         <th class="px-4 py-3 font-semibold text-gray-700 text-left">الكمية المحجوزة</th>
                         <th class="px-4 py-3 font-semibold text-gray-700 text-left">الكمية المتاحة</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700 text-left">متوسط التكلفة</th>
+                        <th class="px-4 py-3 font-semibold text-gray-700 text-left">سعر التكلفة</th>
                         <th class="px-4 py-3 font-semibold text-gray-700 text-left">القيمة الإجمالية</th>
                     </tr>
                 </thead>
@@ -56,7 +56,7 @@
                     @forelse($inventoryItems as $iw)
                         @php
                             $available = $iw->quantity - $iw->reserved_quantity;
-                            $value = $iw->quantity * $iw->average_cost;
+                            $value = $iw->quantity * ($iw->item->cost_price ?? 0);
                             $totalQuantity += $iw->quantity;
                             $totalReserved += $iw->reserved_quantity;
                             $totalAvailable += $available;
@@ -71,7 +71,7 @@
                             <td class="px-4 py-3 text-left">
                                 <span class="font-mono text-sm {{ $available <= 0 ? 'text-red-600' : 'text-green-600' }}">{{ number_format($available, 2) }}</span>
                             </td>
-                            <td class="px-4 py-3 text-left font-mono text-sm">{{ number_format($iw->average_cost, 2) }}</td>
+                            <td class="px-4 py-3 text-left font-mono text-sm">{{ number_format($iw->item->cost_price ?? 0, 2) }}</td>
                             <td class="px-4 py-3 text-left font-mono text-sm text-blue-600">{{ number_format($value, 2) }}</td>
                         </tr>
                     @empty
