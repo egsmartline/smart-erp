@@ -1,20 +1,17 @@
 @extends('layouts.auth')
 
 @section('content')
-<style>
-    .sidebar-green { background: linear-gradient(135deg, #047857, #059669) !important; }
-</style>
 <div class="flex min-h-screen" x-data="{ sidebarOpen: true }">
     {{-- Sidebar --}}
-    <aside class="sidebar-green fixed right-0 top-0 bottom-0 text-white flex flex-col z-50 w-64"
-        :class="{ 'w-16': !sidebarOpen }" style="transition: width 0.3s;">
+    <aside class="fixed right-0 top-0 h-full bg-gradient-to-b from-emerald-700 to-emerald-600 text-white flex flex-col transition-all duration-300 z-50"
+        :class="sidebarOpen ? 'w-64' : 'w-16'">
         {{-- User Info --}}
-        <div class="flex-shrink-0 p-4" style="border-bottom: 1px solid #10b981;">
+        <div class="flex-shrink-0 p-4 border-b border-emerald-500">
             <div class="flex items-center gap-3">
                 <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-emerald-700 font-bold text-lg flex-shrink-0">
                     {{ mb_substr(auth()->user()->name, 0, 1) }}
                 </div>
-                <div x-show="sidebarOpen" class="flex-1 min-w-0">
+                <div x-show="sidebarOpen" x-transition class="flex-1 min-w-0">
                     <div class="text-sm font-bold truncate text-white">{{ auth()->user()->name }}</div>
                     <div class="text-xs text-emerald-100 truncate">{{ auth()->user()->email }}</div>
                 </div>
@@ -40,7 +37,7 @@
                     </button>
                     <ul x-show="open" x-collapse class="mt-1 mr-6 space-y-1">
                         <li>
-                            <a href="{{ route('companies.manage') }}"
+                            <a href="{{ route('companies.index') }}"
                                 class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-emerald-100 hover:text-white hover:bg-emerald-500 transition-all">
                                 <span class="h-1.5 w-1.5 rounded-full bg-emerald-300 flex-shrink-0"></span>
                                 <span x-show="sidebarOpen">إدارة الشركات</span>
@@ -66,7 +63,7 @@
         </div>
 
         {{-- Sidebar Toggle --}}
-        <div class="flex-shrink-0 px-3 pb-3 pt-3" style="border-top: 1px solid #10b981;">
+        <div class="flex-shrink-0 px-3 pb-3 border-t border-emerald-500 pt-3">
             <button @click="sidebarOpen = !sidebarOpen"
                 class="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl hover:bg-emerald-500 transition-all text-emerald-100 hover:text-white">
                 <svg class="h-5 w-5 transition-transform" :class="sidebarOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,7 +75,7 @@
     </aside>
 
     {{-- Main Content --}}
-    <div :class="sidebarOpen ? 'mr-64' : 'mr-16'" class="flex-1 min-h-screen bg-gradient-to-br from-blue-50 via-white to-emerald-50" style="transition: margin-right 0.3s;">
+    <div :class="sidebarOpen ? 'mr-64' : 'mr-16'" class="flex-1 min-h-screen bg-gradient-to-br from-blue-50 via-white to-emerald-50 transition-all duration-300">
         {{-- Top Bar --}}
         <div class="sticky top-0 z-40 flex items-center justify-between bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 py-4">
             <div>

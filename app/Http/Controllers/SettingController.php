@@ -132,83 +132,62 @@ class SettingController extends TenantAwareController
 
         $tenantId = $this->getTenantId();
 
+        $tables = [
+            // Phase 1: detail/line tables (children, deleted first)
+            'bank_statement_lines',
+            'budget_lines',
+            'inventory_adjustment_lines',
+            'journal_entry_lines',
+            'payslip',
+            'purchase_invoice_lines',
+            'purchase_receipt_note_lines',
+            'purchase_order_lines',
+            'purchase_return_lines',
+            'quotation_lines',
+            'sales_delivery_note_lines',
+            'sales_invoice_lines',
+            'sales_return_lines',
+            'stock_transfer_lines',
+
+            // Phase 2: leaf tables (no FKs to other transaction tables)
+            'attendance',
+            'bank_transactions',
+            'expenses',
+            'leaves',
+            'loans',
+            'payments',
+            'product_lots',
+            'product_variants',
+            'reordering_rules',
+            'stock_movements',
+            'treasury_transactions',
+
+            // Phase 3: headers that reference other headers
+            'purchase_receipt_notes',
+            'purchase_returns',
+            'quotations',
+            'sales_returns',
+
+            // Phase 4: independent headers (no FKs to other transaction tables)
+            'bank_statements',
+            'budgets',
+            'contracts',
+            'custodies',
+            'inventory_adjustments',
+            'journal_entries',
+            'payroll',
+            'purchase_invoices',
+            'purchase_orders',
+            'sales_delivery_notes',
+            'sales_invoices',
+            'stock_transfers',
+        ];
+
         DB::beginTransaction();
         try {
-            DB::statement('SET FOREIGN_KEY_CHECKS=0');
-
-            $dataTables = [
-                'attendance',
-                'bank_transactions',
-                'bank_statement_lines',
-                'bank_statements',
-                'budget_lines',
-                'budgets',
-                'contracts',
-                'custodies',
-                'expenses',
-                'inventory_adjustment_lines',
-                'inventory_adjustments',
-                'journal_entry_lines',
-                'journal_entries',
-                'leaves',
-                'loans',
-                'payment_terms',
-                'payments',
-                'payroll',
-                'payslip',
-                'product_lots',
-                'product_variants',
-                'purchase_invoice_lines',
-                'purchase_invoices',
-                'purchase_order_lines',
-                'purchase_orders',
-                'purchase_receipt_note_lines',
-                'purchase_receipt_notes',
-                'purchase_return_lines',
-                'purchase_returns',
-                'quotation_lines',
-                'quotations',
-                'reordering_rules',
-                'sales_delivery_note_lines',
-                'sales_delivery_notes',
-                'sales_invoice_lines',
-                'sales_invoices',
-
-                'sales_return_lines',
-                'sales_returns',
-                'stock_movements',
-                'stock_transfer_lines',
-                'stock_transfers',
-                'treasury_transactions',
-                'analytical_accounts',
-                'bank_accounts',
-                'cash_treasuries',
-                'invoice_templates',
-                'item_warehouses',
-                'customers',
-                'suppliers',
-                'items',
-                'item_categories',
-                'item_units',
-                'departments',
-                'employees',
-                'job_positions',
-                'warehouses',
-                'companies',
-                'tenant_user',
-                'currencies',
-                'taxes', 'tax_settings',
-                'fiscal_years',
-                'journals',
-                'settings',
-                'user_permissions', 'user_roles',
-            ];
-
-            foreach ($dataTables as $table) {
+            foreach ($tables as $table) {
                 DB::table($table)->where('tenant_id', $tenantId)->delete();
             }
-
-            DB::table('tenants')->where('id', $tenantId)->delete();
 
             Account::where('tenant_id', $tenantId)->update([
                 'opening_balance' => 0,
@@ -216,12 +195,9 @@ class SettingController extends TenantAwareController
                 'balance' => 0,
             ]);
 
-            DB::statement('SET FOREIGN_KEY_CHECKS=1');
             DB::commit();
-
             return redirect()->route('settings.index')->with('success', 'تم تصفير الحسابات والبيانات بنجاح');
         } catch (\Exception $e) {
-            DB::statement('SET FOREIGN_KEY_CHECKS=1');
             DB::rollBack();
             return back()->with('error', 'حدث خطأ أثناء التصفير: ' . $e->getMessage());
         }
