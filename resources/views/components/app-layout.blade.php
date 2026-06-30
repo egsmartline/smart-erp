@@ -126,8 +126,8 @@
         <aside :class="sidebarOpen ? 'w-64' : 'w-20'"
             class="fixed right-0 top-0 h-full bg-primary-800 text-white sidebar-transition z-40 flex flex-col no-print">
 
-            {{-- Logo + Company Switcher --}}
-            <div class="flex-shrink-0 p-4 border-b border-primary-700" x-data="{ open: false }">
+            {{-- Logo --}}
+            <div class="flex-shrink-0 p-4 border-b border-primary-700">
                 @php $company = \App\Models\Company::where('tenant_id', session('current_tenant_id'))->first(); @endphp
                 <div class="flex items-center gap-3">
                     @if($company && $company->logo)
@@ -137,34 +137,9 @@
                             <svg class="h-6 w-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                         </div>
                     @endif
-                    <div x-show="sidebarOpen" x-transition class="flex-1 min-w-0">
-                        <button @click="open = !open" class="flex items-center gap-1 w-full text-right">
-                            <div class="flex-1 min-w-0">
-                                <div class="text-lg font-bold text-white truncate">{{ $company->name ?? 'Smart ERP' }}</div>
-                                <div class="text-xs text-black">Developer by BASSAM DAWOOD {{ date('Y') }}</div>
-                            </div>
-                            <svg x-show="sidebarOpen" class="h-4 w-4 flex-shrink-0 text-primary-300 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                        </button>
-                        <div x-show="open && sidebarOpen" @click.outside="open = false" class="absolute z-50 mt-2 w-56 rounded-xl bg-white shadow-xl border border-gray-100 py-1 overflow-hidden">
-                            @php $tenants = auth()->user()->getAccessibleTenants(); @endphp
-                            @foreach($tenants as $t)
-                                @php $c = \App\Models\Company::where('tenant_id', $t->id)->first(); @endphp
-                                <form action="{{ route('switch-tenant', $t->id) }}" method="POST" class="block">
-                                    @csrf
-                                    <button type="submit" class="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-right transition {{ session('current_tenant_id') == $t->id ? 'bg-primary-50 text-primary-700 font-bold' : 'text-gray-700 hover:bg-gray-50' }}">
-                                        @if($c && $c->logo)
-                                            <img src="{{ asset('storage/' . $c->logo) }}" alt="" class="h-7 w-7 rounded-lg object-cover flex-shrink-0">
-                                        @else
-                                            <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-500 flex-shrink-0">{{ mb_substr($c->name ?? $t->name, 0, 1) }}</div>
-                                        @endif
-                                        <span class="truncate">{{ $c->name ?? $t->name }}</span>
-                                        @if(session('current_tenant_id') == $t->id)
-                                            <svg class="h-4 w-4 mr-auto flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                                        @endif
-                                    </button>
-                                </form>
-                            @endforeach
-                        </div>
+                    <div x-show="sidebarOpen" class="flex-1 min-w-0">
+                        <div class="text-lg font-bold text-white truncate">{{ $company->name ?? 'Smart ERP' }}</div>
+                        <div class="text-xs text-blue-300">Developer by BASSAM DAWOOD {{ date('Y') }}</div>
                     </div>
                 </div>
             </div>
