@@ -62,8 +62,12 @@ Route::get('/select-company', [AuthController::class, 'showSelectCompany'])->mid
 Route::post('/switch-company/{companyId}', [AuthController::class, 'switchCompany'])->middleware('auth')->name('switch-company');
 Route::get('/manage-companies', [CompanyController::class, 'manage'])->middleware('auth')->name('companies.manage');
 
+Route::get('/', function () {
+    return redirect()->route('select-company');
+})->middleware('auth')->name('home');
+
 Route::middleware(['auth', 'tenant'])->group(function () {
-    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('switch-tenant/{tenantId}', [DashboardController::class, 'switchTenant'])->name('switch-tenant');
 
     Route::get('/setup', [SetupController::class, 'index'])->name('setup.index');

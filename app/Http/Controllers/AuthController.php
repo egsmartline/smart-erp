@@ -12,7 +12,7 @@ class AuthController extends Controller
     public function showLogin()
     {
         if (Auth::check()) {
-            return new \Illuminate\Http\RedirectResponse('/');
+            return new \Illuminate\Http\RedirectResponse(route('home'));
         }
         return view('auth.login');
     }
@@ -53,7 +53,7 @@ class AuthController extends Controller
             $company = $companies->first();
             session(['current_tenant_id' => $company->tenant_id]);
             session(['current_company_id' => $company->id]);
-            return new \Illuminate\Http\RedirectResponse('/');
+            return new \Illuminate\Http\RedirectResponse(route('dashboard'));
         }
 
         return view('auth.select-company', compact('companies'));
