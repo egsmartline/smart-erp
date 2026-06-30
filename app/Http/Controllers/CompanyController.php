@@ -14,7 +14,8 @@ class CompanyController extends TenantAwareController
 {
     public function index()
     {
-        $companies = $this->tenantQuery(Company::class)->with('secondaryCurrency')->get();
+        $tenantIds = auth()->user()->tenants()->pluck('tenants.id');
+        $companies = Company::whereIn('tenant_id', $tenantIds)->with('secondaryCurrency')->get();
         return view('companies.index', compact('companies'));
     }
 
@@ -111,7 +112,7 @@ class CompanyController extends TenantAwareController
 
     public function edit(Company $company)
     {
-        $currencies = Currency::where('tenant_id', $this->getTenantId())->where('is_active', true)->get();
+        $currencies = Currency::where('tenant_id', $company->tenant_id)->where('is_active', true)->get();
         return view('companies.edit', compact('company', 'currencies'));
     }
 
