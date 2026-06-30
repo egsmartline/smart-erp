@@ -12,7 +12,8 @@ class InventoryCountController extends TenantAwareController
     public function index(Request $request)
     {
         $query = ItemWarehouse::where('tenant_id', $this->getTenantId())
-            ->with(['item', 'warehouse']);
+            ->with(['item', 'warehouse'])
+            ->whereHas('warehouse');
 
         if ($request->filled('warehouse_id')) {
             $query->where('warehouse_id', $request->warehouse_id);
