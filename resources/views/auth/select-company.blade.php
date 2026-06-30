@@ -37,7 +37,7 @@
                     </button>
                     <ul x-show="open" x-collapse class="mt-1 mr-6 space-y-1">
                         <li>
-                            <a href="{{ route('companies.index') }}"
+                            <a href="{{ route('companies.manage') }}"
                                 class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-emerald-100 hover:text-white hover:bg-emerald-500 transition-all">
                                 <span class="h-1.5 w-1.5 rounded-full bg-emerald-300 flex-shrink-0"></span>
                                 <span x-show="sidebarOpen">إدارة الشركات</span>

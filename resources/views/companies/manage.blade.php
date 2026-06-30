@@ -88,14 +88,14 @@
     </aside>
 
     {{-- Main Content --}}
-    <div :class="sidebarOpen ? 'mr-64' : 'mr-16'" class="flex-1 min-h-screen bg-gradient-to-br from-blue-50 via-white to-emerald-50" style="transition: margin-right 0.3s;">
+    <div :class="sidebarOpen ? 'mr-64' : 'mr-16'" class="flex-1 min-h-screen bg-gradient-to-br from-emerald-50 via-white to-emerald-100" style="transition: margin-right 0.3s;">
         {{-- Top Bar --}}
         <div class="sticky top-0 z-40 flex items-center justify-between bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 py-4">
             <div>
                 <h1 class="text-2xl font-bold text-gray-800">إدارة الشركات</h1>
                 <p class="text-sm text-gray-500">إدارة وتعديل الشركات المسجلة في النظام</p>
             </div>
-            <a href="{{ route('companies.create') }}" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition">
+            <a href="{{ route('companies.create') }}" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 إضافة شركة جديدة
             </a>
@@ -130,7 +130,7 @@
                                     @if($company->logo)
                                         <img src="{{ asset('storage/' . $company->logo) }}" alt="Logo" class="h-10 w-10 rounded-lg object-cover">
                                     @else
-                                        <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-sm font-bold text-blue-600">
+                                        <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 text-sm font-bold text-emerald-600">
                                             {{ substr($company->name, 0, 1) }}
                                         </div>
                                     @endif
@@ -140,7 +140,7 @@
                                 <td class="px-6 py-4 text-gray-600">{{ $company->phone ?? '-' }}</td>
                                 <td class="px-6 py-4 text-gray-600">{{ $company->email ?? '-' }}</td>
                                 <td class="px-6 py-4">
-                                    <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">
+                                    <span class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
                                         {{ $company->currency_code }}
                                     </span>
                                     @if($company->secondaryCurrency)
@@ -158,7 +158,7 @@
                                 </td>
                                 <td class="px-6 py-4 text-center">
                                     <div class="flex items-center justify-center gap-2">
-                                        <a href="{{ route('companies.show', $company) }}" class="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-blue-600 transition" title="عرض">
+                                        <a href="{{ route('companies.show', $company) }}" class="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-emerald-600 transition" title="عرض">
                                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                         </a>
                                         <a href="{{ route('companies.edit', $company) }}" class="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-yellow-600 transition" title="تعديل">
