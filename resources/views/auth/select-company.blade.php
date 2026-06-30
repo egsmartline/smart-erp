@@ -3,8 +3,8 @@
 @section('content')
 <div class="flex min-h-screen" x-data="{ sidebarOpen: true }">
     {{-- Sidebar --}}
-    <aside class="fixed right-0 top-0 h-full bg-gradient-to-b from-emerald-700 to-emerald-600 text-white flex flex-col transition-all duration-300 z-50"
-        :class="sidebarOpen ? 'w-64' : 'w-16'">
+    <aside class="sidebar-green fixed right-0 top-0 h-full text-white flex flex-col z-50"
+        :class="sidebarOpen ? 'w-64' : 'w-16'" style="transition: width 0.3s">
         {{-- User Info --}}
         <div class="flex-shrink-0 p-4 border-b border-emerald-500">
             <div class="flex items-center gap-3">
@@ -75,7 +75,7 @@
     </aside>
 
     {{-- Main Content --}}
-    <div :class="sidebarOpen ? 'mr-64' : 'mr-16'" class="flex-1 min-h-screen bg-gradient-to-br from-blue-50 via-white to-emerald-50 transition-all duration-300">
+    <div :class="sidebarOpen ? 'mr-64' : 'mr-16'" class="flex-1 min-h-screen bg-gradient-to-br from-emerald-50 via-white to-emerald-100 transition-all duration-300">
         {{-- Top Bar --}}
         <div class="sticky top-0 z-40 flex items-center justify-between bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 py-4">
             <div>
@@ -97,13 +97,13 @@
                     <form action="{{ route('switch-company', $company->id) }}" method="POST">
                         @csrf
                         <button type="submit"
-                            class="w-full text-right rounded-2xl border-2 border-gray-200 bg-white p-6 hover:border-blue-500 hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer group">
+                            class="company-card w-full text-right rounded-2xl border-2 border-gray-200 bg-white p-6 hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer group">
                             <div class="flex items-center gap-4">
                                 <div class="flex h-16 w-16 items-center justify-center rounded-2xl shrink-0 overflow-hidden">
                                     @if($company->logo)
                                         <img src="{{ asset('storage/' . $company->logo) }}" alt="{{ $company->name }}" class="h-full w-full object-cover">
                                     @else
-                                        <div class="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-100 to-blue-50 text-blue-600 group-hover:from-blue-600 group-hover:to-blue-700 group-hover:text-white transition-all">
+                                        <div class="company-icon flex h-full w-full items-center justify-center bg-gradient-to-br from-emerald-100 to-emerald-50 text-emerald-600 transition-all">
                                             <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                                             </svg>
@@ -111,7 +111,7 @@
                                     @endif
                                 </div>
                                 <div class="flex-1 text-right">
-                                    <h3 class="text-lg font-bold text-gray-800 group-hover:text-blue-600 transition-colors">{{ $company->name }}</h3>
+                                    <h3 class="company-name text-lg font-bold text-gray-800 transition-colors">{{ $company->name }}</h3>
                                     @if($company->tax_number)
                                         <p class="text-xs text-gray-500 mt-0.5">رقم ضريبي: {{ $company->tax_number }}</p>
                                     @endif
@@ -119,8 +119,8 @@
                                         <p class="text-xs text-gray-400 mt-0.5">{{ $company->phone }}</p>
                                     @endif
                                 </div>
-                                <div class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 group-hover:bg-blue-100 transition-colors">
-                                    <svg class="h-4 w-4 text-gray-400 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="company-arrow flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 transition-colors">
+                                    <svg class="h-4 w-4 text-gray-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                     </svg>
                                 </div>

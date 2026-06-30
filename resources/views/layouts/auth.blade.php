@@ -62,6 +62,25 @@
             0%, 100% { transform: translateY(0px); }
             50% { transform: translateY(-10px); }
         }
+        .sidebar-green {
+            background: linear-gradient(135deg, #047857, #059669) !important;
+        }
+        .company-card:hover {
+            border-color: #10b981 !important;
+        }
+        .company-card:hover .company-icon {
+            background: linear-gradient(135deg, #059669, #10b981) !important;
+            color: white !important;
+        }
+        .company-card:hover .company-arrow {
+            background-color: #d1fae5 !important;
+        }
+        .company-card:hover .company-arrow svg {
+            color: #059669 !important;
+        }
+        .company-card:hover .company-name {
+            color: #059669 !important;
+        }
     </style>
 </head>
 <body class="font-cairo">
