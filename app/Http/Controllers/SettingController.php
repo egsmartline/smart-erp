@@ -183,20 +183,23 @@ class SettingController extends TenantAwareController
             'stock_transfers',
         ];
 
+        $totalDeleted = 0;
+
         DB::beginTransaction();
         try {
             foreach ($tables as $table) {
-                DB::table($table)->where('tenant_id', $tenantId)->delete();
+                $deleted = DB::table($table)->where('tenant_id', $tenantId)->delete();
+                $totalDeleted += $deleted;
             }
 
-            Account::where('tenant_id', $tenantId)->update([
+            $accountsUpdated = Account::where('tenant_id', $tenantId)->update([
                 'opening_balance' => 0,
                 'current_balance' => 0,
                 'balance' => 0,
             ]);
 
             DB::commit();
-            return redirect()->route('settings.index')->with('success', 'تم تصفير الحسابات والبيانات بنجاح');
+            return redirect()->route('settings.index')->with('success', "تم تصفير الحسابات والبيانات بنجاح (معرف المستأجر: $tenantId، عدد السجلات المحذوفة: $totalDeleted، الحسابات المحدثة: $accountsUpdated)");
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'حدث خطأ أثناء التصفير: ' . $e->getMessage());
