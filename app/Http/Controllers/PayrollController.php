@@ -107,6 +107,7 @@ class PayrollController extends TenantAwareController
     public function edit(Payroll $payroll)
     {
         if ($payroll->tenant_id !== $this->getTenantId()) abort(403);
+        $payroll->load('payslips.employee');
 
         return view('payroll.edit', compact('payroll'));
     }
@@ -117,15 +118,52 @@ class PayrollController extends TenantAwareController
 
         $validated = $request->validate([
             'notes' => 'nullable|string',
+            'payslips' => 'nullable|array',
+            'payslips.*.id' => 'required|exists:payslips,id',
+            'payslips.*.basic_salary' => 'nullable|numeric|min:0',
+            'payslips.*.total_allowances' => 'nullable|numeric|min:0',
+            'payslips.*.total_deductions' => 'nullable|numeric|min:0',
+            'payslips.*.overtime_pay' => 'nullable|numeric|min:0',
         ]);
-
-        if ($payroll->state !== 'draft') {
-            return back()->with('error', 'لا يمكن تعديل كشف رواتب تم تأكيده');
-        }
 
         $payroll->update([
             'notes' => $validated['notes'] ?? null,
         ]);
+
+        if (isset($validated['payslips'])) {
+            $totalBasic = 0;
+            $totalAllowances = 0;
+            $totalDeductions = 0;
+            $totalNet = 0;
+
+            foreach ($validated['payslips'] as $data) {
+                $basic = $data['basic_salary'] ?? 0;
+                $allowances = $data['total_allowances'] ?? 0;
+                $deductions = $data['total_deductions'] ?? 0;
+                $overtime = $data['overtime_pay'] ?? 0;
+                $net = $basic + $allowances + $overtime - $deductions;
+
+                Payslip::where('id', $data['id'])->update([
+                    'basic_salary' => $basic,
+                    'total_allowances' => $allowances,
+                    'total_deductions' => $deductions,
+                    'overtime_pay' => $overtime,
+                    'net_salary' => max($net, 0),
+                ]);
+
+                $totalBasic += $basic;
+                $totalAllowances += $allowances;
+                $totalDeductions += $deductions;
+                $totalNet += max($net, 0);
+            }
+
+            $payroll->update([
+                'total_basic' => $totalBasic,
+                'total_allowances' => $totalAllowances,
+                'total_deductions' => $totalDeductions,
+                'total_net' => $totalNet,
+            ]);
+        }
 
         return redirect()->route('payroll.show', $payroll)->with('success', 'تم تحديث كشف الرواتب بنجاح');
     }
@@ -133,10 +171,6 @@ class PayrollController extends TenantAwareController
     public function destroy(Payroll $payroll)
     {
         if ($payroll->tenant_id !== $this->getTenantId()) abort(403);
-
-        if ($payroll->state !== 'draft') {
-            return back()->with('error', 'لا يمكن حذف كشف رواتب تم تأكيده');
-        }
 
         $payroll->payslips()->delete();
         $payroll->delete();
