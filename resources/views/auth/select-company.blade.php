@@ -3,17 +3,17 @@
 @section('content')
 <div class="flex min-h-screen" x-data="{ sidebarOpen: true }">
     {{-- Sidebar --}}
-    <aside class="fixed right-0 top-0 h-full bg-gradient-to-b from-emerald-800 to-emerald-700 text-white flex flex-col transition-all duration-300 z-50"
+    <aside class="fixed right-0 top-0 h-full bg-gradient-to-b from-emerald-700 to-emerald-600 text-white flex flex-col transition-all duration-300 z-50"
         :class="sidebarOpen ? 'w-64' : 'w-16'">
         {{-- User Info --}}
-        <div class="flex-shrink-0 p-4 border-b border-emerald-600">
+        <div class="flex-shrink-0 p-4 border-b border-emerald-500">
             <div class="flex items-center gap-3">
-                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-emerald-600 font-bold text-lg flex-shrink-0">
+                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-emerald-700 font-bold text-lg flex-shrink-0">
                     {{ mb_substr(auth()->user()->name, 0, 1) }}
                 </div>
                 <div x-show="sidebarOpen" x-transition class="flex-1 min-w-0">
                     <div class="text-sm font-bold truncate text-white">{{ auth()->user()->name }}</div>
-                    <div class="text-xs text-white/70 truncate">{{ auth()->user()->email }}</div>
+                    <div class="text-xs text-emerald-100 truncate">{{ auth()->user()->email }}</div>
                 </div>
             </div>
         </div>
@@ -24,22 +24,22 @@
                 {{-- الشركات --}}
                 <li x-data="{ open: false }">
                     <button @click="open = !open"
-                        class="w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl hover:bg-white/10 transition-all text-right group">
+                        class="w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl hover:bg-emerald-500 transition-all text-right group">
                         <div class="flex items-center gap-3">
-                            <svg class="h-5 w-5 flex-shrink-0 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="h-5 w-5 flex-shrink-0 text-emerald-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                             </svg>
                             <span x-show="sidebarOpen" class="whitespace-nowrap text-sm font-medium text-white">الشركات</span>
                         </div>
-                        <svg x-show="sidebarOpen" class="h-4 w-4 text-white/50 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg x-show="sidebarOpen" class="h-4 w-4 text-emerald-200 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
                     </button>
                     <ul x-show="open" x-collapse class="mt-1 mr-6 space-y-1">
                         <li>
                             <a href="{{ route('companies.index') }}"
-                                class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-white/80 hover:bg-white/10 transition-all">
-                                <span class="h-1.5 w-1.5 rounded-full bg-white/50 flex-shrink-0"></span>
+                                class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-emerald-100 hover:text-white hover:bg-emerald-500 transition-all">
+                                <span class="h-1.5 w-1.5 rounded-full bg-emerald-300 flex-shrink-0"></span>
                                 <span x-show="sidebarOpen">إدارة الشركات</span>
                             </a>
                         </li>
@@ -53,7 +53,7 @@
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
                 <button type="submit"
-                    class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 transition-all text-white text-sm font-bold cursor-pointer">
+                    class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 transition-all text-white text-sm font-bold cursor-pointer">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                     </svg>
@@ -63,9 +63,9 @@
         </div>
 
         {{-- Sidebar Toggle --}}
-        <div class="flex-shrink-0 px-3 pb-3 border-t border-emerald-600 pt-3">
+        <div class="flex-shrink-0 px-3 pb-3 border-t border-emerald-500 pt-3">
             <button @click="sidebarOpen = !sidebarOpen"
-                class="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl hover:bg-white/10 transition-all text-white/70 hover:text-white">
+                class="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl hover:bg-emerald-500 transition-all text-emerald-100 hover:text-white">
                 <svg class="h-5 w-5 transition-transform" :class="sidebarOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
                 </svg>
