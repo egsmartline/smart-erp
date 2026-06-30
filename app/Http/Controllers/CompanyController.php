@@ -14,8 +14,8 @@ class CompanyController extends TenantAwareController
 {
     public function index()
     {
-        $tenantIds = auth()->user()->tenants()->pluck('tenants.id');
-        $companies = Company::whereIn('tenant_id', $tenantIds)->with('secondaryCurrency')->get();
+        $tenants = auth()->user()->getAccessibleTenants();
+        $companies = Company::whereIn('tenant_id', $tenants->pluck('id'))->with('secondaryCurrency')->get();
         return view('companies.index', compact('companies'));
     }
 
