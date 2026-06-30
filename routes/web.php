@@ -224,7 +224,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::post('expenses/{expense}/reject', [ExpenseController::class, 'reject'])->name('expenses.reject');
 
     // HR - Payroll
-    Route::resource('payroll', PayrollController::class)->only(['index', 'create', 'store', 'show']);
+    Route::resource('payroll', PayrollController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
     Route::post('payroll/{payroll}/confirm', [PayrollController::class, 'confirm'])->name('payroll.confirm');
 
     // HR - Loans

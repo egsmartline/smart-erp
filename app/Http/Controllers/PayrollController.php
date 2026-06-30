@@ -104,6 +104,46 @@ class PayrollController extends TenantAwareController
         return view('payroll.show', compact('payroll'));
     }
 
+    public function edit(Payroll $payroll)
+    {
+        if ($payroll->tenant_id !== $this->getTenantId()) abort(403);
+
+        return view('payroll.edit', compact('payroll'));
+    }
+
+    public function update(Request $request, Payroll $payroll)
+    {
+        if ($payroll->tenant_id !== $this->getTenantId()) abort(403);
+
+        $validated = $request->validate([
+            'notes' => 'nullable|string',
+        ]);
+
+        if ($payroll->state !== 'draft') {
+            return back()->with('error', 'لا يمكن تعديل كشف رواتب تم تأكيده');
+        }
+
+        $payroll->update([
+            'notes' => $validated['notes'] ?? null,
+        ]);
+
+        return redirect()->route('payroll.show', $payroll)->with('success', 'تم تحديث كشف الرواتب بنجاح');
+    }
+
+    public function destroy(Payroll $payroll)
+    {
+        if ($payroll->tenant_id !== $this->getTenantId()) abort(403);
+
+        if ($payroll->state !== 'draft') {
+            return back()->with('error', 'لا يمكن حذف كشف رواتب تم تأكيده');
+        }
+
+        $payroll->payslips()->delete();
+        $payroll->delete();
+
+        return redirect()->route('payroll.index')->with('success', 'تم حذف كشف الرواتب بنجاح');
+    }
+
     public function confirm(Payroll $payroll)
     {
         if ($payroll->tenant_id !== $this->getTenantId()) abort(403);
