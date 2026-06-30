@@ -338,6 +338,17 @@
                 </ul>
             </nav>
 
+            {{-- Back to Companies --}}
+            <div class="flex-shrink-0 px-3 pb-1">
+                <a href="{{ route('select-company') }}"
+                    class="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 transition-all text-white text-sm font-bold">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                    <span x-show="sidebarOpen">العودة إلى تبويب الشركات</span>
+                </a>
+            </div>
+
             {{-- Logout --}}
             <div class="flex-shrink-0 px-3 pb-2">
                 <form method="POST" action="{{ route('logout') }}">
