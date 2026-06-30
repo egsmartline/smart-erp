@@ -11,6 +11,15 @@
                     class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
             </div>
             <div class="min-w-[180px]">
+                <label class="mb-1 block text-sm font-medium text-gray-700">التصنيف</label>
+                <select name="category_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <option value="">الكل</option>
+                    @foreach($categories as $category)
+                        <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="min-w-[180px]">
                 <label class="mb-1 block text-sm font-medium text-gray-700">المخزن</label>
                 <select name="warehouse_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     <option value="">الكل</option>
