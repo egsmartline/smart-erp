@@ -27,10 +27,10 @@ class FiscalYearController extends TenantAwareController
         ]);
 
         $validated['tenant_id'] = $this->getTenantId();
-        $validated['is_current'] = false;
+        $validated['is_active'] = false;
 
-        if ($validated['is_current'] ?? false) {
-            $this->tenantQuery(FiscalYear::class)->update(['is_current' => false]);
+        if ($validated['is_active'] ?? false) {
+            $this->tenantQuery(FiscalYear::class)->update(['is_active' => false]);
         }
 
         FiscalYear::create($validated);
@@ -60,8 +60,8 @@ class FiscalYearController extends TenantAwareController
             'end_date' => 'required|date|after:start_date',
         ]);
 
-        if ($validated['is_current'] ?? false) {
-            $this->tenantQuery(FiscalYear::class)->update(['is_current' => false]);
+        if ($validated['is_active'] ?? false) {
+            $this->tenantQuery(FiscalYear::class)->update(['is_active' => false]);
         }
 
         $fiscalYear->update($validated);

@@ -17,6 +17,7 @@ class FiscalYear extends Model
         'name',
         'start_date',
         'end_date',
+        'is_active',
         'is_closed',
         'closed_at',
         'closed_by',

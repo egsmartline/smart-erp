@@ -71,7 +71,7 @@ class SetupController extends Controller
                 'name' => date('Y'),
                 'start_date' => date('Y-01-01'),
                 'end_date' => date('Y-12-31'),
-                'is_current' => true,
+                'is_active' => true,
             ]);
 
             Auth::login($admin);

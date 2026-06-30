@@ -93,7 +93,7 @@ class CompanyController extends TenantAwareController
                 'name' => date('Y'),
                 'start_date' => date('Y-01-01'),
                 'end_date' => date('Y-12-31'),
-                'is_current' => true,
+                'is_active' => true,
             ]);
 
             $user = auth()->user();
