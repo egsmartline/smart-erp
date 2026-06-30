@@ -12,38 +12,38 @@
                     {{ mb_substr(auth()->user()->name, 0, 1) }}
                 </div>
                 <div x-show="sidebarOpen" x-transition class="flex-1 min-w-0">
-                    <div class="text-sm font-bold truncate">{{ auth()->user()->name }}</div>
-                    <div class="text-xs text-emerald-300 truncate">{{ auth()->user()->email }}</div>
+                    <div class="text-sm font-bold truncate text-white">{{ auth()->user()->name }}</div>
+                    <div class="text-xs text-white/70 truncate">{{ auth()->user()->email }}</div>
                 </div>
             </div>
         </div>
 
         {{-- Available Companies --}}
         <div class="flex-1 overflow-y-auto py-3 px-2">
-            <div x-show="sidebarOpen" class="px-3 mb-2 text-xs text-emerald-300 font-medium uppercase tracking-wider">الشركات المتاحة</div>
+            <div x-show="sidebarOpen" class="px-3 mb-2 text-xs text-white/50 font-medium uppercase tracking-wider">الشركات المتاحة</div>
             <ul class="space-y-1">
                 @foreach($companies as $company)
                 <li>
                     <form action="{{ route('switch-company', $company->id) }}" method="POST">
                         @csrf
                         <button type="submit"
-                            class="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-emerald-600 transition-all text-right group">
-                            <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600 group-hover:bg-emerald-500 flex-shrink-0 overflow-hidden">
+                            class="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-white/10 transition-all text-right group">
+                            <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-white/20 group-hover:bg-white/30 flex-shrink-0 overflow-hidden">
                                 @if($company->logo)
                                     <img src="{{ asset('storage/' . $company->logo) }}" alt="" class="h-full w-full object-cover">
                                 @else
-                                    <svg class="h-5 w-5 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                                     </svg>
                                 @endif
                             </div>
                             <div x-show="sidebarOpen" class="flex-1 min-w-0 text-right">
-                                <div class="text-sm font-medium truncate">{{ $company->name }}</div>
+                                <div class="text-sm font-medium truncate text-white">{{ $company->name }}</div>
                                 @if($company->tax_number)
-                                    <div class="text-xs text-emerald-300 truncate">رقم ضريبي: {{ $company->tax_number }}</div>
+                                    <div class="text-xs text-white/60 truncate">رقم ضريبي: {{ $company->tax_number }}</div>
                                 @endif
                             </div>
-                            <svg x-show="sidebarOpen" class="h-4 w-4 text-emerald-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg x-show="sidebarOpen" class="h-4 w-4 text-white/50 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                             </svg>
                         </button>
@@ -70,7 +70,7 @@
         {{-- Sidebar Toggle --}}
         <div class="flex-shrink-0 px-3 pb-3 border-t border-emerald-600 pt-3">
             <button @click="sidebarOpen = !sidebarOpen"
-                class="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl hover:bg-emerald-600 transition-all text-emerald-300 hover:text-white">
+                class="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl hover:bg-white/10 transition-all text-white/70 hover:text-white">
                 <svg class="h-5 w-5 transition-transform" :class="sidebarOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
                 </svg>
