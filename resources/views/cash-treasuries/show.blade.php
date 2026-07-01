@@ -1,5 +1,12 @@
 <x-app-layout>
     <x-slot name="header">
+        <style>
+            @media print {
+                .print-treasury-balance { font-size: 1.5rem !important; }  /* text-2xl */
+                .print-treasury-label { font-size: 0.75rem !important; }   /* text-xs */
+                .print-treasury-name { font-size: 0.875rem !important; }    /* text-sm */
+            }
+        </style>
         <div class="flex items-center justify-between">
             <h2 class="text-xl font-bold text-gray-800">بيانات الخزينة: {{ $treasury->name }}</h2>
             <div class="flex items-center gap-2">
@@ -11,9 +18,9 @@
 
     <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6 mb-6">
         <div class="text-center py-6">
-            <div class="text-4xl print:text-2xl font-bold {{ $treasury->current_balance > 0 ? 'text-emerald-600' : 'text-red-600' }}">{{ number_format($treasury->current_balance, 2) }} {{ $treasury->currency->code ?? 'ج.م' }}</div>
-            <div class="text-sm print:text-xs text-gray-500 mt-2">الرصيد الحالي</div>
-            <div class="mt-2 text-lg print:text-sm font-bold text-gray-700 print-only">{{ $treasury->name }}</div>
+            <div class="text-4xl print-treasury-balance font-bold {{ $treasury->current_balance > 0 ? 'text-emerald-600' : 'text-red-600' }}">{{ number_format($treasury->current_balance, 2) }} {{ $treasury->currency->code ?? 'ج.م' }}</div>
+            <div class="text-sm print-treasury-label text-gray-500 mt-2">الرصيد الحالي</div>
+            <div class="mt-2 text-lg print-treasury-name font-bold text-gray-700 print-only">{{ $treasury->name }}</div>
             @if($treasury->whatsapp_number)
                 @php
                     $currencyCode = $treasury->currency->code ?? 'ج.م';
