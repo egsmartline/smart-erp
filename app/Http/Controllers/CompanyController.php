@@ -146,8 +146,53 @@ class CompanyController extends TenantAwareController
 
     public function destroy(Company $company)
     {
-        $company->delete();
-        return redirect()->route('companies.index')->with('success', 'تم حذف الشركة بنجاح');
+        $tenantId = $company->tenant_id;
+
+        DB::beginTransaction();
+        try {
+            $tables = [
+                'bank_statement_lines', 'budget_lines', 'inventory_adjustment_lines',
+                'journal_entry_lines', 'payslip', 'purchase_invoice_lines',
+                'purchase_receipt_note_lines', 'purchase_order_lines', 'purchase_return_lines',
+                'quotation_lines', 'sales_delivery_note_lines', 'sales_invoice_lines',
+                'sales_return_lines', 'stock_transfer_lines', 'sales_order_lines',
+                'attendance', 'bank_transactions', 'expenses', 'leaves', 'loans',
+                'payments', 'product_lots', 'product_variants', 'reordering_rules',
+                'stock_movements', 'treasury_transactions', 'purchase_receipt_notes',
+                'purchase_returns', 'quotations', 'sales_returns', 'bank_statements',
+                'budgets', 'contracts', 'custodies', 'inventory_adjustments',
+                'journal_entries', 'payroll', 'purchase_invoices', 'purchase_orders',
+                'sales_delivery_notes', 'sales_invoices', 'stock_transfers',
+                'trade_operations', 'transfers', 'sales_orders',
+            ];
+            foreach ($tables as $table) {
+                DB::table($table)->where('tenant_id', $tenantId)->delete();
+            }
+            foreach (['customers', 'suppliers', 'items', 'item_categories', 'item_units', 'warehouses', 'item_warehouses'] as $table) {
+                DB::table($table)->where('tenant_id', $tenantId)->delete();
+            }
+            foreach (['employees', 'departments', 'job_positions'] as $table) {
+                DB::table($table)->where('tenant_id', $tenantId)->delete();
+            }
+            foreach (['journals', 'journal_entries', 'journal_entry_lines', 'analytical_accounts'] as $table) {
+                DB::table($table)->where('tenant_id', $tenantId)->delete();
+            }
+            foreach (['cash_treasuries', 'bank_accounts', 'treasury_transactions', 'payments'] as $table) {
+                DB::table($table)->where('tenant_id', $tenantId)->delete();
+            }
+            foreach (['fiscal_years', 'currencies', 'payment_terms', 'taxes'] as $table) {
+                DB::table($table)->where('tenant_id', $tenantId)->delete();
+            }
+            DB::table('chart_of_accounts')->where('tenant_id', $tenantId)->delete();
+            DB::table('accounts')->where('tenant_id', $tenantId)->delete();
+
+            $company->delete();
+            DB::commit();
+            return redirect()->route('companies.index')->with('success', 'تم حذف الشركة وجميع بياناتها بنجاح');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'حدث خطأ أثناء حذف الشركة: ' . $e->getMessage());
+        }
     }
 
     private function createDefaultAccounts($tenantId, $currencyId)
