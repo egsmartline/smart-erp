@@ -11,7 +11,13 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
         <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6 text-center">
-            <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-blue-100 text-2xl font-bold text-blue-700 mb-3">{{ substr($employee->first_name, 0, 1) }}</div>
+            <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-full {{ $employee->gender == 'female' ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-700' }} mb-3">
+                @if($employee->gender == 'female')
+                    <svg class="h-10 w-10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="9" r="5"/><path d="M12 14v8m-4-4h8"/></svg>
+                @else
+                    <svg class="h-10 w-10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="10" cy="14" r="5"/><path d="M19 5l-5.4 5.4M14 5h5v5"/></svg>
+                @endif
+            </div>
             <h3 class="text-lg font-bold text-gray-900">{{ $employee->full_name }}</h3>
             <p class="text-sm text-gray-500">{{ $employee->employee_id }}</p>
             <p class="text-sm text-gray-500 mt-1">{{ $employee->jobPosition->name ?? '' }}</p>

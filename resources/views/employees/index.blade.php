@@ -38,7 +38,13 @@
                         <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-3">
-                                    <div class="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700">{{ substr($emp->first_name, 0, 1) }}</div>
+                                    <div class="flex h-9 w-9 items-center justify-center rounded-full {{ $emp->gender == 'female' ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-700' }}">
+                                        @if($emp->gender == 'female')
+                                            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="9" r="5"/><path d="M12 14v8m-4-4h8"/></svg>
+                                        @else
+                                            <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="10" cy="14" r="5"/><path d="M19 5l-5.4 5.4M14 5h5v5"/></svg>
+                                        @endif
+                                    </div>
                                     <div>
                                         <a href="{{ route('employees.show', $emp) }}" class="font-medium text-gray-900 hover:text-blue-600">{{ $emp->full_name }}</a>
                                         <div class="text-xs text-gray-500">{{ $emp->email ?? '' }}</div>
