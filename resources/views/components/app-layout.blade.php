@@ -115,7 +115,7 @@
             footer { display: none !important; }
             .print-footer { position: fixed; bottom: 0; left: 0; right: 0; text-align: center; font-size: 8px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 5px; }
 
-            @page { @bottom-center {                         content: "الصفحة " counter(page) " من " counter(pages); font-size: 8px; color: #000000; } }
+            @page { @bottom-center { content: "الصفحة " counter(page) " من " counter(pages); font-size: 8px; color: #000000; } }
         }
     </style>
     @stack('styles')
