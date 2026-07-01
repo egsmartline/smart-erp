@@ -13,6 +13,9 @@ class AccountSeeder extends Seeder
         $tenants = Tenant::all();
 
         foreach ($tenants as $tenant) {
+            if (\App\Models\Account::where('tenant_id', $tenant->id)->exists()) {
+                continue;
+            }
             $this->createAccountsForTenant($tenant->id);
         }
     }

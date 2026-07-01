@@ -19,9 +19,7 @@ class DatabaseSeeder extends Seeder
         if (Tenant::count() === 0) {
             $this->call(TenantSeeder::class);
         }
-        if (\App\Models\Account::count() === 0) {
-            $this->call(AccountSeeder::class);
-        }
+        $this->call(AccountSeeder::class);
 
         $this->call(PermissionSeeder::class);
 
