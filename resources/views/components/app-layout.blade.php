@@ -127,13 +127,13 @@
             class="fixed right-0 top-0 h-full bg-primary-800 text-white sidebar-transition z-40 flex flex-col no-print">
 
             {{-- Logo --}}
-            <div class="flex-shrink-0 p-4 border-b border-primary-700 flex justify-center">
+            <div class="flex-shrink-0 p-6 border-b border-primary-700 flex justify-center">
                 @php $company = \App\Models\Company::where('tenant_id', session('current_tenant_id'))->first(); @endphp
                 @if($company && $company->logo)
-                    <img src="{{ asset('storage/' . $company->logo) }}" alt="Logo" class="h-10 w-10 rounded-xl object-cover">
+                    <img src="{{ asset('storage/' . $company->logo) }}" alt="Logo" class="h-20 w-20 rounded-xl object-contain">
                 @else
-                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white">
-                        <svg class="h-6 w-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    <div class="flex h-20 w-20 items-center justify-center rounded-xl bg-white">
+                        <svg class="h-12 w-12 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                     </div>
                 @endif
             </div>
