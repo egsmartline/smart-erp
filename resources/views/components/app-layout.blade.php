@@ -400,22 +400,6 @@
                     </button>
                 </form>
             </div>
-            {{-- Dark Mode Toggle --}}
-            <div class="flex-shrink-0 px-3 py-1">
-                <button @click="toggleDark"
-                    class="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl hover:bg-primary-700 transition-all text-primary-300 hover:text-white">
-                    <svg x-show="!darkMode" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-                    <svg x-show="darkMode" class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                    <span x-show="sidebarOpen" x-text="darkMode ? 'وضع نهاري' : 'وضع ليلي'" class="text-sm"></span>
-                </button>
-            </div>
-            {{-- DB Status --}}
-            <div class="flex-shrink-0 px-3 pb-1">
-                <div class="flex items-center justify-center gap-2 px-4 py-1">
-                    <span class="h-2.5 w-2.5 rounded-full" :class="dbStatus === 'online' ? 'bg-green-400' : dbStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500 animate-pulse'"></span>
-                    <span x-show="sidebarOpen" class="text-xs text-primary-300" x-text="dbStatus === 'online' ? 'متصل بقاعدة البيانات' : dbStatus === 'offline' ? 'غير متصل' : 'جاري الاتصال...'"></span>
-                </div>
-            </div>
             {{-- Sidebar Toggle --}}
             <div class="flex-shrink-0 p-3 border-t border-primary-700">
                 <button @click="sidebarOpen = !sidebarOpen"
@@ -492,6 +476,16 @@
                                 <a href="{{ route('currency.switch', ['currency' => 'EGP']) }}" class="block px-4 py-2 text-sm hover:bg-gray-100 {{ session('display_currency', 'EGP') === 'EGP' ? 'bg-primary-50 text-primary-600 font-bold' : '' }}">ج.م - جنيه مصري</a>
                                 <a href="{{ route('currency.switch', ['currency' => 'USD']) }}" class="block px-4 py-2 text-sm hover:bg-gray-100 {{ session('display_currency') === 'USD' ? 'bg-primary-50 text-primary-600 font-bold' : '' }}">$ - دولار أمريكي</a>
                             </div>
+                        </div>
+                        {{-- Dark Mode Toggle --}}
+                        <button @click="toggleDark" class="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white p-1.5 text-sm text-gray-600 hover:bg-primary-50 hover:text-primary-600 transition shadow-sm" title="الوضع الليلي">
+                            <svg x-show="!darkMode" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                            <svg x-show="darkMode" class="h-4 w-4 text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                        </button>
+                        {{-- DB Status --}}
+                        <div class="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2 py-1.5 shadow-sm" title="حالة الاتصال بقاعدة البيانات">
+                            <span class="h-2 w-2 rounded-full" :class="dbStatus === 'online' ? 'bg-green-500' : dbStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500 animate-pulse'"></span>
+                            <span class="text-xs text-gray-500" x-text="dbStatus === 'online' ? 'متصل' : dbStatus === 'offline' ? 'منقطع' : '...'"></span>
                         </div>
                         <span class="text-sm text-gray-500">{{ now()->format('Y/m/d') }}</span>
                         {{-- User Menu --}}
