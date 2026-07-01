@@ -3,40 +3,34 @@
     <!-- Logo + Company Switcher -->
     <div class="flex items-center h-16 border-b border-gray-800 px-3" x-data="{ open: false }">
         @php $company = \App\Models\Company::where('tenant_id', session('current_tenant_id'))->first(); @endphp
-        <div class="flex items-center gap-3 w-full">
-            @if($company && $company->logo)
-                <img src="{{ asset('storage/' . $company->logo) }}" alt="Logo" class="h-10 w-10 rounded-lg object-cover flex-shrink-0">
-            @else
-                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-lg font-bold flex-shrink-0">S</div>
-            @endif
-            <div class="flex-1 min-w-0">
-                <button @click="open = !open" class="flex items-center gap-1 w-full text-right">
-                    <div class="flex-1 min-w-0">
-                        <div class="text-lg font-bold text-white truncate">{{ $company->name ?? 'Smart ERP' }}</div>
-                        <div class="text-xs text-gray-300">Developer by BASSAM DAWOOD {{ date('Y') }}</div>
-                    </div>
-                    <svg class="h-4 w-4 flex-shrink-0 text-gray-400 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                </button>
-                <div x-show="open" @click.outside="open = false" class="absolute z-50 mt-2 w-56 rounded-xl bg-white shadow-xl border border-gray-100 py-1 overflow-hidden">
-                    @php $tenants = auth()->user()->getAccessibleTenants(); @endphp
-                    @foreach($tenants as $t)
-                        @php $c = \App\Models\Company::where('tenant_id', $t->id)->first(); @endphp
-                        <form action="{{ route('switch-tenant', $t->id) }}" method="POST" class="block">
-                            @csrf
-                            <button type="submit" class="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-right transition {{ session('current_tenant_id') == $t->id ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-700 hover:bg-gray-50' }}">
-                                @if($c && $c->logo)
-                                    <img src="{{ asset('storage/' . $c->logo) }}" alt="" class="h-7 w-7 rounded-lg object-cover flex-shrink-0">
-                                @else
-                                    <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-500 flex-shrink-0">{{ mb_substr($c->name ?? $t->name, 0, 1) }}</div>
-                                @endif
-                                <span class="truncate">{{ $c->name ?? $t->name }}</span>
-                                @if(session('current_tenant_id') == $t->id)
-                                    <svg class="h-4 w-4 mr-auto flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                                @endif
-                            </button>
-                        </form>
-                    @endforeach
-                </div>
+        <div class="flex items-center justify-between w-full">
+            <button @click="open = !open" class="flex items-center gap-2">
+                @if($company && $company->logo)
+                    <img src="{{ asset('storage/' . $company->logo) }}" alt="Logo" class="h-10 w-10 rounded-lg object-cover flex-shrink-0">
+                @else
+                    <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-lg font-bold flex-shrink-0">S</div>
+                @endif
+                <svg class="h-4 w-4 text-gray-400 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div x-show="open" @click.outside="open = false" class="absolute z-50 mt-2 w-56 rounded-xl bg-white shadow-xl border border-gray-100 py-1 overflow-hidden" style="top: 4rem; right: 1rem;">
+                @php $tenants = auth()->user()->getAccessibleTenants(); @endphp
+                @foreach($tenants as $t)
+                    @php $c = \App\Models\Company::where('tenant_id', $t->id)->first(); @endphp
+                    <form action="{{ route('switch-tenant', $t->id) }}" method="POST" class="block">
+                        @csrf
+                        <button type="submit" class="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-right transition {{ session('current_tenant_id') == $t->id ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-700 hover:bg-gray-50' }}">
+                            @if($c && $c->logo)
+                                <img src="{{ asset('storage/' . $c->logo) }}" alt="" class="h-7 w-7 rounded-lg object-cover flex-shrink-0">
+                            @else
+                                <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100 text-xs font-bold text-gray-500 flex-shrink-0">{{ mb_substr($c->name ?? $t->name, 0, 1) }}</div>
+                            @endif
+                            <span class="truncate">{{ $c->name ?? $t->name }}</span>
+                            @if(session('current_tenant_id') == $t->id)
+                                <svg class="h-4 w-4 mr-auto flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            @endif
+                        </button>
+                    </form>
+                @endforeach
             </div>
         </div>
     </div>
