@@ -106,6 +106,7 @@
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 
             .no-print { display: none !important; }
+            .print-only { display: block !important; }
             body { background: white !important; font-size: 11px; color: #1f2937; }
             .mr-64, .mr-20 { margin-right: 0 !important; }
 
