@@ -2,9 +2,11 @@
     <x-slot name="header">
         <style>
             @media print {
-                .print-treasury-balance { font-size: 1.5rem !important; }  /* text-2xl */
-                .print-treasury-label { font-size: 0.75rem !important; }   /* text-xs */
-                .print-treasury-name { font-size: 0.875rem !important; }    /* text-sm */
+                .print-treasury-card { padding: 0.75rem !important; margin-bottom: 0.75rem !important; }
+                .print-treasury-card-inner { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
+                .print-treasury-balance { font-size: 1.5rem !important; }
+                .print-treasury-label { font-size: 0.75rem !important; }
+                .print-treasury-name { font-size: 0.875rem !important; }
             }
         </style>
         <div class="flex items-center justify-between">
@@ -16,8 +18,8 @@
         </div>
     </x-slot>
 
-    <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6 mb-6">
-        <div class="text-center py-6">
+    <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6 mb-6 print-treasury-card">
+        <div class="text-center py-6 print-treasury-card-inner">
             <div class="text-4xl print-treasury-balance font-bold {{ $treasury->current_balance > 0 ? 'text-emerald-600' : 'text-red-600' }}">{{ number_format($treasury->current_balance, 2) }} {{ $treasury->currency->code ?? 'ج.م' }}</div>
             <div class="text-sm print-treasury-label text-gray-500 mt-2">الرصيد الحالي</div>
             <div class="mt-2 text-lg print-treasury-name font-bold text-gray-700 print-only">{{ $treasury->name }}</div>
