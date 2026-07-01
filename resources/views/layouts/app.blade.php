@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Smart ERP - {{ $title ?? 'لوحة التحكم' }}</title>
+    <title>{{ $title ?? 'لوحة التحكم' }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -65,15 +65,13 @@
             class="fixed right-0 top-0 h-full bg-primary-800 text-white sidebar-transition z-40 flex flex-col">
 
             <!-- Logo -->
-            <div class="p-4 border-b border-primary-700">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center flex-shrink-0">
-                        <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                        </svg>
-                    </div>
-                    <span x-show="sidebarOpen" class="font-bold text-lg">Smart ERP</span>
-                </div>
+            <div class="p-4 border-b border-primary-700 flex justify-center">
+                @php $company = \App\Models\Company::where('tenant_id', session('current_tenant_id'))->first(); @endphp
+                @if($company && $company->logo)
+                    <img src="{{ asset('storage/' . $company->logo) }}" alt="Logo" class="h-10 w-10 rounded-lg object-cover">
+                @else
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-primary-600 font-bold text-lg">S</div>
+                @endif
             </div>
 
             <!-- Navigation -->
@@ -517,8 +515,7 @@
 
             <!-- Footer -->
             <footer class="bg-white border-t border-gray-200 px-6 py-4">
-                <div class="flex items-center justify-between text-sm text-gray-500">
-                    <p>Developer by BASSAM DAWOOD {{ date('Y') }}</p>
+                <div class="flex items-center justify-center text-sm text-gray-500">
                     <p>الإصدار 1.0.0</p>
                 </div>
             </footer>

@@ -2,15 +2,12 @@
 <aside class="fixed inset-y-0 right-0 z-50 w-64 bg-gray-900 text-white shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 {{ $open ?? false ? 'translate-x-0' : 'translate-x-full lg:translate-x-0' }}" dir="rtl">
     <!-- Logo -->
     <div class="flex items-center justify-center h-16 border-b border-gray-800">
-        <div class="flex items-center gap-3">
-            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-lg font-bold">
-                S
-            </div>
-            <div>
-                <div class="text-lg font-bold text-white">Smart ERP</div>
-                <div class="text-xs text-gray-300">Developer by BASSAM DAWOOD {{ date('Y') }}</div>
-            </div>
-        </div>
+        @php $company = \App\Models\Company::where('tenant_id', session('current_tenant_id'))->first(); @endphp
+        @if($company && $company->logo)
+            <img src="{{ asset('storage/' . $company->logo) }}" alt="Logo" class="h-10 w-10 rounded-lg object-cover">
+        @else
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600 text-lg font-bold text-white">S</div>
+        @endif
     </div>
 
     <!-- Navigation -->
