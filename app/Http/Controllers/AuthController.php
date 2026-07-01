@@ -39,21 +39,13 @@ class AuthController extends Controller
     {
         $user = auth()->user();
 
-        if (!$user->tenant_id) {
-            return new \Illuminate\Http\RedirectResponse(route('setup.index'));
-        }
-
         $tenantIds = $user->getAccessibleTenants()->pluck('id');
 
         $companies = Company::whereIn('tenant_id', $tenantIds)
             ->where('is_active', true)
             ->get();
 
-        if ($companies->isEmpty()) {
-            return new \Illuminate\Http\RedirectResponse(route('setup.index'));
-        }
-
-        return view('auth.select-company', compact('companies'));
+        return view('auth.select-company', compact('companies', 'user'));
     }
 
     public function switchCompany(Request $request, $companyId)

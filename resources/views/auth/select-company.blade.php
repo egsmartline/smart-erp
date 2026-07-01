@@ -82,53 +82,73 @@
                 <h1 class="text-2xl font-bold text-gray-800">اختر الشركة</h1>
                 <p class="text-sm text-gray-500">اختر الشركة التي تريد العمل بها</p>
             </div>
-            <div class="flex items-center gap-3 text-sm text-gray-500">
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
-                <span>{{ now()->format('Y/m/d') }}</span>
+            <div class="flex items-center gap-3">
+                <a href="{{ route('companies.manage') }}" class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-100 transition">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    إضافة شركة
+                </a>
+                <div class="flex items-center gap-1.5 text-sm text-gray-500">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span>{{ now()->format('Y/m/d') }}</span>
+                </div>
             </div>
         </div>
 
         {{-- Companies Grid --}}
         <div class="p-6">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                @foreach($companies as $company)
-                    <form action="{{ route('switch-company', $company->id) }}" method="POST">
-                        @csrf
-                        <button type="submit"
-                            class="company-card w-full text-right rounded-2xl border-2 border-gray-200 bg-white p-6 hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer group">
-                            <div class="flex items-center gap-4">
-                                <div class="flex h-16 w-16 items-center justify-center rounded-2xl shrink-0 overflow-hidden">
-                                    @if($company->logo)
-                                        <img src="{{ asset('storage/' . $company->logo) }}" alt="{{ $company->name }}" class="h-full w-full object-cover">
-                                    @else
-                                        <div class="company-icon flex h-full w-full items-center justify-center bg-gradient-to-br from-emerald-100 to-emerald-50 text-emerald-600 transition-all">
-                                            <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                                            </svg>
-                                        </div>
-                                    @endif
+            @if($companies->isEmpty())
+                <div class="flex flex-col items-center justify-center py-16">
+                    <svg class="h-24 w-24 text-gray-300 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                    <h2 class="text-2xl font-bold text-gray-700 mb-2">لا توجد شركات</h2>
+                    <p class="text-gray-500 mb-8">لم يتم إنشاء أي شركة بعد. أضف شركة جديدة للبدء.</p>
+                    <a href="{{ route('companies.manage') }}" class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-8 py-4 text-lg font-bold text-white hover:bg-emerald-700 transition shadow-lg">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        إضافة شركة جديدة
+                    </a>
+                </div>
+            @else
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    @foreach($companies as $company)
+                        <form action="{{ route('switch-company', $company->id) }}" method="POST">
+                            @csrf
+                            <button type="submit"
+                                class="company-card w-full text-right rounded-2xl border-2 border-gray-200 bg-white p-6 hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer group">
+                                <div class="flex items-center gap-4">
+                                    <div class="flex h-16 w-16 items-center justify-center rounded-2xl shrink-0 overflow-hidden">
+                                        @if($company->logo)
+                                            <img src="{{ asset('storage/' . $company->logo) }}" alt="{{ $company->name }}" class="h-full w-full object-cover">
+                                        @else
+                                            <div class="company-icon flex h-full w-full items-center justify-center bg-gradient-to-br from-emerald-100 to-emerald-50 text-emerald-600 transition-all">
+                                                <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                                </svg>
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <div class="flex-1 text-right">
+                                        <h3 class="company-name text-lg font-bold text-gray-800 transition-colors">{{ $company->name }}</h3>
+                                        @if($company->tax_number)
+                                            <p class="text-xs text-gray-500 mt-0.5">رقم ضريبي: {{ $company->tax_number }}</p>
+                                        @endif
+                                        @if($company->phone)
+                                            <p class="text-xs text-gray-400 mt-0.5">{{ $company->phone }}</p>
+                                        @endif
+                                    </div>
+                                    <div class="company-arrow flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 transition-colors">
+                                        <svg class="h-4 w-4 text-gray-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                        </svg>
+                                    </div>
                                 </div>
-                                <div class="flex-1 text-right">
-                                    <h3 class="company-name text-lg font-bold text-gray-800 transition-colors">{{ $company->name }}</h3>
-                                    @if($company->tax_number)
-                                        <p class="text-xs text-gray-500 mt-0.5">رقم ضريبي: {{ $company->tax_number }}</p>
-                                    @endif
-                                    @if($company->phone)
-                                        <p class="text-xs text-gray-400 mt-0.5">{{ $company->phone }}</p>
-                                    @endif
-                                </div>
-                                <div class="company-arrow flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 transition-colors">
-                                    <svg class="h-4 w-4 text-gray-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                                    </svg>
-                                </div>
-                            </div>
-                        </button>
-                    </form>
-                @endforeach
-            </div>
+                            </button>
+                        </form>
+                    @endforeach
+                </div>
+            @endif
         </div>
     </div>
 </div>
