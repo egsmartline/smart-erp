@@ -162,6 +162,12 @@
                     <form action="{{ route('settings.reset') }}" method="POST">
                         @csrf
                         <input type="hidden" name="confirm" value="1">
+                        <div class="flex items-center gap-4 mb-3">
+                            <label class="flex items-center gap-2 text-sm text-gray-600">
+                                <input type="checkbox" name="all_tenants" value="1">
+                                تصفير كل المستأجرين (جميع الشركات)
+                            </label>
+                        </div>
                         <button type="submit"
                             x-show="confirmText === 'تصفير'"
                             class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-red-700 transition"

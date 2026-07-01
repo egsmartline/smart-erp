@@ -131,6 +131,7 @@ class SettingController extends TenantAwareController
         $request->validate(['confirm' => 'required|accepted']);
 
         $tenantId = $this->getTenantId();
+        $allTenants = $request->has('all_tenants');
 
         $tables = [
             // Phase 1: detail/line tables (children, deleted first)
@@ -162,13 +163,11 @@ class SettingController extends TenantAwareController
             'stock_movements',
             'treasury_transactions',
 
-            // Phase 3: headers that reference other headers
+            // Phase 3: headers
             'purchase_receipt_notes',
             'purchase_returns',
             'quotations',
             'sales_returns',
-
-            // Phase 4: independent headers (no FKs to other transaction tables)
             'bank_statements',
             'budgets',
             'contracts',
@@ -181,6 +180,12 @@ class SettingController extends TenantAwareController
             'sales_delivery_notes',
             'sales_invoices',
             'stock_transfers',
+
+            // Phase 4: master data
+            'trade_operations',
+            'transfers',
+            'sales_orders',
+            'sales_order_lines',
         ];
 
         $totalDeleted = 0;
@@ -188,7 +193,61 @@ class SettingController extends TenantAwareController
         DB::beginTransaction();
         try {
             foreach ($tables as $table) {
-                $deleted = DB::table($table)->where('tenant_id', $tenantId)->delete();
+                if ($allTenants) {
+                    $deleted = DB::table($table)->delete();
+                } else {
+                    $deleted = DB::table($table)->where('tenant_id', $tenantId)->delete();
+                }
+                $totalDeleted += $deleted;
+            }
+
+            // Clear master data for this tenant (or all)
+            foreach (['customers', 'suppliers', 'items', 'item_categories', 'item_units', 'warehouses', 'item_warehouses'] as $table) {
+                if ($allTenants) {
+                    $deleted = DB::table($table)->delete();
+                } else {
+                    $deleted = DB::table($table)->where('tenant_id', $tenantId)->delete();
+                }
+                $totalDeleted += $deleted;
+            }
+
+            // Clear HR data
+            foreach (['employees', 'departments', 'job_positions'] as $table) {
+                if ($allTenants) {
+                    $deleted = DB::table($table)->delete();
+                } else {
+                    $deleted = DB::table($table)->where('tenant_id', $tenantId)->delete();
+                }
+                $totalDeleted += $deleted;
+            }
+
+            // Clear accounting data
+            foreach (['journals', 'journal_entries', 'journal_entry_lines', 'analytical_accounts'] as $table) {
+                if ($allTenants) {
+                    $deleted = DB::table($table)->delete();
+                } else {
+                    $deleted = DB::table($table)->where('tenant_id', $tenantId)->delete();
+                }
+                $totalDeleted += $deleted;
+            }
+
+            // Clear treasury
+            foreach (['cash_treasuries', 'bank_accounts', 'treasury_transactions', 'payments'] as $table) {
+                if ($allTenants) {
+                    $deleted = DB::table($table)->delete();
+                } else {
+                    $deleted = DB::table($table)->where('tenant_id', $tenantId)->delete();
+                }
+                $totalDeleted += $deleted;
+            }
+
+            // Clear fiscal & currencies
+            foreach (['fiscal_years', 'currencies', 'payment_terms', 'taxes'] as $table) {
+                if ($allTenants) {
+                    $deleted = DB::table($table)->delete();
+                } else {
+                    $deleted = DB::table($table)->where('tenant_id', $tenantId)->delete();
+                }
                 $totalDeleted += $deleted;
             }
 
@@ -198,8 +257,15 @@ class SettingController extends TenantAwareController
                 'balance' => 0,
             ]);
 
+            // Reset chart of accounts
+            DB::table('chart_of_accounts')->where('tenant_id', $tenantId)->update([
+                'opening_balance' => 0,
+                'current_balance' => 0,
+            ]);
+
             DB::commit();
-            return redirect()->route('settings.index')->with('success', "تم تصفير الحسابات والبيانات بنجاح (معرف المستأجر: {$tenantId}، عدد السجلات المحذوفة: {$totalDeleted}، الحسابات المحدثة: {$accountsUpdated})");
+            $msg = $allTenants ? "جميع المستأجرين" : "المستأجر {$tenantId}";
+            return redirect()->route('settings.index')->with('success', "تم تصفير الحسابات والبيانات بنجاح ({$msg}، عدد السجلات المحذوفة: {$totalDeleted}، الحسابات المحدثة: {$accountsUpdated})");
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'حدث خطأ أثناء التصفير: ' . $e->getMessage());
