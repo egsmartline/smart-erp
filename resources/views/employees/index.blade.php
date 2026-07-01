@@ -13,10 +13,12 @@
         <form method="GET" class="mb-4 flex gap-4 flex-wrap">
             <input type="text" name="search" value="{{ request('search') }}" placeholder="بحث بالاسم أو الكود..." class="rounded-lg border border-gray-300 px-3 py-2 text-sm w-64">
 
-            <select name="is_active" class="rounded-lg border border-gray-300 px-3 py-2 text-sm">
+            <select name="employment_status" class="rounded-lg border border-gray-300 px-3 py-2 text-sm">
                 <option value="">الكل</option>
-                <option value="1" {{ request('is_active') == '1' ? 'selected' : '' }}>نشط</option>
-                <option value="0" {{ request('is_active') == '0' ? 'selected' : '' }}>غير نشط</option>
+                <option value="active" {{ request('employment_status') == 'active' ? 'selected' : '' }}>نشط</option>
+                <option value="inactive" {{ request('employment_status') == 'inactive' ? 'selected' : '' }}>غير نشط</option>
+                <option value="on_leave" {{ request('employment_status') == 'on_leave' ? 'selected' : '' }}>في إجازة</option>
+                <option value="terminated" {{ request('employment_status') == 'terminated' ? 'selected' : '' }}>منتهي</option>
             </select>
             <button type="submit" class="rounded-lg bg-gray-600 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition">بحث</button>
         </form>
@@ -55,8 +57,12 @@
                             <td class="px-4 py-3 text-gray-600">{{ $emp->jobPosition->name ?? '-' }}</td>
                             <td class="px-4 py-3 text-gray-600">{{ $emp->hire_date?->format('Y/m/d') ?? '-' }}</td>
                             <td class="px-4 py-3 text-center">
-                                @if($emp->is_active)
+                                @if($emp->employment_status == 'active')
                                     <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">نشط</span>
+                                @elseif($emp->employment_status == 'on_leave')
+                                    <span class="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">في إجازة</span>
+                                @elseif($emp->employment_status == 'terminated')
+                                    <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">منتهي</span>
                                 @else
                                     <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">غير نشط</span>
                                 @endif

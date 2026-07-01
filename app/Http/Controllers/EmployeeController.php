@@ -13,9 +13,8 @@ class EmployeeController extends TenantAwareController
         $query = Employee::where('tenant_id', $this->getTenantId())
             ->with(['jobPosition']);
 
-        if ($request->filled('is_active')) {
-            $status = $request->boolean('is_active') ? 'active' : 'inactive';
-            $query->where('employment_status', $status);
+        if ($request->filled('employment_status')) {
+            $query->where('employment_status', $request->employment_status);
         }
         if ($request->filled('search')) {
             $search = $request->search;

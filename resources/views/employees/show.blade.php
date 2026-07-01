@@ -22,8 +22,12 @@
             <p class="text-sm text-gray-500">{{ $employee->employee_id }}</p>
             <p class="text-sm text-gray-500 mt-1">{{ $employee->jobPosition->name ?? '' }}</p>
             <div class="mt-3">
-                @if($employee->is_active)
+                @if($employee->employment_status == 'active')
                     <span class="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">نشط</span>
+                @elseif($employee->employment_status == 'on_leave')
+                    <span class="inline-flex items-center rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-800">في إجازة</span>
+                @elseif($employee->employment_status == 'terminated')
+                    <span class="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-800">منتهي</span>
                 @else
                     <span class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">غير نشط</span>
                 @endif
