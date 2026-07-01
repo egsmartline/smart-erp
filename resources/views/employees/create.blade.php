@@ -98,6 +98,15 @@
                     <input type="date" name="contract_end_date" value="{{ old('contract_end_date') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
                 </div>
                 <div>
+                    <label class="mb-1 block text-sm font-medium text-gray-700">الحالة</label>
+                    <select name="employment_status" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                        <option value="active" {{ old('employment_status', 'active') == 'active' ? 'selected' : '' }}>نشط</option>
+                        <option value="inactive" {{ old('employment_status', 'active') == 'inactive' ? 'selected' : '' }}>غير نشط</option>
+                        <option value="terminated" {{ old('employment_status', 'active') == 'terminated' ? 'selected' : '' }}>منتهي</option>
+                        <option value="on_leave" {{ old('employment_status', 'active') == 'on_leave' ? 'selected' : '' }}>في إجازة</option>
+                    </select>
+                </div>
+                <div>
                     <label class="mb-1 block text-sm font-medium text-gray-700">الراتب الإجمالي <span class="text-red-500">*</span></label>
                     <input type="number" name="gross_salary" step="0.01" min="0" value="{{ old('gross_salary') }}" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
                 </div>

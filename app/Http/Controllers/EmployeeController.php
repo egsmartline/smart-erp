@@ -56,6 +56,7 @@ class EmployeeController extends TenantAwareController
             'hire_date' => 'required|date',
             'contract_end_date' => 'nullable|date',
             'gross_salary' => 'required|numeric|min:0',
+            'employment_status' => 'nullable|in:active,inactive,terminated,on_leave',
             'bank_name' => 'nullable|string|max:100',
             'bank_account' => 'nullable|string|max:50',
             'notes' => 'nullable|string',
@@ -65,7 +66,7 @@ class EmployeeController extends TenantAwareController
         $nextNumber = $lastEmp ? (int) substr($lastEmp->employee_id, -4) + 1 : 1;
         $validated['employee_id'] = 'EMP-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
         $validated['tenant_id'] = $this->getTenantId();
-        $validated['employment_status'] = 'active';
+        $validated['employment_status'] = $validated['employment_status'] ?? 'active';
         $validated['name'] = $validated['first_name'] . ' ' . $validated['last_name'];
 
         Employee::create($validated);
