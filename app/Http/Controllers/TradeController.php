@@ -39,8 +39,8 @@ class TradeController extends Controller
         }
 
         $operations = $query->orderBy('created_at', 'desc')->paginate(20);
-        $importCount = TradeOperation::forTenant()->import()->count();
-        $exportCount = TradeOperation::forTenant()->export()->count();
+        $importCount = TradeOperation::forTenant()->importOperation()->count();
+        $exportCount = TradeOperation::forTenant()->exportOperation()->count();
         $activeCount = TradeOperation::forTenant()->whereNotIn('status', ['completed', 'cancelled'])->count();
 
         return view('trade.index', compact('operations', 'importCount', 'exportCount', 'activeCount'));

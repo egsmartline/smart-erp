@@ -66,12 +66,12 @@ class TradeOperation extends Model
         return null;
     }
 
-    public function scopeImport($query)
+    public function scopeImportOperation($query)
     {
         return $query->where('type', 'import');
     }
 
-    public function scopeExport($query)
+    public function scopeExportOperation($query)
     {
         return $query->where('type', 'export');
     }
