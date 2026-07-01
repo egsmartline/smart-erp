@@ -50,6 +50,7 @@ use App\Http\Controllers\CurrencySwitcherController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ImportController;
+use App\Http\Controllers\TradeController;
 use App\Http\Controllers\SalesDeliveryNoteController;
 use App\Http\Controllers\PurchaseReceiptNoteController;
 use App\Http\Controllers\PdfController;
@@ -274,6 +275,10 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::get('import', [ImportController::class, 'index'])->name('import.index');
     Route::post('import', [ImportController::class, 'import'])->name('import.do');
     Route::get('export/{type}', [ImportController::class, 'export'])->name('import.export');
+
+    // Trade Operations
+    Route::resource('trade', TradeController::class);
+    Route::post('trade/{tradeOperation}/status', [TradeController::class, 'updateStatus'])->name('trade.update-status');
 
     // PDF
     Route::get('pdf/sales-invoice/{invoice}', [PdfController::class, 'salesInvoice'])->name('pdf.sales-invoice');
