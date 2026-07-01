@@ -15,7 +15,6 @@ return new class extends Migration
             $table->string('emergency_contact_name')->nullable()->after('city');
             $table->string('emergency_contact_phone')->nullable()->after('emergency_contact_name');
         });
-        DB::statement('ALTER TABLE employees MODIFY department_id BIGINT UNSIGNED NULL');
     }
 
     public function down(): void
@@ -23,6 +22,5 @@ return new class extends Migration
         Schema::table('employees', function ($table) {
             $table->dropColumn(['nationality', 'contract_type', 'bank_iban', 'emergency_contact_name', 'emergency_contact_phone']);
         });
-        DB::statement('ALTER TABLE employees MODIFY department_id BIGINT UNSIGNED NOT NULL');
     }
 };
