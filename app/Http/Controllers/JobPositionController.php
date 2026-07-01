@@ -36,10 +36,9 @@ class JobPositionController extends TenantAwareController
         $validated['tenant_id'] = $this->getTenantId();
         $validated['is_active'] = $validated['is_active'] ?? true;
 
-        // Auto-generate code if not provided
+        // Auto-generate unique code if not provided
         if (empty($validated['code'])) {
-            $maxId = JobPosition::withTrashed()->max('id') ?? 0;
-            $validated['code'] = 'POS-' . str_pad($maxId + 1, 4, '0', STR_PAD_LEFT);
+            $validated['code'] = 'POS-' . strtoupper(uniqid());
         }
 
         JobPosition::create($validated);
@@ -75,7 +74,7 @@ class JobPositionController extends TenantAwareController
         ]);
 
         if (empty($validated['code'])) {
-            $validated['code'] = $position->code ?? 'POS-' . str_pad($position->id, 4, '0', STR_PAD_LEFT);
+            $validated['code'] = $position->code ?? 'POS-' . strtoupper(uniqid());
         }
 
         $position->update($validated);
