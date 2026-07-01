@@ -26,7 +26,7 @@ class JobPositionController extends TenantAwareController
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'nullable|string|max:50',
+            'code' => 'nullable|string|max:50|unique:job_positions,code',
             'description' => 'nullable|string|max:500',
             'min_salary' => 'nullable|numeric|min:0',
             'max_salary' => 'nullable|numeric|min:0|gte:min_salary',
@@ -35,6 +35,12 @@ class JobPositionController extends TenantAwareController
 
         $validated['tenant_id'] = $this->getTenantId();
         $validated['is_active'] = $validated['is_active'] ?? true;
+
+        // Auto-generate code if not provided
+        if (empty($validated['code'])) {
+            $maxId = JobPosition::withTrashed()->max('id') ?? 0;
+            $validated['code'] = 'POS-' . str_pad($maxId + 1, 4, '0', STR_PAD_LEFT);
+        }
 
         JobPosition::create($validated);
 
@@ -61,12 +67,16 @@ class JobPositionController extends TenantAwareController
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'code' => 'nullable|string|max:50',
+            'code' => 'nullable|string|max:50|unique:job_positions,code,' . $position->id,
             'description' => 'nullable|string|max:500',
             'min_salary' => 'nullable|numeric|min:0',
             'max_salary' => 'nullable|numeric|min:0',
             'is_active' => 'boolean',
         ]);
+
+        if (empty($validated['code'])) {
+            $validated['code'] = $position->code ?? 'POS-' . str_pad($position->id, 4, '0', STR_PAD_LEFT);
+        }
 
         $position->update($validated);
 

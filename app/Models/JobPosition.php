@@ -15,6 +15,7 @@ class JobPosition extends Model
         'tenant_id',
         'code',
         'name',
+        'description',
         'min_salary',
         'max_salary',
         'is_active',
