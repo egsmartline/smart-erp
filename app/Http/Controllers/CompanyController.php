@@ -6,7 +6,6 @@ use App\Models\Company;
 use App\Models\Tenant;
 use App\Models\Currency;
 use App\Models\Account;
-use App\Models\FiscalYear;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -87,14 +86,6 @@ class CompanyController extends TenantAwareController
             Company::create($companyData);
 
             $this->createDefaultAccounts($tenant->id, $currencyId);
-
-            FiscalYear::create([
-                'tenant_id' => $tenant->id,
-                'name' => date('Y'),
-                'start_date' => date('Y-01-01'),
-                'end_date' => date('Y-12-31'),
-                'is_active' => true,
-            ]);
 
             $user = auth()->user();
             $user->tenants()->attach($tenant->id, ['role' => $user->role]);

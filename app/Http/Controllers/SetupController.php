@@ -66,14 +66,6 @@ class SetupController extends Controller
 
             $this->createDefaultAccounts($tenant->id, $validated['currency_id']);
 
-            FiscalYear::create([
-                'tenant_id' => $tenant->id,
-                'name' => date('Y'),
-                'start_date' => date('Y-01-01'),
-                'end_date' => date('Y-12-31'),
-                'is_active' => true,
-            ]);
-
             Auth::login($admin);
             session(['current_tenant_id' => $tenant->id]);
 
