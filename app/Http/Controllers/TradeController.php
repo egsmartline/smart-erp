@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\TradeOperation;
-use App\Models\Customer;
-use App\Models\Supplier;
 use App\Models\Currency;
 use Illuminate\Http\Request;
 
@@ -50,12 +48,10 @@ class TradeController extends Controller
     {
         $tenantId = $this->getTenantId();
         $type = $request->type ?? 'import';
-        $customers = Customer::where('tenant_id', $tenantId)->get();
-        $suppliers = Supplier::where('tenant_id', $tenantId)->get();
         $currencies = Currency::where('tenant_id', $tenantId)->get();
         $operationNumber = TradeOperation::generateNumber($type);
 
-        return view('trade.create', compact('type', 'customers', 'suppliers', 'currencies', 'operationNumber'));
+        return view('trade.create', compact('type', 'currencies', 'operationNumber'));
     }
 
     public function store(Request $request)
@@ -65,8 +61,6 @@ class TradeController extends Controller
         $data = $request->validate([
             'type' => 'required|in:import,export',
             'date' => 'required|date',
-            'party_id' => 'nullable|integer',
-            'party_type' => 'nullable|string',
             'party_name' => 'nullable|string|max:255',
             'country' => 'nullable|string|max:255',
             'port_of_loading' => 'nullable|string|max:255',
@@ -101,14 +95,6 @@ class TradeController extends Controller
         $data['operation_number'] = TradeOperation::generateNumber($data['type']);
         $data['created_by'] = auth()->id();
 
-        if ($data['party_id'] && $data['party_type'] === 'customer') {
-            $customer = Customer::find($data['party_id']);
-            $data['party_name'] = $customer?->name;
-        } elseif ($data['party_id'] && $data['party_type'] === 'supplier') {
-            $supplier = Supplier::find($data['party_id']);
-            $data['party_name'] = $supplier?->name;
-        }
-
         TradeOperation::create($data);
 
         return redirect()->route('trade.index')->with('success', 'تم إنشاء العملية بنجاح');
@@ -128,10 +114,8 @@ class TradeController extends Controller
             abort(403);
         }
         $tenantId = $this->getTenantId();
-        $customers = Customer::where('tenant_id', $tenantId)->get();
-        $suppliers = Supplier::where('tenant_id', $tenantId)->get();
         $currencies = Currency::where('tenant_id', $tenantId)->get();
-        return view('trade.edit', compact('tradeOperation', 'customers', 'suppliers', 'currencies'));
+        return view('trade.edit', compact('tradeOperation', 'currencies'));
     }
 
     public function update(Request $request, TradeOperation $tradeOperation)
@@ -142,8 +126,6 @@ class TradeController extends Controller
 
         $data = $request->validate([
             'date' => 'required|date',
-            'party_id' => 'nullable|integer',
-            'party_type' => 'nullable|string',
             'party_name' => 'nullable|string|max:255',
             'country' => 'nullable|string|max:255',
             'port_of_loading' => 'nullable|string|max:255',
@@ -173,14 +155,6 @@ class TradeController extends Controller
             'other_costs' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
         ]);
-
-        if ($data['party_id'] && $data['party_type'] === 'customer') {
-            $customer = Customer::find($data['party_id']);
-            $data['party_name'] = $customer?->name;
-        } elseif ($data['party_id'] && $data['party_type'] === 'supplier') {
-            $supplier = Supplier::find($data['party_id']);
-            $data['party_name'] = $supplier?->name;
-        }
 
         $tradeOperation->update($data);
 
