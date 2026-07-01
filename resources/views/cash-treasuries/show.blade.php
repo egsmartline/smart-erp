@@ -11,9 +11,9 @@
 
     <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6 mb-6">
         <div class="text-center py-6">
-            <div class="text-4xl font-bold {{ $treasury->current_balance > 0 ? 'text-emerald-600' : 'text-red-600' }}">{{ number_format($treasury->current_balance, 2) }} {{ $treasury->currency->code ?? 'ج.م' }}</div>
-            <div class="text-sm text-gray-500 mt-2">الرصيد الحالي</div>
-            <div class="mt-2 text-lg font-bold text-gray-700 print-only">{{ $treasury->name }}</div>
+            <div class="text-4xl print:text-2xl font-bold {{ $treasury->current_balance > 0 ? 'text-emerald-600' : 'text-red-600' }}">{{ number_format($treasury->current_balance, 2) }} {{ $treasury->currency->code ?? 'ج.م' }}</div>
+            <div class="text-sm print:text-xs text-gray-500 mt-2">الرصيد الحالي</div>
+            <div class="mt-2 text-lg print:text-sm font-bold text-gray-700 print-only">{{ $treasury->name }}</div>
             @if($treasury->whatsapp_number)
                 @php
                     $currencyCode = $treasury->currency->code ?? 'ج.م';
