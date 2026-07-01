@@ -1,7 +1,25 @@
 @props(['header' => null])
 
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" x-data="{
+    sidebarOpen: true,
+    mobileMenu: false,
+    printModalOpen: false,
+    includeLogo: true,
+    darkMode: localStorage.getItem('darkMode') === 'true',
+    dbStatus: 'checking',
+    init() {
+        this.checkDb();
+    },
+    checkDb() {
+        fetch('/health/db').then(r => r.json()).then(d => { this.dbStatus = d.status === 'connected' ? 'online' : 'offline'; }).catch(() => { this.dbStatus = 'offline'; });
+        setTimeout(() => this.checkDb(), 30000);
+    },
+    toggleDark() {
+        this.darkMode = !this.darkMode;
+        localStorage.setItem('darkMode', this.darkMode);
+    }
+}" :class="{ 'dark': darkMode }">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -34,6 +52,34 @@
         .content-area { min-height: calc(100vh - 64px); }
         .sidebar-transition { transition: all 0.3s ease; }
         [x-cloak] { display: none !important; }
+        .dark body, .dark .bg-gray-100 { background-color: #111827 !important; }
+        .dark .bg-white { background-color: #1f2937 !important; }
+        .dark .text-gray-900 { color: #f3f4f6 !important; }
+        .dark .text-gray-800 { color: #e5e7eb !important; }
+        .dark .text-gray-700 { color: #d1d5db !important; }
+        .dark .text-gray-600 { color: #9ca3af !important; }
+        .dark .text-gray-500 { color: #6b7280 !important; }
+        .dark .border-gray-200 { border-color: #374151 !important; }
+        .dark .border-gray-300 { border-color: #4b5563 !important; }
+        .dark .shadow-sm, .dark .shadow, .dark .shadow-md, .dark .shadow-lg { box-shadow: 0 1px 3px 0 rgba(0,0,0,0.3) !important; }
+        .dark th { background-color: #374151 !important; color: #e5e7eb !important; }
+        .dark td { border-color: #4b5563 !important; }
+        .dark .bg-emerald-50 { background-color: #064e3b !important; color: #a7f3d0 !important; }
+        .dark .bg-blue-50 { background-color: #1e3a5f !important; color: #93c5fd !important; }
+        .dark .bg-red-50 { background-color: #4c1d1d !important; color: #fca5a5 !important; }
+        .dark .bg-yellow-50 { background-color: #4d3c00 !important; color: #fde68a !important; }
+        .dark input, .dark select, .dark textarea { background-color: #374151 !important; color: #e5e7eb !important; border-color: #4b5563 !important; }
+        .dark input:focus, .dark select:focus, .dark textarea:focus { border-color: #3b82f6 !important; }
+        .dark table { background-color: #1f2937 !important; }
+        .dark .bg-gray-50 { background-color: #374151 !important; }
+        .dark .hover\:bg-gray-50:hover { background-color: #374151 !important; }
+        .dark .divide-gray-200 > * { border-color: #374151 !important; }
+        .dark .hover\:bg-primary-50:hover { background-color: #1e3a5f !important; }
+        .dark .bg-primary-50 { background-color: #1e3a5f !important; color: #93c5fd !important; }
+        .dark .text-gray-400 { color: #9ca3af !important; }
+        .dark .bg-gray-200 { background-color: #4b5563 !important; }
+        .dark .ring-gray-300 { border-color: #4b5563 !important; }
+        .dark .border { border-color: #374151 !important; }
 
         {{-- Print Styles --}}
         .print-only { display: none; }
@@ -120,7 +166,7 @@
     </style>
     @stack('styles')
 </head>
-<body class="font-cairo bg-gray-100" x-data="{ sidebarOpen: true, mobileMenu: false, printModalOpen: false, includeLogo: true }">
+<body class="font-cairo bg-gray-100 dark:bg-gray-900">
     <div class="flex min-h-screen">
         {{-- Sidebar --}}
         <aside :class="sidebarOpen ? 'w-64' : 'w-20'"
@@ -352,6 +398,22 @@
                         <span x-show="sidebarOpen">تسجيل الخروج</span>
                     </button>
                 </form>
+            </div>
+            {{-- Dark Mode Toggle --}}
+            <div class="flex-shrink-0 px-3 py-1">
+                <button @click="toggleDark"
+                    class="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl hover:bg-primary-700 transition-all text-primary-300 hover:text-white">
+                    <svg x-show="!darkMode" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                    <svg x-show="darkMode" class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <span x-show="sidebarOpen" x-text="darkMode ? 'وضع نهاري' : 'وضع ليلي'" class="text-sm"></span>
+                </button>
+            </div>
+            {{-- DB Status --}}
+            <div class="flex-shrink-0 px-3 pb-1">
+                <div class="flex items-center justify-center gap-2 px-4 py-1">
+                    <span class="h-2.5 w-2.5 rounded-full" :class="dbStatus === 'online' ? 'bg-green-400' : dbStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500 animate-pulse'"></span>
+                    <span x-show="sidebarOpen" class="text-xs text-primary-300" x-text="dbStatus === 'online' ? 'متصل بقاعدة البيانات' : dbStatus === 'offline' ? 'غير متصل' : 'جاري الاتصال...'"></span>
+                </div>
             </div>
             {{-- Sidebar Toggle --}}
             <div class="flex-shrink-0 p-3 border-t border-primary-700">

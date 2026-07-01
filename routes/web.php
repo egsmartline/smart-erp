@@ -62,6 +62,15 @@ Route::get('/select-company', [AuthController::class, 'showSelectCompany'])->mid
 Route::post('/switch-company/{companyId}', [AuthController::class, 'switchCompany'])->middleware('auth')->name('switch-company');
 Route::get('/manage-companies', [CompanyController::class, 'manage'])->middleware('auth')->name('companies.manage');
 
+Route::get('/health/db', function () {
+    try {
+        DB::connection()->getPdo();
+        return response()->json(['status' => 'connected']);
+    } catch (\Exception $e) {
+        return response()->json(['status' => 'disconnected', 'error' => $e->getMessage()], 500);
+    }
+})->name('health.db');
+
 Route::get('/', function () {
     return redirect()->route('select-company');
 })->middleware('auth')->name('home');
