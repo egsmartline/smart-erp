@@ -13,9 +13,9 @@
         <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6 text-center">
             <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-full {{ $employee->gender == 'female' ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-700' }} mb-3">
                 @if($employee->gender == 'female')
-                    <svg class="h-10 w-10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="9" r="5"/><path d="M12 14v8m-4-4h8"/></svg>
+                    <svg class="h-10 w-10" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4a4 4 0 100 8 4 4 0 000-8zm-2 10c-3.3 0-6 2.2-6 5v1h16v-1c0-2.8-2.7-5-6-5h-4z"/><path d="M10 16l2 4 2-4"/></svg>
                 @else
-                    <svg class="h-10 w-10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="10" cy="14" r="5"/><path d="M19 5l-5.4 5.4M14 5h5v5"/></svg>
+                    <svg class="h-10 w-10" fill="currentColor" viewBox="0 0 24 24"><path d="M12 4a4 4 0 100 8 4 4 0 000-8zm-2 10c-3.3 0-6 2.2-6 5v1h16v-1c0-2.8-2.7-5-6-5h-4z"/></svg>
                 @endif
             </div>
             <h3 class="text-lg font-bold text-gray-900">{{ $employee->full_name }}</h3>
