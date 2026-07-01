@@ -76,6 +76,7 @@ class SalesInvoiceController extends TenantAwareController
             'lines.*.unit_price' => 'required|numeric|min:0',
             'lines.*.discount_percent' => 'nullable|numeric|min:0|max:100',
             'lines.*.tax_rate' => 'nullable|numeric|min:0|max:100',
+            'lines.*.warehouse_id' => 'required|exists:warehouses,id',
         ]);
 
         DB::beginTransaction();
@@ -109,7 +110,7 @@ class SalesInvoiceController extends TenantAwareController
                     'tax_amount' => $lineTax,
                     'subtotal' => $lineSubtotal,
                     'total' => $lineTotal,
-                    'warehouse_id' => $validated['warehouse_id'],
+                    'warehouse_id' => $line['warehouse_id'],
                 ];
             }
 
@@ -198,6 +199,7 @@ class SalesInvoiceController extends TenantAwareController
             'lines.*.unit_price' => 'required|numeric|min:0',
             'lines.*.discount_percent' => 'nullable|numeric|min:0|max:100',
             'lines.*.tax_rate' => 'nullable|numeric|min:0|max:100',
+            'lines.*.warehouse_id' => 'required|exists:warehouses,id',
         ]);
 
         DB::beginTransaction();
@@ -231,7 +233,7 @@ class SalesInvoiceController extends TenantAwareController
                     'tax_amount' => $lineTax,
                     'subtotal' => $lineSubtotal,
                     'total' => $lineTotal,
-                    'warehouse_id' => $validated['warehouse_id'],
+                    'warehouse_id' => $line['warehouse_id'],
                 ];
             }
 
@@ -308,7 +310,7 @@ class SalesInvoiceController extends TenantAwareController
 
             foreach ($salesInvoice->lines as $line) {
                 $itemWarehouse = ItemWarehouse::where('item_id', $line->item_id)
-                    ->where('warehouse_id', $salesInvoice->warehouse_id)
+                    ->where('warehouse_id', $line->warehouse_id)
                     ->first();
 
                 if ($itemWarehouse) {
@@ -318,7 +320,7 @@ class SalesInvoiceController extends TenantAwareController
                 StockMovement::create([
                     'tenant_id' => $this->getTenantId(),
                     'item_id' => $line->item_id,
-                    'warehouse_id' => $salesInvoice->warehouse_id,
+                    'warehouse_id' => $line->warehouse_id,
                     'type' => 'sale',
                     'quantity' => $line->quantity,
                     'unit_cost' => $line->unit_price,
@@ -363,7 +365,7 @@ class SalesInvoiceController extends TenantAwareController
         try {
             foreach ($salesInvoice->lines as $line) {
                 $itemWarehouse = ItemWarehouse::where('item_id', $line->item_id)
-                    ->where('warehouse_id', $salesInvoice->warehouse_id)
+                    ->where('warehouse_id', $line->warehouse_id)
                     ->first();
 
                 if ($itemWarehouse) {
@@ -373,7 +375,7 @@ class SalesInvoiceController extends TenantAwareController
                 StockMovement::create([
                     'tenant_id' => $this->getTenantId(),
                     'item_id' => $line->item_id,
-                    'warehouse_id' => $salesInvoice->warehouse_id,
+                    'warehouse_id' => $line->warehouse_id,
                     'type' => 'return_in',
                     'quantity' => $line->quantity,
                     'unit_cost' => $line->unit_price,

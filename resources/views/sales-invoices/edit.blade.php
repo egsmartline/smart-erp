@@ -88,6 +88,7 @@
                                 <th class="px-3 py-2 font-semibold text-gray-700">السعر</th>
                                 <th class="px-3 py-2 font-semibold text-gray-700">خصم %</th>
                                 <th class="px-3 py-2 font-semibold text-gray-700">الضريبة %</th>
+                                <th class="px-3 py-2 font-semibold text-gray-700">المخزن</th>
                                 <th class="px-3 py-2 font-semibold text-gray-700 text-left">الإجمالي</th>
                                 <th class="px-3 py-2 font-semibold text-gray-700 text-center w-10"></th>
                             </tr>
@@ -163,8 +164,14 @@
         'tax' => $i->tax_rate ?? 15,
     ])->values()->all()); ?>;
 
+    var warehousesData = <?php echo json_encode($warehouses->map(fn($w) => [
+        'id' => $w->id,
+        'name' => $w->name,
+    ])->values()->all()); ?>;
+
     var existingLines = <?php echo json_encode($salesInvoice->lines->map(fn($l) => [
         'item_id' => $l->item_id,
+        'warehouse_id' => $l->warehouse_id,
         'quantity' => $l->quantity,
         'unit_price' => $l->unit_price,
         'discount_percent' => $l->discount_percent,
@@ -246,17 +253,33 @@
         td6.appendChild(inpTax);
 
         var td7 = document.createElement('td');
-        td7.className = 'px-3 py-3 text-left font-mono text-sm font-medium text-gray-900';
-        td7.id = 'total-' + idx;
-        td7.textContent = '0.00';
+        td7.className = 'px-3 py-2';
+        var whSelect = document.createElement('select');
+        whSelect.name = 'lines[' + idx + '][warehouse_id]';
+        whSelect.required = true;
+        whSelect.className = 'w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500';
+        for (var wi = 0; wi < warehousesData.length; wi++) {
+            var wh = warehousesData[wi];
+            var whOpt = document.createElement('option');
+            whOpt.value = wh.id;
+            whOpt.textContent = wh.name;
+            if (data.warehouse_id && String(wh.id) === String(data.warehouse_id)) whOpt.selected = true;
+            whSelect.appendChild(whOpt);
+        }
+        td7.appendChild(whSelect);
 
         var td8 = document.createElement('td');
-        td8.className = 'px-3 py-2 text-center';
+        td8.className = 'px-3 py-3 text-left font-mono text-sm font-medium text-gray-900';
+        td8.id = 'total-' + idx;
+        td8.textContent = '0.00';
+
+        var td9 = document.createElement('td');
+        td9.className = 'px-3 py-2 text-center';
         var delBtn = document.createElement('button');
         delBtn.type = 'button';
         delBtn.className = 'rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600 transition cursor-pointer btn-del-line';
         delBtn.innerHTML = '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
-        td8.appendChild(delBtn);
+        td9.appendChild(delBtn);
 
         tr.appendChild(td1);
         tr.appendChild(td2);
@@ -266,6 +289,7 @@
         tr.appendChild(td6);
         tr.appendChild(td7);
         tr.appendChild(td8);
+        tr.appendChild(td9);
         tbody.appendChild(tr);
     }
 
