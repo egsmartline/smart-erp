@@ -10,10 +10,12 @@ class TenantSeeder extends Seeder
 {
     public function run(): void
     {
-        Tenant::create([
-            'name' => 'الشركة الافتراضية',
-            'slug' => 'default',
-            'is_active' => true,
-        ]);
+Tenant::firstOrCreate(
+    ['slug' => 'default'],
+    [
+        'name' => 'الشركة الافتراضية',
+        'is_active' => true,
+    ]
+);
     }
 }
