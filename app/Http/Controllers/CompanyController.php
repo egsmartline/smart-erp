@@ -98,6 +98,7 @@ class CompanyController extends TenantAwareController
 
             $user = auth()->user();
             $user->tenants()->attach($tenant->id, ['role' => $user->role]);
+            $user->update(['tenant_id' => $tenant->id]);
 
             session(['current_tenant_id' => $tenant->id]);
             session(['current_company_id' => Company::where('tenant_id', $tenant->id)->first()->id]);

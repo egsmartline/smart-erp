@@ -65,6 +65,8 @@ class AuthController extends Controller
             ->where('is_active', true)
             ->findOrFail($companyId);
 
+        $user->update(['tenant_id' => $company->tenant_id]);
+
         session(['current_tenant_id' => $company->tenant_id]);
         session(['current_company_id' => $company->id]);
 
