@@ -83,7 +83,7 @@ class PaymentController extends TenantAwareController
                     'reference_type' => 'payment',
                     'reference_id' => $payment->id,
                     'reference_number' => $validated['payment_number'],
-                    'description' => $validated['notes'] ?? (($validated['type'] === 'receipt' ? 'قبض' : 'دفع') . ' - ' . $validated['payment_number']),
+                    'description' => $validated['notes'] ?? (($validated['type'] === 'receipt' ? 'قبض' : 'صرف') . ' - ' . $validated['payment_number']),
                     'user_id' => $validated['user_id'],
                 ]);
             }
@@ -99,7 +99,7 @@ class PaymentController extends TenantAwareController
                     'reference_type' => 'payment',
                     'reference_id' => $payment->id,
                     'reference_number' => $validated['payment_number'],
-                    'description' => $validated['notes'] ?? (($validated['type'] === 'receipt' ? 'قبض' : 'دفع') . ' - ' . $validated['payment_number']),
+                    'description' => $validated['notes'] ?? (($validated['type'] === 'receipt' ? 'قبض' : 'صرف') . ' - ' . $validated['payment_number']),
                     'user_id' => $validated['user_id'],
                 ]);
             }
@@ -111,7 +111,7 @@ class PaymentController extends TenantAwareController
                     $journalService->createEntry([
                         'tenant_id' => $validated['tenant_id'],
                         'date' => $validated['date'],
-                        'description' => $validated['notes'] ?? ($validated['type'] === 'receipt' ? 'قبض' : 'دفع') . ' - ' . $validated['payment_number'],
+                        'description' => $validated['notes'] ?? ($validated['type'] === 'receipt' ? 'قبض' : 'صرف') . ' - ' . $validated['payment_number'],
                         'reference' => $validated['payment_number'],
                         'type' => $validated['type'] === 'receipt' ? 'receipt' : 'payment',
                         'lines' => $lines,
@@ -120,7 +120,7 @@ class PaymentController extends TenantAwareController
             }
 
             DB::commit();
-            $message = $validated['type'] === 'receipt' ? 'تم تسجيل القبض بنجاح' : 'تم تسجيل الدفع بنجاح';
+            $message = $validated['type'] === 'receipt' ? 'تم تسجيل القبض بنجاح' : 'تم تسجيل الصرف بنجاح';
             return redirect()->route('payments.index')->with('success', $message);
         } catch (\Exception $e) {
             DB::rollBack();

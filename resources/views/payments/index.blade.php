@@ -16,7 +16,7 @@
                 <select name="type" id="type" class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     <option value="">الكل</option>
                     <option value="receipt" {{ request('type') === 'receipt' ? 'selected' : '' }}>قبض</option>
-                    <option value="payment" {{ request('type') === 'payment' ? 'selected' : '' }}>دفع</option>
+                    <option value="payment" {{ request('type') === 'payment' ? 'selected' : '' }}>صرف</option>
                 </select>
             </div>
             <div>
@@ -50,7 +50,7 @@
                             <td class="px-4 py-3 text-gray-600">{{ $payment->date->format('Y-m-d') }}</td>
                             <td class="px-4 py-3">
                                 <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $payment->type === 'receipt' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">
-                                    {{ $payment->type === 'receipt' ? 'قبض' : 'دفع' }}
+                                    {{ $payment->type === 'receipt' ? 'قبض' : 'صرف' }}
                                 </span>
                             </td>
                             <td class="px-4 py-3 font-medium text-gray-900">{{ $payment->customer->name ?? $payment->supplier->name ?? '-' }}</td>

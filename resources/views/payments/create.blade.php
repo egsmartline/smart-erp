@@ -25,7 +25,7 @@
                     <select name="type" id="type" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         <option value="">اختر النوع</option>
                         <option value="receipt" {{ old('type') === 'receipt' ? 'selected' : '' }}>قبض</option>
-                        <option value="payment" {{ old('type') === 'payment' ? 'selected' : '' }}>دفع</option>
+                        <option value="payment" {{ old('type') === 'payment' ? 'selected' : '' }}>صرف</option>
                     </select>
                 </div>
                 <div>

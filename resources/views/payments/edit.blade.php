@@ -24,7 +24,7 @@
                     <label for="type" class="mb-1 block text-sm font-medium text-gray-700">النوع <span class="text-red-500">*</span></label>
                     <select name="type" id="type" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         <option value="receipt" {{ old('type', $payment->type) === 'receipt' ? 'selected' : '' }}>قبض</option>
-                        <option value="payment" {{ old('type', $payment->type) === 'payment' ? 'selected' : '' }}>دفع</option>
+                        <option value="payment" {{ old('type', $payment->type) === 'payment' ? 'selected' : '' }}>صرف</option>
                     </select>
                 </div>
                 <div>

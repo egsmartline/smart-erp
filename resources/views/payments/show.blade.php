@@ -15,7 +15,7 @@
             </div>
             <div class="mt-2">
                 <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $payment->type === 'receipt' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">
-                    {{ $payment->type === 'receipt' ? 'قبض' : 'دفع' }}
+                    {{ $payment->type === 'receipt' ? 'قبض' : 'صرف' }}
                 </span>
             </div>
             <div class="text-sm text-gray-500 mt-2">
@@ -38,7 +38,7 @@
                 <div class="flex justify-between"><span class="text-gray-500">التاريخ:</span><span class="font-medium">{{ $payment->date->format('Y-m-d') }}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">النوع:</span>
                     <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $payment->type === 'receipt' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">
-                        {{ $payment->type === 'receipt' ? 'قبض' : 'دفع' }}
+                        {{ $payment->type === 'receipt' ? 'قبض' : 'صرف' }}
                     </span>
                 </div>
                 <div class="flex justify-between"><span class="text-gray-500">المبلغ:</span><span class="font-medium font-mono text-lg">{{ number_format($payment->amount, 2) }}</span></div>
