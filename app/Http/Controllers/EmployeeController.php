@@ -61,7 +61,7 @@ class EmployeeController extends TenantAwareController
             'notes' => 'nullable|string',
         ]);
 
-        $lastEmp = Employee::where('tenant_id', $this->getTenantId())->latest('id')->first();
+        $lastEmp = Employee::withTrashed()->latest('id')->first();
         $nextNumber = $lastEmp ? (int) substr($lastEmp->employee_id, -4) + 1 : 1;
         $validated['employee_id'] = 'EMP-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
         $validated['tenant_id'] = $this->getTenantId();
