@@ -109,7 +109,7 @@ class EmployeeController extends TenantAwareController
             'job_position_id' => 'required|exists:job_positions,id',
             'hire_date' => 'required|date',
             'contract_end_date' => 'nullable|date',
-            'employment_status' => 'required|in:active,inactive,terminated,on_leave',
+            'employment_status' => 'nullable|in:active,inactive,terminated,on_leave',
             'gross_salary' => 'required|numeric|min:0',
             'bank_name' => 'nullable|string|max:100',
             'bank_account' => 'nullable|string|max:50',
