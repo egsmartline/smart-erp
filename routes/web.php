@@ -73,8 +73,11 @@ Route::get('/health/db', function () {
 })->name('health.db');
 
 Route::get('/', function () {
-    return redirect()->route('select-company');
-})->middleware('auth')->name('home');
+    if (auth()->check()) {
+        return redirect()->route('select-company');
+    }
+    return redirect()->route('login');
+})->name('home');
 
 Route::middleware(['auth', 'tenant'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
