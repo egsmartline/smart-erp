@@ -29,34 +29,27 @@
                             <td class="px-4 py-3 text-gray-600 whitespace-nowrap">{{ $t->date ?? $t->created_at->format('Y-m-d') }}</td>
                             <td class="px-4 py-3 font-medium text-gray-900">
                                 @php
-                                    $sourceName = '-';
+                                    $isSource = $t->description && str_starts_with($t->description, 'تحويل صادر');
                                     if ($t instanceof \App\Models\TreasuryTransaction) {
-                                        if ($t->treasury_id) {
-                                            $sourceName = $t->treasury->name ?? '-';
-                                        } elseif ($t->target_treasury_id) {
-                                            $sourceName = optional(\App\Models\Account::find($t->target_treasury_id))->name ?? 'حساب مالي';
-                                        }
+                                        $selfName = $t->treasury_id ? ($t->treasury->name ?? '-') : (optional(\App\Models\Account::find($t->target_treasury_id))->name ?? 'حساب مالي');
                                     } else {
-                                        $sourceName = $t->bankAccount->account_name ?? '-';
+                                        $selfName = $t->bankAccount->account_name ?? '-';
                                     }
+                                    if ($t->reference_type === 'treasury') {
+                                        $refName = optional(\App\Models\CashTreasury::find($t->reference_id))->name ?? '-';
+                                    } elseif ($t->reference_type === 'bank') {
+                                        $refName = optional(\App\Models\BankAccount::find($t->reference_id))->account_name ?? '-';
+                                    } elseif ($t->reference_type === 'account') {
+                                        $refName = optional(\App\Models\Account::find($t->reference_id))->name ?? 'حساب مالي';
+                                    } else {
+                                        $refName = $t->targetTreasury->name ?? $t->targetBankAccount->account_name ?? '-';
+                                    }
+                                    $sourceName = $isSource ? $selfName : $refName;
+                                    $targetName = $isSource ? $refName : $selfName;
                                 @endphp
                                 {{ $sourceName }}
                             </td>
-                            <td class="px-4 py-3 font-medium text-gray-900">
-                                @php
-                                    $targetName = '-';
-                                    if ($t->reference_type === 'treasury') {
-                                        $targetName = optional(\App\Models\CashTreasury::find($t->reference_id))->name ?? '-';
-                                    } elseif ($t->reference_type === 'bank') {
-                                        $targetName = optional(\App\Models\BankAccount::find($t->reference_id))->account_name ?? '-';
-                                    } elseif ($t->reference_type === 'account') {
-                                        $targetName = optional(\App\Models\Account::find($t->reference_id))->name ?? 'حساب مالي';
-                                    } else {
-                                        $targetName = $t->targetTreasury->name ?? $t->targetBankAccount->account_name ?? '-';
-                                    }
-                                @endphp
-                                {{ $targetName }}
-                            </td>
+                            <td class="px-4 py-3 font-medium text-gray-900">{{ $targetName }}</td>
                             <td class="px-4 py-3 text-left font-mono text-sm font-bold text-emerald-600">{{ number_format($t->amount, 2) }}</td>
                             <td class="px-4 py-3 text-gray-600 max-w-xs truncate">{{ $t->description ?? '-' }}</td>
                             <td class="px-4 py-3 text-gray-500 text-xs">{{ $t->user->name ?? '-' }}</td>
