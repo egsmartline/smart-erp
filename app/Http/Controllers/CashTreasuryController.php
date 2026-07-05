@@ -57,6 +57,12 @@ class CashTreasuryController extends TenantAwareController
     {
         $this->authorizeTenant($cashTreasury);
 
+        $bankAccounts = $this->tenantQuery(BankAccount::class)
+            ->with('currency')
+            ->where('is_active', true)
+            ->orderBy('account_name')
+            ->get();
+
         $txnData = collect();
 
         foreach (TreasuryTransaction::where('treasury_id', $cashTreasury->id)->where(function ($q) { $q->where('reference_type', '!=', 'payment')->orWhereNull('reference_type'); })->with('user')->orderBy('created_at', 'desc')->cursor() as $t) {
@@ -83,7 +89,11 @@ class CashTreasuryController extends TenantAwareController
 
         $transactions = $txnData->sortByDesc('date')->values();
 
-        return view('cash-treasuries.show', ['treasury' => $cashTreasury, 'transactions' => $transactions]);
+        return view('cash-treasuries.show', [
+            'treasury' => $cashTreasury,
+            'transactions' => $transactions,
+            'bankAccounts' => $bankAccounts,
+        ]);
     }
 
     public function edit(CashTreasury $cashTreasury)

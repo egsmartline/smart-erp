@@ -75,6 +75,24 @@
                         <div class="text-sm text-gray-500">إنشاء قيد محاسبي جديد</div>
                     </div>
                 </a>
+                <a href="{{ route('transfers.create') }}" class="flex items-center gap-3 rounded-lg border border-gray-200 p-3 hover:bg-gray-50 transition">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8m0 0l-3-3m3 3l-3 3m-5 4h8m0 0l-3 3m3-3l-3-3"/></svg>
+                    </div>
+                    <div>
+                        <div class="font-medium text-gray-900">تحويل جديد</div>
+                        <div class="text-sm text-gray-500">تحويل بين الخزائن والحسابات البنكية</div>
+                    </div>
+                </a>
+                <a href="{{ route('transfers.index') }}" class="flex items-center gap-3 rounded-lg border border-gray-200 p-3 hover:bg-gray-50 transition">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-fuchsia-100 text-fuchsia-600">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M7 11h10M9 15h6"/></svg>
+                    </div>
+                    <div>
+                        <div class="font-medium text-gray-900">التحويلات الداخلية</div>
+                        <div class="text-sm text-gray-500">عرض سجل التحويلات السابقة</div>
+                    </div>
+                </a>
                 <a href="{{ route('journal-entries.index') }}" class="flex items-center gap-3 rounded-lg border border-gray-200 p-3 hover:bg-gray-50 transition">
                     <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 text-purple-600">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>

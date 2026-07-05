@@ -76,6 +76,12 @@ class TransferController extends TenantAwareController
         try {
             $this->createTransfer($validated);
             DB::commit();
+
+            $redirectTo = $request->input('redirect_to');
+            if (!empty($redirectTo)) {
+                return redirect($redirectTo)->with('success', 'تم التحويل بنجاح');
+            }
+
             return redirect()->route('transfers.index')->with('success', 'تم التحويل بنجاح');
         } catch (\Exception $e) {
             DB::rollBack();

@@ -89,6 +89,10 @@
                     <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
                     سندات القبض والصرف
                 </a>
+                <a href="{{ route('transfers.create') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('transfers.create') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                    تحويل جديد
+                </a>
                 <a href="{{ route('cash-treasuries.balances') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('cash-treasuries.balances') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
                     <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
                     أرصدة الخزائن والحسابات البنكية
