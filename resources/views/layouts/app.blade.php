@@ -263,6 +263,12 @@
                                 </a>
                             </li>
                             <li>
+                                <a href="{{ route('transfers.create') }}"
+                                    class="submenu-item block px-4 py-2 rounded-lg text-sm {{ request()->routeIs('transfers.create') ? 'active' : 'hover:bg-primary-700' }}">
+                                    تحويل جديد
+                                </a>
+                            </li>
+                            <li>
                                 <a href="{{ route('transfers.index') }}"
                                     class="submenu-item block px-4 py-2 rounded-lg text-sm {{ request()->routeIs('transfers.*') ? 'active' : 'hover:bg-primary-700' }}">
                                     التحويلات الداخلية
