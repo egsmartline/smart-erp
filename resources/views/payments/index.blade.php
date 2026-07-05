@@ -43,6 +43,10 @@
                     <span class="text-sm font-medium text-red-700">إجمالي الصرف: </span>
                     <span class="text-lg font-bold text-red-600">{{ number_format($totalPayments, 2) }}</span>
                 </div>
+                <div class="rounded-lg bg-blue-50 border border-blue-200 px-4 py-2 text-center">
+                    <span class="text-sm font-medium text-blue-700">الرصيد: </span>
+                    <span class="text-lg font-bold {{ $totalReceipts - $totalPayments >= 0 ? 'text-emerald-600' : 'text-red-600' }}">{{ number_format($totalReceipts - $totalPayments, 2) }}</span>
+                </div>
             </div>
         </form>
     </div>
