@@ -21,7 +21,9 @@ class PaymentController extends TenantAwareController
     public function index(Request $request)
     {
         $query = $this->tenantQuery(Payment::class)
-            ->when($request->type, fn($q, $t) => $q->where('type', $t));
+            ->when($request->type, fn($q, $t) => $q->where('type', $t))
+            ->when($request->date_from, fn($q, $d) => $q->whereDate('date', '>=', $d))
+            ->when($request->date_to, fn($q, $d) => $q->whereDate('date', '<=', $d));
 
         $totalReceipts = (clone $query)->where('type', 'receipt')->sum('amount');
         $totalPayments = (clone $query)->where('type', 'payment')->sum('amount');

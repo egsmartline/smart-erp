@@ -10,32 +10,41 @@
     </x-slot>
 
     <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6 mb-6">
-        <form method="GET" action="{{ route('payments.index') }}" class="flex flex-wrap items-end gap-4">
-            <div>
-                <label for="type" class="mb-1 block text-sm font-medium text-gray-700">النوع</label>
-                <select name="type" id="type" class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                    <option value="">الكل</option>
-                    <option value="receipt" {{ request('type') === 'receipt' ? 'selected' : '' }}>قبض</option>
-                    <option value="payment" {{ request('type') === 'payment' ? 'selected' : '' }}>صرف</option>
-                </select>
+        <form method="GET" action="{{ route('payments.index') }}" class="space-y-4">
+            <div class="flex flex-wrap items-end gap-4">
+                <div>
+                    <label for="type" class="mb-1 block text-sm font-medium text-gray-700">النوع</label>
+                    <select name="type" id="type" class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <option value="">الكل</option>
+                        <option value="receipt" {{ request('type') === 'receipt' ? 'selected' : '' }}>قبض</option>
+                        <option value="payment" {{ request('type') === 'payment' ? 'selected' : '' }}>صرف</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="date_from" class="mb-1 block text-sm font-medium text-gray-700">من تاريخ</label>
+                    <input type="date" name="date_from" id="date_from" value="{{ request('date_from') }}" class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="date_to" class="mb-1 block text-sm font-medium text-gray-700">إلى تاريخ</label>
+                    <input type="date" name="date_to" id="date_to" value="{{ request('date_to') }}" class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="search" class="mb-1 block text-sm font-medium text-gray-700">بحث</label>
+                    <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="بحث بالاسم أو الرقم..." class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="rounded-lg bg-gray-600 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition">بحث</button>
             </div>
-            <div>
-                <label for="search" class="mb-1 block text-sm font-medium text-gray-700">بحث</label>
-                <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="بحث بالاسم أو الرقم..." class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+            <div class="flex flex-wrap items-center gap-4 pt-3 border-t border-gray-100">
+                <div class="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-2 text-center">
+                    <span class="text-sm font-medium text-emerald-700">إجمالي القبض: </span>
+                    <span class="text-lg font-bold text-emerald-600">{{ number_format($totalReceipts, 2) }}</span>
+                </div>
+                <div class="rounded-lg bg-red-50 border border-red-200 px-4 py-2 text-center">
+                    <span class="text-sm font-medium text-red-700">إجمالي الصرف: </span>
+                    <span class="text-lg font-bold text-red-600">{{ number_format($totalPayments, 2) }}</span>
+                </div>
             </div>
-            <button type="submit" class="rounded-lg bg-gray-600 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition">بحث</button>
         </form>
-    </div>
-
-    <div class="grid grid-cols-2 gap-4 mb-6">
-        <div class="rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-center">
-            <div class="text-sm font-medium text-emerald-700 mb-1">إجمالي القبض</div>
-            <div class="text-2xl font-bold text-emerald-600">{{ number_format($totalReceipts, 2) }}</div>
-        </div>
-        <div class="rounded-xl bg-red-50 border border-red-200 p-4 text-center">
-            <div class="text-sm font-medium text-red-700 mb-1">إجمالي الصرف</div>
-            <div class="text-2xl font-bold text-red-600">{{ number_format($totalPayments, 2) }}</div>
-        </div>
     </div>
 
     <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6">
