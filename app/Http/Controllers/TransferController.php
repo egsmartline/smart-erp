@@ -97,10 +97,6 @@ class TransferController extends TenantAwareController
         $source = $this->resolveSource($data['from_type'], $data['from_id'], $tenantId);
         $target = $this->resolveTarget($data['to_type'], $data['to_id'], $tenantId);
 
-        if ($source['balance'] < $data['amount']) {
-            throw new \Exception('الرصيد غير كافٍ في الحساب المصدر');
-        }
-
         $refNum = 'TRF-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -5));
 
         $this->createSourceTransaction($data, $tenantId, $userId, $refNum);
