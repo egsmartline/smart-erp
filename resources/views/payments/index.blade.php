@@ -27,6 +27,17 @@
         </form>
     </div>
 
+    <div class="grid grid-cols-2 gap-4 mb-6">
+        <div class="rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-center">
+            <div class="text-sm font-medium text-emerald-700 mb-1">إجمالي القبض</div>
+            <div class="text-2xl font-bold text-emerald-600">{{ number_format($totalReceipts, 2) }}</div>
+        </div>
+        <div class="rounded-xl bg-red-50 border border-red-200 p-4 text-center">
+            <div class="text-sm font-medium text-red-700 mb-1">إجمالي الصرف</div>
+            <div class="text-2xl font-bold text-red-600">{{ number_format($totalPayments, 2) }}</div>
+        </div>
+    </div>
+
     <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6">
         <div class="overflow-x-auto">
             <table class="w-full text-right text-sm">

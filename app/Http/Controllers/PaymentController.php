@@ -20,12 +20,15 @@ class PaymentController extends TenantAwareController
 {
     public function index(Request $request)
     {
-        $payments = $this->tenantQuery(Payment::class)
-            ->when($request->type, fn($q, $t) => $q->where('type', $t))
-            ->latest()
-            ->paginate(20);
+        $query = $this->tenantQuery(Payment::class)
+            ->when($request->type, fn($q, $t) => $q->where('type', $t));
 
-        return view('payments.index', compact('payments'));
+        $totalReceipts = (clone $query)->where('type', 'receipt')->sum('amount');
+        $totalPayments = (clone $query)->where('type', 'payment')->sum('amount');
+
+        $payments = $query->latest()->paginate(20);
+
+        return view('payments.index', compact('payments', 'totalReceipts', 'totalPayments'));
     }
 
     public function create()
