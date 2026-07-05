@@ -200,9 +200,9 @@
                     </li>
 
                     {{-- الخزينة --}}
-                    <li x-data="{ open: {{ in_array(true, [request()->routeIs('cash-treasuries.*'), request()->routeIs('bank-accounts.*'), request()->routeIs('payments.*')]) ? 'true' : 'false' }} }">
+                    <li x-data="{ open: {{ in_array(true, [request()->routeIs('cash-treasuries.*'), request()->routeIs('bank-accounts.*'), request()->routeIs('payments.*'), request()->routeIs('transfers.*')]) ? 'true' : 'false' }} }">
                         <button @click="open = !open"
-                            class="menu-item w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl {{ request()->routeIs('cash-treasuries.*') || request()->routeIs('bank-accounts.*') || request()->routeIs('payments.*') ? 'active' : 'hover:bg-primary-700' }} transition-all">
+                            class="menu-item w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl {{ request()->routeIs('cash-treasuries.*') || request()->routeIs('bank-accounts.*') || request()->routeIs('payments.*') || request()->routeIs('transfers.*') ? 'active' : 'hover:bg-primary-700' }} transition-all">
                             <div class="flex items-center gap-3">
                                 <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                                 <span x-show="sidebarOpen" class="whitespace-nowrap text-sm font-medium">الخزينة</span>
@@ -210,9 +210,11 @@
                             <svg x-show="sidebarOpen" class="h-4 w-4 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
                         <ul x-show="open" x-collapse class="mt-1 mr-6 space-y-1">
-                            <li><a href="{{ route('cash-treasuries.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('cash-treasuries.*') && !request()->routeIs('cash-treasuries.balances') && !request()->routeIs('payments.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">إدارة الخزينة</span></a></li>
+                            <li><a href="{{ route('cash-treasuries.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('cash-treasuries.*') && !request()->routeIs('cash-treasuries.balances') && !request()->routeIs('payments.*') && !request()->routeIs('transfers.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">إدارة الخزينة</span></a></li>
                             <li><a href="{{ route('bank-accounts.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('bank-accounts.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">الحسابات البنكية</span></a></li>
                             <li><a href="{{ route('payments.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('payments.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">سندات القبض والصرف</span></a></li>
+                            <li><a href="{{ route('transfers.create') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('transfers.create') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">تحويل جديد</span></a></li>
+                            <li><a href="{{ route('transfers.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('transfers.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">التحويلات الداخلية</span></a></li>
                             <li><a href="{{ route('cash-treasuries.balances') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('cash-treasuries.balances') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">أرصدة الخزائن والحسابات البنكية</span></a></li>
                         </ul>
                     </li>
