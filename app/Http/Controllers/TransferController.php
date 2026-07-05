@@ -303,53 +303,51 @@ class TransferController extends TenantAwareController
             ->first();
 
         if ($txn) {
-            $related = TreasuryTransaction::where('tenant_id', $this->getTenantId())
-                ->where('reference_number', $txn->reference_number)
-                ->where('id', '!=', $id);
-
-            $target = $related->first();
-
-            if ($target) {
-                if ($txn->treasury_id) {
-                    $treasury = CashTreasury::find($txn->treasury_id);
-                    if ($treasury) $treasury->increment('current_balance', $txn->amount);
-                } else {
-                    $account = Account::find($txn->target_treasury_id);
-                    if ($account) $account->increment('current_balance', $txn->amount);
-                }
-                if ($target->treasury_id) {
-                    $targetTreasury = CashTreasury::find($target->treasury_id);
-                    if ($targetTreasury) $targetTreasury->decrement('current_balance', $txn->amount);
-                } else {
-                    $targetAccount = Account::find($target->target_treasury_id);
-                    if ($targetAccount) $targetAccount->decrement('current_balance', $txn->amount);
-                }
-                $target->delete();
-            }
-
-            $this->journalService->reverseEntryByReference($txn->reference_number, 'transfer');
-            $txn->delete();
+            $refNum = $txn->reference_number;
         } else {
             $txn = BankTransaction::where('tenant_id', $this->getTenantId())
                 ->where('id', $id)
                 ->where('type', 'transfer')
                 ->firstOrFail();
-
-            $related = BankTransaction::where('tenant_id', $this->getTenantId())
-                ->where('reference_number', $txn->reference_number)
-                ->where('id', '!=', $id)
-                ->first();
-
-            if ($related) {
-                $bank = BankAccount::find($txn->bank_account_id);
-                $targetBank = BankAccount::find($related->bank_account_id);
-                if ($bank) $bank->increment('current_balance', $txn->amount);
-                if ($targetBank) $targetBank->decrement('current_balance', $txn->amount);
-                $related->delete();
-            }
-
-            $this->journalService->reverseEntryByReference($txn->reference_number, 'transfer');
-            $txn->delete();
+            $refNum = $txn->reference_number;
         }
+
+        $treasuryTxns = TreasuryTransaction::where('tenant_id', $this->getTenantId())
+            ->where('reference_number', $refNum)
+            ->where('type', 'transfer')
+            ->get();
+
+        $bankTxns = BankTransaction::where('tenant_id', $this->getTenantId())
+            ->where('reference_number', $refNum)
+            ->where('type', 'transfer')
+            ->get();
+
+        foreach ($treasuryTxns as $t) {
+            if (str_starts_with($t->description, 'تحويل صادر')) {
+                if ($t->treasury_id) {
+                    CashTreasury::where('id', $t->treasury_id)->increment('current_balance', $t->amount);
+                } else {
+                    Account::where('id', $t->target_treasury_id)->increment('current_balance', $t->amount);
+                }
+            } else {
+                if ($t->treasury_id) {
+                    CashTreasury::where('id', $t->treasury_id)->decrement('current_balance', $t->amount);
+                } else {
+                    Account::where('id', $t->target_treasury_id)->decrement('current_balance', $t->amount);
+                }
+            }
+            $t->delete();
+        }
+
+        foreach ($bankTxns as $t) {
+            if (str_starts_with($t->description, 'تحويل صادر')) {
+                BankAccount::where('id', $t->bank_account_id)->increment('current_balance', $t->amount);
+            } else {
+                BankAccount::where('id', $t->bank_account_id)->decrement('current_balance', $t->amount);
+            }
+            $t->delete();
+        }
+
+        $this->journalService->reverseEntryByReference($refNum, 'transfer');
     }
 }
