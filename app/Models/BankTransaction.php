@@ -14,6 +14,7 @@ class BankTransaction extends Model
         'bank_account_id',
         'type',
         'amount',
+        'date',
         'reference_type',
         'reference_id',
         'description',

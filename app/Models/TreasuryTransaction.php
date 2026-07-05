@@ -14,6 +14,7 @@ class TreasuryTransaction extends Model
         'treasury_id',
         'type',
         'amount',
+        'date',
         'reference_type',
         'reference_id',
         'description',

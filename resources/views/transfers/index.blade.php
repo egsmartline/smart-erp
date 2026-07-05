@@ -26,7 +26,7 @@
                 <tbody>
                     @forelse($transfers as $t)
                         <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
-                            <td class="px-4 py-3 text-gray-600 whitespace-nowrap">{{ $t->created_at->format('Y-m-d') }}</td>
+                            <td class="px-4 py-3 text-gray-600 whitespace-nowrap">{{ $t->date ?? $t->created_at->format('Y-m-d') }}</td>
                             <td class="px-4 py-3 font-medium text-gray-900">
                                 @php
                                     $sourceName = '-';

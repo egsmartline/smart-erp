@@ -83,7 +83,7 @@
 
                 <div>
                     <label class="mb-1 block text-sm font-medium text-gray-700">التاريخ</label>
-                    <input type="date" name="date" value="{{ old('date', $txn->created_at->format('Y-m-d')) }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" required>
+                    <input type="date" name="date" value="{{ old('date', $txn->date ?? $txn->created_at->format('Y-m-d')) }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" required>
                 </div>
             </div>
 
