@@ -127,10 +127,10 @@
             .border { border-color: #e5e7eb !important; }
 
             {{-- Tables --}}
-            table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 10px; }
+            table { width: 100%; border-collapse: collapse; margin: 4px 0; font-size: 9px; }
             thead { display: table-header-group; }
-            th { background: #D4ECF8 !important; color: #1e3a8a !important; padding: 8px 10px; text-align: right; font-weight: 600; font-size: 10px; border: 1px solid #D4ECF8; }
-            td { padding: 6px 10px; text-align: right; border: 1px solid #e5e7eb; font-size: 10px; }
+            th { background: #D4ECF8 !important; color: #1e3a8a !important; padding: 3px 4px; text-align: right; font-weight: 600; font-size: 9px; border: 1px solid #D4ECF8; }
+            td { padding: 2px 4px; text-align: right; border: 1px solid #e5e7eb; font-size: 9px; }
             tr { background: transparent !important; }
             tr:hover { background: inherit !important; }
 
