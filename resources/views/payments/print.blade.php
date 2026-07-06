@@ -27,13 +27,13 @@
             <table class="w-full text-right text-sm">
                 <thead>
                     <tr class="border-b border-gray-200 bg-gray-50">
-                        <th class="px-4 py-3 font-semibold text-gray-700">رقم</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700">التاريخ</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700">النوع</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700">الشخص</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700">المبلغ</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700">البيان</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700">طريقة الدفع</th>
+                        <th class="px-4 py-3 font-semibold text-gray-700" style="width:15%">رقم</th>
+                        <th class="px-4 py-3 font-semibold text-gray-700" style="width:12%">التاريخ</th>
+                        <th class="px-4 py-3 font-semibold text-gray-700" style="width:8%">النوع</th>
+                        <th class="px-4 py-3 font-semibold text-gray-700" style="width:25%">الشخص</th>
+                        <th class="px-4 py-3 font-semibold text-gray-700" style="width:12%">المبلغ</th>
+                        <th class="px-4 py-3 font-semibold text-gray-700" style="width:20%">البيان</th>
+                        <th class="px-4 py-3 font-semibold text-gray-700" style="width:8%">طريقة الدفع</th>
                     </tr>
                 </thead>
                 <tbody>
