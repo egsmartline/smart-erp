@@ -232,6 +232,7 @@
                             <li><a href="{{ route('quotations.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('quotations.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">عروض الأسعار</span></a></li>
                             <li><a href="{{ route('sales-delivery-notes.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('sales-delivery-notes.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">إذن تسليم</span></a></li>
                             <li><a href="{{ route('customers.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('customers.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">العملاء</span></a></li>
+                            <li><a href="{{ route('reports.customer-statement') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('reports.customer-statement') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">كشف حساب عميل</span></a></li>
                         </ul>
                     </li>
 
