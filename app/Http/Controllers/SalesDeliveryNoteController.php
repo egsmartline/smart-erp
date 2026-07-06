@@ -56,6 +56,18 @@ class SalesDeliveryNoteController extends TenantAwareController
 
         $tenantId = $this->getTenantId();
 
+        foreach ($validated['lines'] as $line) {
+            $itemWarehouse = ItemWarehouse::where('item_id', $line['item_id'])
+                ->where('warehouse_id', $validated['warehouse_id'])
+                ->first();
+            $available = $itemWarehouse ? $itemWarehouse->quantity : 0;
+            if ($available < $line['quantity']) {
+                $item = Item::find($line['item_id']);
+                $itemName = $item ? $item->name : '#' . $line['item_id'];
+                return back()->withInput()->with('error', "الرصيد غير كافٍ للصنف {$itemName} (المتوفر: {$available}، المطلوب: {$line['quantity']})");
+            }
+        }
+
         return DB::transaction(function () use ($validated, $tenantId) {
             $deliveryNote = SalesDeliveryNote::create([
                 'tenant_id' => $tenantId,
@@ -158,6 +170,24 @@ class SalesDeliveryNoteController extends TenantAwareController
         ]);
 
         $tenantId = $this->getTenantId();
+
+        $oldLines = $salesDeliveryNote->lines()->get()->keyBy('item_id');
+
+        foreach ($validated['lines'] as $line) {
+            $itemWarehouse = ItemWarehouse::where('item_id', $line['item_id'])
+                ->where('warehouse_id', $validated['warehouse_id'])
+                ->first();
+
+            $oldQty = isset($oldLines[$line['item_id']]) ? $oldLines[$line['item_id']]->quantity : 0;
+            $currentAvailable = $itemWarehouse ? $itemWarehouse->quantity : 0;
+            $availableAfterReverse = $currentAvailable + $oldQty;
+
+            if ($availableAfterReverse < $line['quantity']) {
+                $item = Item::find($line['item_id']);
+                $itemName = $item ? $item->name : '#' . $line['item_id'];
+                return back()->withInput()->with('error', "الرصيد غير كافٍ للصنف {$itemName} (المتوفر بعد عكس القديم: {$availableAfterReverse}، المطلوب: {$line['quantity']})");
+            }
+        }
 
         DB::transaction(function () use ($salesDeliveryNote, $validated, $tenantId, $request) {
             foreach ($salesDeliveryNote->lines as $oldLine) {

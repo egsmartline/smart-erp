@@ -281,10 +281,19 @@ class SalesInvoiceController extends TenantAwareController
             }
 
             if ($salesInvoice->status === 'posted') {
-                foreach ($salesInvoice->fresh()->lines as $line) {
+                $salesInvoice->fresh()->load('lines.item');
+
+                foreach ($salesInvoice->lines as $line) {
                     $itemWarehouse = ItemWarehouse::where('item_id', $line->item_id)
                         ->where('warehouse_id', $line->warehouse_id)
                         ->first();
+
+                    $available = $itemWarehouse ? $itemWarehouse->quantity : 0;
+                    if ($available < $line->quantity) {
+                        DB::rollBack();
+                        $itemName = $line->item->name ?? '#' . $line->item_id;
+                        return back()->withInput()->with('error', "الرصيد غير كافٍ للصنف {$itemName} (المتوفر: {$available}، المطلوب: {$line->quantity})");
+                    }
 
                     if ($itemWarehouse) {
                         $itemWarehouse->decrement('quantity', $line->quantity);
@@ -355,6 +364,20 @@ class SalesInvoiceController extends TenantAwareController
     {
         if ($salesInvoice->status !== 'draft') {
             return back()->with('error', 'الفاتورة مرحلة بالفعل');
+        }
+
+        $salesInvoice->load('lines');
+
+        foreach ($salesInvoice->lines as $line) {
+            $itemWarehouse = ItemWarehouse::where('item_id', $line->item_id)
+                ->where('warehouse_id', $line->warehouse_id)
+                ->first();
+
+            $available = $itemWarehouse ? $itemWarehouse->quantity : 0;
+            if ($available < $line->quantity) {
+                $itemName = $line->item->name ?? '#' . $line->item_id;
+                return back()->with('error', "الرصيد غير كافٍ للصنف {$itemName} (المتوفر: {$available}، المطلوب: {$line->quantity})");
+            }
         }
 
         DB::beginTransaction();
