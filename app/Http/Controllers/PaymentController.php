@@ -27,8 +27,8 @@ class PaymentController extends TenantAwareController
 
         if ($request->print) {
             $payments = $query->latest()->get();
-            $totalReceipts = $query->where('type', 'receipt')->sum('amount');
-            $totalPayments = $query->where('type', 'payment')->sum('amount');
+            $totalReceipts = (clone $query)->where('type', 'receipt')->sum('amount');
+            $totalPayments = (clone $query)->where('type', 'payment')->sum('amount');
             return view('payments.print', compact('payments', 'totalReceipts', 'totalPayments'));
         }
 
