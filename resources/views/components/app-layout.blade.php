@@ -113,6 +113,8 @@
             {{-- Print header --}}
             body.print-with-logo .print-header { display: block !important; margin-bottom: 15px; padding-bottom: 12px; border-bottom: 2px solid #2563eb; }
             body.print-without-logo .print-header-minimal { display: block !important; margin-bottom: 15px; padding-bottom: 12px; border-bottom: 2px solid #2563eb; }
+            body.print-with-logo .print-header-minimal { display: none !important; }
+            body.print-without-logo .print-header { display: none !important; }
 
             header, .topbar, .top-bar, [class*="topbar"], [class*="top-bar"] { display: none !important; }
 
