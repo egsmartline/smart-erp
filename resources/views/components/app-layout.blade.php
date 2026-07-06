@@ -161,7 +161,7 @@
             {{-- Footer --}}
             footer { display: none !important; }
 
-            @page { @bottom-left { content: "الصفحة " counter(page) " من " counter(pages); font-size: 8px; color: #000000; } }
+            @page { @bottom-center { content: "Developer By Bassam Dawood  |  الصفحة " counter(page) " من " counter(pages); font-size: 7px; color: #000000; } }
         }
     </style>
     @stack('styles')
