@@ -149,28 +149,6 @@ class ItemController extends TenantAwareController
 
         $item->update($validated);
 
-        if (($validated['opening_stock'] ?? 0) > 0) {
-            $warehouseId = $validated['default_warehouse'] ?? $this->tenantQuery(\App\Models\Warehouse::class)->where('is_default', true)->value('id');
-            if (!$warehouseId) {
-                $warehouseId = $this->tenantQuery(\App\Models\Warehouse::class)->value('id');
-            }
-            if ($warehouseId) {
-                $existing = ItemWarehouse::where('item_id', $item->id)
-                    ->where('warehouse_id', $warehouseId)
-                    ->first();
-                if ($existing) {
-                    $existing->increment('quantity', $validated['opening_stock']);
-                } else {
-                    ItemWarehouse::create([
-                        'tenant_id' => $this->getTenantId(),
-                        'item_id' => $item->id,
-                        'warehouse_id' => $warehouseId,
-                        'quantity' => $validated['opening_stock'],
-                    ]);
-                }
-            }
-        }
-
         return redirect()->route('items.index')->with('success', 'تم تحديث الصنف بنجاح');
     }
 
