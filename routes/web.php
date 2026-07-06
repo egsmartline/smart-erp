@@ -257,7 +257,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::get('currency/switch/{currency}', [CurrencySwitcherController::class, 'switch'])->name('currency.switch');
 
     // Sales Delivery Notes
-    Route::resource('sales-delivery-notes', SalesDeliveryNoteController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
+    Route::resource('sales-delivery-notes', SalesDeliveryNoteController::class)->only(['index', 'create', 'store', 'show', 'edit', 'update', 'destroy']);
 
     // Purchase Receipt Notes
     Route::resource('purchase-receipt-notes', PurchaseReceiptNoteController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
