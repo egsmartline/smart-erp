@@ -35,7 +35,7 @@ class FixItemStock extends Command
                 if ($correct < 0) $correct = 0;
 
                 if ((float) $iw->quantity !== $correct) {
-                    DB::table('item_warehouse')->where('id', $iw->id)->update(['quantity' => $correct]);
+                    $iw->update(['quantity' => $correct]);
                     $this->line("  {$item->name}: {$iw->quantity} -> {$correct}");
                     $fixed++;
                 }
