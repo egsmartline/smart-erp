@@ -163,8 +163,8 @@ class SalesInvoiceController extends TenantAwareController
 
     public function edit(SalesInvoice $salesInvoice)
     {
-        if ($salesInvoice->status !== 'draft') {
-            return back()->with('error', 'لا يمكن تعديل فاتورة غير مسودة');
+        if (!in_array($salesInvoice->status, ['draft', 'posted'])) {
+            return back()->with('error', 'لا يمكن تعديل هذه الفاتورة');
         }
 
         $salesInvoice->load('lines.item');
@@ -178,8 +178,8 @@ class SalesInvoiceController extends TenantAwareController
 
     public function update(Request $request, SalesInvoice $salesInvoice)
     {
-        if ($salesInvoice->status !== 'draft') {
-            return back()->with('error', 'لا يمكن تعديل فاتورة غير مسودة');
+        if (!in_array($salesInvoice->status, ['draft', 'posted'])) {
+            return back()->with('error', 'لا يمكن تعديل هذه الفاتورة');
         }
 
         $validated = $request->validate([
@@ -205,6 +205,24 @@ class SalesInvoiceController extends TenantAwareController
         DB::beginTransaction();
 
         try {
+            if ($salesInvoice->status === 'posted') {
+                foreach ($salesInvoice->lines as $line) {
+                    $itemWarehouse = ItemWarehouse::where('item_id', $line->item_id)
+                        ->where('warehouse_id', $line->warehouse_id)
+                        ->first();
+                    if ($itemWarehouse) {
+                        $itemWarehouse->increment('quantity', $line->quantity);
+                    }
+
+                    StockMovement::where('reference_type', SalesInvoice::class)
+                        ->where('reference_id', $salesInvoice->id)
+                        ->where('item_id', $line->item_id)
+                        ->delete();
+                }
+
+                app(JournalService::class)->reverseEntryByReference($salesInvoice->invoice_number, 'sales');
+            }
+
             $subtotal = 0;
             $totalTax = 0;
             $totalDiscount = 0;
@@ -260,6 +278,45 @@ class SalesInvoiceController extends TenantAwareController
             foreach ($lineData as $data) {
                 $data['sales_invoice_id'] = $salesInvoice->id;
                 SalesInvoiceLine::create($data);
+            }
+
+            if ($salesInvoice->status === 'posted') {
+                foreach ($salesInvoice->fresh()->lines as $line) {
+                    $itemWarehouse = ItemWarehouse::where('item_id', $line->item_id)
+                        ->where('warehouse_id', $line->warehouse_id)
+                        ->first();
+
+                    if ($itemWarehouse) {
+                        $itemWarehouse->decrement('quantity', $line->quantity);
+                    }
+
+                    StockMovement::create([
+                        'tenant_id' => $this->getTenantId(),
+                        'item_id' => $line->item_id,
+                        'warehouse_id' => $line->warehouse_id,
+                        'type' => 'sale',
+                        'quantity' => $line->quantity,
+                        'unit_cost' => $line->unit_price,
+                        'total_cost' => $line->total,
+                        'reference_type' => SalesInvoice::class,
+                        'reference_id' => $salesInvoice->id,
+                        'description' => 'خروج مخزون - فاتورة مبيعات',
+                        'user_id' => auth()->id(),
+                    ]);
+                }
+
+                $journalService = app(JournalService::class);
+                $lines = $journalService->buildSalesInvoiceLines($salesInvoice->toArray(), $this->getTenantId());
+                if (count($lines) >= 2) {
+                    $journalService->createEntry([
+                        'tenant_id' => $this->getTenantId(),
+                        'date' => $salesInvoice->date->format('Y-m-d'),
+                        'description' => 'فاتورة مبيعات - ' . $salesInvoice->invoice_number,
+                        'reference' => $salesInvoice->invoice_number,
+                        'type' => 'sales',
+                        'lines' => $lines,
+                    ]);
+                }
             }
 
             DB::commit();
