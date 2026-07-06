@@ -30,9 +30,9 @@
                         <th class="px-4 py-3 font-semibold text-gray-700" style="width:15%">رقم</th>
                         <th class="px-4 py-3 font-semibold text-gray-700" style="width:12%">التاريخ</th>
                         <th class="px-4 py-3 font-semibold text-gray-700" style="width:8%">النوع</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700" style="width:25%">الشخص</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700" style="width:12%">المبلغ</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700" style="width:20%">البيان</th>
+                        <th class="px-4 py-3 font-semibold text-gray-700" style="width:18%">الشخص</th>
+                        <th class="px-4 py-3 font-semibold text-gray-700" style="width:15%">المبلغ</th>
+                        <th class="px-4 py-3 font-semibold text-gray-700" style="width:24%">البيان</th>
                         <th class="px-4 py-3 font-semibold text-gray-700" style="width:8%">طريقة الدفع</th>
                     </tr>
                 </thead>
