@@ -111,10 +111,7 @@
             .mr-64, .mr-20 { margin-right: 0 !important; }
 
             {{-- Print header --}}
-            body.print-with-logo .print-header { display: block !important; margin-bottom: 15px; padding-bottom: 12px; border-bottom: 2px solid #2563eb; }
-            body.print-without-logo .print-header-minimal { display: block !important; margin-bottom: 15px; padding-bottom: 12px; border-bottom: 2px solid #2563eb; }
-            body.print-with-logo .print-header-minimal { display: none !important; }
-            body.print-without-logo .print-header { display: none !important; }
+            .print-header, .print-header-minimal { display: none !important; }
 
             header, .topbar, .top-bar, [class*="topbar"], [class*="top-bar"] { display: none !important; }
 
@@ -163,9 +160,8 @@
 
             {{-- Footer --}}
             footer { display: none !important; }
-            .print-footer { position: fixed; bottom: 0; left: 0; right: 0; text-align: center; font-size: 8px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 5px; }
 
-            @page { @bottom-center { content: "الصفحة " counter(page) " من " counter(pages); font-size: 8px; color: #000000; } }
+            @page { @bottom-left { content: "الصفحة " counter(page) " من " counter(pages); font-size: 8px; color: #000000; } }
         }
     </style>
     @stack('styles')
