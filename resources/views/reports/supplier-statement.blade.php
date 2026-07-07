@@ -12,8 +12,8 @@
                 <label class="mb-1 block text-sm font-medium text-gray-700">المورد</label>
                 <select name="supplier_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     <option value="">اختر المورد</option>
-                    @foreach($suppliers as $supplier)
-                        <option value="{{ $supplier->id }}" {{ $supplierId == $supplier->id ? 'selected' : '' }}>{{ $supplier->name }}</option>
+                    @foreach($suppliers as $sup)
+                        <option value="{{ $sup->id }}" {{ $supplierId == $sup->id ? 'selected' : '' }}>{{ $sup->name }}</option>
                     @endforeach
                 </select>
             </div>

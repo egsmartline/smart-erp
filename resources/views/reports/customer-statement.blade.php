@@ -12,8 +12,8 @@
                 <label class="mb-1 block text-sm font-medium text-gray-700">العميل</label>
                 <select name="customer_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     <option value="">اختر العميل</option>
-                    @foreach($customers as $customer)
-                        <option value="{{ $customer->id }}" {{ $customerId == $customer->id ? 'selected' : '' }}>{{ $customer->name }}</option>
+                    @foreach($customers as $cust)
+                        <option value="{{ $cust->id }}" {{ $customerId == $cust->id ? 'selected' : '' }}>{{ $cust->name }}</option>
                     @endforeach
                 </select>
             </div>
