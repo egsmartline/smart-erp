@@ -30,36 +30,51 @@
     </div>
 
     <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6">
+        @if($customer)
+            <div class="mb-4 text-sm">
+                <span class="text-gray-500">العميل: </span>
+                <span class="font-semibold">{{ $customer->name }}</span>
+                <span class="mx-4 text-gray-300">|</span>
+                <span class="text-gray-500">الرصيد الافتتاحي: </span>
+                <span class="font-semibold {{ $openingBalance >= 0 ? 'text-red-600' : 'text-emerald-600' }}">{{ number_format($openingBalance, 2) }}</span>
+            </div>
+        @endif
         <div class="overflow-x-auto">
             <table class="w-full text-right text-sm">
                 <thead>
                     <tr class="border-b-2 border-gray-300 bg-gray-50">
                         <th class="px-4 py-3 font-semibold">التاريخ</th>
-                        <th class="px-4 py-3 font-semibold">رقم الفاتورة</th>
-                        <th class="px-4 py-3 font-semibold">العميل</th>
-                        <th class="px-4 py-3 font-semibold text-left">الإجمالي</th>
-                        <th class="px-4 py-3 font-semibold text-left">المدفوع</th>
-                        <th class="px-4 py-3 font-semibold text-left">المتبقي</th>
-                        <th class="px-4 py-3 font-semibold">الحالة</th>
+                        <th class="px-4 py-3 font-semibold">البيان</th>
+                        <th class="px-4 py-3 font-semibold">المرجع</th>
+                        <th class="px-4 py-3 font-semibold text-left">مدين</th>
+                        <th class="px-4 py-3 font-semibold text-left">دائن</th>
+                        <th class="px-4 py-3 font-semibold text-left">الرصيد</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($invoices as $invoice)
+                    @php $runningBal = $openingBalance; @endphp
+                    @if($openingBalance != 0)
+                        <tr class="border-b border-gray-100 bg-gray-50 font-semibold">
+                            <td class="px-4 py-2">—</td>
+                            <td class="px-4 py-2">رصيد افتتاحي</td>
+                            <td class="px-4 py-2">—</td>
+                            <td class="px-4 py-2 text-left font-mono">{{ $openingBalance > 0 ? number_format($openingBalance, 2) : '-' }}</td>
+                            <td class="px-4 py-2 text-left font-mono">{{ $openingBalance < 0 ? number_format(abs($openingBalance), 2) : '-' }}</td>
+                            <td class="px-4 py-2 text-left font-mono">{{ number_format($runningBal, 2) }}</td>
+                        </tr>
+                    @endif
+                    @forelse($transactions as $tx)
+                        @php $runningBal += $tx['amount']; @endphp
                         <tr class="border-b border-gray-100 hover:bg-gray-50">
-                            <td class="px-4 py-2">{{ $invoice->date->format('Y-m-d') }}</td>
-                            <td class="px-4 py-2 font-mono text-xs">{{ $invoice->invoice_number }}</td>
-                            <td class="px-4 py-2">{{ $invoice->customer->name ?? '-' }}</td>
-                            <td class="px-4 py-2 text-left font-mono">{{ number_format($invoice->total, 2) }}</td>
-                            <td class="px-4 py-2 text-left font-mono text-emerald-600">{{ number_format($invoice->paid_amount, 2) }}</td>
-                            <td class="px-4 py-2 text-left font-mono text-red-600">{{ number_format($invoice->due_amount, 2) }}</td>
-                            <td class="px-4 py-2">
-                                <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ $invoice->payment_status === 'paid' ? 'bg-green-100 text-green-800' : ($invoice->payment_status === 'partial' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800') }}">
-                                    {{ $invoice->payment_status === 'paid' ? 'مدفوع' : ($invoice->payment_status === 'partial' ? 'جزئي' : 'غير مدفوع') }}
-                                </span>
-                            </td>
+                            <td class="px-4 py-2">{{ $tx['date']?->format('Y-m-d') ?? '-' }}</td>
+                            <td class="px-4 py-2"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ $tx['badge'] }}">{{ $tx['type'] }}</span></td>
+                            <td class="px-4 py-2 font-mono text-xs">{{ $tx['reference'] }}</td>
+                            <td class="px-4 py-2 text-left font-mono text-red-600">{{ $tx['amount'] > 0 ? number_format($tx['amount'], 2) : '-' }}</td>
+                            <td class="px-4 py-2 text-left font-mono text-emerald-600">{{ $tx['amount'] < 0 ? number_format(abs($tx['amount']), 2) : '-' }}</td>
+                            <td class="px-4 py-2 text-left font-mono {{ $runningBal >= 0 ? 'text-red-600' : 'text-emerald-600' }}">{{ number_format($runningBal, 2) }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" class="px-4 py-8 text-center text-gray-500">اختر عميلاً لعرض البيانات</td></tr>
+                        <tr><td colspan="6" class="px-4 py-8 text-center text-gray-500">اختر عميلاً لعرض البيانات</td></tr>
                     @endforelse
                 </tbody>
             </table>

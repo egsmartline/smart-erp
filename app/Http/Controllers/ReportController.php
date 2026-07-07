@@ -102,16 +102,59 @@ class ReportController extends TenantAwareController
 
         $customers = $this->tenantQuery(Customer::class)->where('is_active', true)->get();
 
-        $invoices = collect();
+        $customer = null;
+        $transactions = collect();
+        $openingBalance = 0;
+
         if ($customerId) {
+            $customer = Customer::find($customerId);
+            $openingBal = (float) ($customer->opening_balance ?? 0);
+            $openingBalance = $customer->opening_balance_type === 'credit' ? -$openingBal : $openingBal;
+
             $invoices = SalesInvoice::where('tenant_id', $this->getTenantId())
                 ->where('customer_id', $customerId)
                 ->whereBetween('date', [$dateFrom, $dateTo])
                 ->with('customer')
                 ->get();
+
+            foreach ($invoices as $inv) {
+                $transactions->push([
+                    'date' => $inv->date,
+                    'type' => 'فاتورة بيع',
+                    'badge' => 'bg-blue-100 text-blue-800',
+                    'reference' => $inv->invoice_number,
+                    'amount' => (float) $inv->total,
+                    'paid' => (float) $inv->paid_amount,
+                    'due' => (float) $inv->due_amount,
+                    'payment_status' => $inv->payment_status,
+                ]);
+            }
+
+            $payments = Payment::where('tenant_id', $this->getTenantId())
+                ->where('customer_id', $customerId)
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->where('type', 'receipt')
+                ->get();
+
+            foreach ($payments as $pay) {
+                $transactions->push([
+                    'date' => $pay->date,
+                    'type' => 'سند قبض',
+                    'badge' => 'bg-emerald-100 text-emerald-800',
+                    'reference' => $pay->payment_number,
+                    'amount' => -(float) $pay->amount,
+                    'paid' => 0,
+                    'due' => 0,
+                    'payment_status' => null,
+                ]);
+            }
+
+            $transactions = $transactions->sortBy(function ($t) {
+                return ($t['date'] ? $t['date']->format('Y-m-d') : '0000-00-00');
+            })->values();
         }
 
-        return view('reports.customer-statement', compact('customers', 'invoices', 'customerId', 'dateFrom', 'dateTo'));
+        return view('reports.customer-statement', compact('customers', 'customer', 'transactions', 'openingBalance', 'customerId', 'dateFrom', 'dateTo'));
     }
 
     public function supplierStatement(Request $request)
@@ -122,16 +165,59 @@ class ReportController extends TenantAwareController
 
         $suppliers = $this->tenantQuery(Supplier::class)->where('is_active', true)->get();
 
-        $invoices = collect();
+        $supplier = null;
+        $transactions = collect();
+        $openingBalance = 0;
+
         if ($supplierId) {
+            $supplier = Supplier::find($supplierId);
+            $openingBal = (float) ($supplier->opening_balance ?? 0);
+            $openingBalance = $supplier->opening_balance_type === 'credit' ? $openingBal : -$openingBal;
+
             $invoices = PurchaseInvoice::where('tenant_id', $this->getTenantId())
                 ->where('supplier_id', $supplierId)
                 ->whereBetween('date', [$dateFrom, $dateTo])
                 ->with('supplier')
                 ->get();
+
+            foreach ($invoices as $inv) {
+                $transactions->push([
+                    'date' => $inv->invoice_date ?? $inv->created_at,
+                    'type' => 'فاتورة شراء',
+                    'badge' => 'bg-orange-100 text-orange-800',
+                    'reference' => $inv->invoice_number,
+                    'amount' => (float) $inv->total,
+                    'paid' => (float) $inv->paid_amount,
+                    'due' => (float) $inv->due_amount,
+                    'payment_status' => $inv->payment_status,
+                ]);
+            }
+
+            $payments = Payment::where('tenant_id', $this->getTenantId())
+                ->where('supplier_id', $supplierId)
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->where('type', 'payment')
+                ->get();
+
+            foreach ($payments as $pay) {
+                $transactions->push([
+                    'date' => $pay->date,
+                    'type' => 'سند صرف',
+                    'badge' => 'bg-emerald-100 text-emerald-800',
+                    'reference' => $pay->payment_number,
+                    'amount' => -(float) $pay->amount,
+                    'paid' => 0,
+                    'due' => 0,
+                    'payment_status' => null,
+                ]);
+            }
+
+            $transactions = $transactions->sortBy(function ($t) {
+                return ($t['date'] ? $t['date']->format('Y-m-d') : '0000-00-00');
+            })->values();
         }
 
-        return view('reports.supplier-statement', compact('suppliers', 'invoices', 'supplierId', 'dateFrom', 'dateTo'));
+        return view('reports.supplier-statement', compact('suppliers', 'supplier', 'transactions', 'openingBalance', 'supplierId', 'dateFrom', 'dateTo'));
     }
 
     public function vatReport(Request $request)
