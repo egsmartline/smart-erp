@@ -147,7 +147,29 @@ class ItemController extends TenantAwareController
             $validated['image'] = 'uploads/items/' . $filename;
         }
 
+        $oldOpening = (float) $item->getOriginal('opening_stock');
         $item->update($validated);
+        $newOpening = (float) $item->opening_stock;
+        $diff = $newOpening - $oldOpening;
+
+        if ($diff != 0) {
+            $iw = ItemWarehouse::where('item_id', $item->id)->first();
+            if ($iw) {
+                $iw->increment('quantity', $diff);
+            } elseif ($diff > 0) {
+                $warehouseId = $validated['default_warehouse']
+                    ?? $this->tenantQuery(Warehouse::class)->where('is_default', true)->value('id')
+                    ?? $this->tenantQuery(Warehouse::class)->value('id');
+                if ($warehouseId) {
+                    ItemWarehouse::create([
+                        'tenant_id' => $this->getTenantId(),
+                        'item_id' => $item->id,
+                        'warehouse_id' => $warehouseId,
+                        'quantity' => $newOpening,
+                    ]);
+                }
+            }
+        }
 
         return redirect()->route('items.index')->with('success', 'تم تحديث الصنف بنجاح');
     }
