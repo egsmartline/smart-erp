@@ -365,10 +365,10 @@ class ReportController extends TenantAwareController
 
             if ($saleRefs->isNotEmpty()) {
                 $invoices = SalesInvoice::where('tenant_id', $this->getTenantId())
-                    ->whereIn('reference', $saleRefs)
+                    ->whereIn('invoice_number', $saleRefs)
                     ->with('customer:id,name,name_ar')
                     ->get()
-                    ->keyBy('reference');
+                    ->keyBy('invoice_number');
                 foreach ($invoices as $ref => $inv) {
                     $partnerNames[$ref] = $inv->customer?->name ?? $inv->customer?->name_ar ?? '-';
                 }
@@ -376,10 +376,10 @@ class ReportController extends TenantAwareController
 
             if ($purchaseRefs->isNotEmpty()) {
                 $invoices = PurchaseInvoice::where('tenant_id', $this->getTenantId())
-                    ->whereIn('reference', $purchaseRefs)
+                    ->whereIn('invoice_number', $purchaseRefs)
                     ->with('supplier:id,name,name_ar')
                     ->get()
-                    ->keyBy('reference');
+                    ->keyBy('invoice_number');
                 foreach ($invoices as $ref => $inv) {
                     $partnerNames[$ref] = $inv->supplier?->name ?? $inv->supplier?->name_ar ?? '-';
                 }
