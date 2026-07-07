@@ -226,19 +226,27 @@ class ReportController extends TenantAwareController
         $dateFrom = $request->date_from ?? now()->startOfMonth()->toDateString();
         $dateTo = $request->date_to ?? now()->toDateString();
 
-        $salesTax = SalesInvoice::where('tenant_id', $this->getTenantId())
+        $salesInvoices = SalesInvoice::where('tenant_id', $this->getTenantId())
             ->where('status', 'posted')
             ->whereBetween('date', [$dateFrom, $dateTo])
-            ->sum('tax_amount');
+            ->where('tax_amount', '>', 0)
+            ->with('customer')
+            ->orderBy('date')
+            ->get();
 
-        $purchaseTax = PurchaseInvoice::where('tenant_id', $this->getTenantId())
+        $purchaseInvoices = PurchaseInvoice::where('tenant_id', $this->getTenantId())
             ->where('status', 'posted')
             ->whereBetween('date', [$dateFrom, $dateTo])
-            ->sum('tax_amount');
+            ->where('tax_amount', '>', 0)
+            ->with('supplier')
+            ->orderBy('date')
+            ->get();
 
+        $salesTax = $salesInvoices->sum('tax_amount');
+        $purchaseTax = $purchaseInvoices->sum('tax_amount');
         $netVat = $salesTax - $purchaseTax;
 
-        return view('reports.vat', compact('salesTax', 'purchaseTax', 'netVat', 'dateFrom', 'dateTo'));
+        return view('reports.vat', compact('salesInvoices', 'purchaseInvoices', 'salesTax', 'purchaseTax', 'netVat', 'dateFrom', 'dateTo'));
     }
 
     public function salesReport(Request $request)
@@ -292,19 +300,19 @@ class ReportController extends TenantAwareController
         $dateFrom = $request->date_from ?? now()->startOfMonth()->toDateString();
         $dateTo = $request->date_to ?? now()->toDateString();
 
-        $receipts = $this->tenantQuery(\App\Models\Payment::class)
-            ->where('type', 'receipt')
+        $transactions = $this->tenantQuery(\App\Models\Payment::class)
+            ->whereIn('type', ['receipt', 'payment'])
             ->whereBetween('date', [$dateFrom, $dateTo])
-            ->sum('amount_in_currency');
+            ->with(['customer', 'supplier', 'treasury', 'bankAccount'])
+            ->orderBy('date')
+            ->orderBy('id')
+            ->get();
 
-        $payments = $this->tenantQuery(\App\Models\Payment::class)
-            ->where('type', 'payment')
-            ->whereBetween('date', [$dateFrom, $dateTo])
-            ->sum('amount_in_currency');
+        $totalReceipts = $transactions->where('type', 'receipt')->sum('amount_in_currency');
+        $totalPayments = $transactions->where('type', 'payment')->sum('amount_in_currency');
+        $netCashFlow = $totalReceipts - $totalPayments;
 
-        $netCashFlow = $receipts - $payments;
-
-        return view('reports.cash-flow', compact('receipts', 'payments', 'netCashFlow', 'dateFrom', 'dateTo'));
+        return view('reports.cash-flow', compact('transactions', 'totalReceipts', 'totalPayments', 'netCashFlow', 'dateFrom', 'dateTo'));
     }
 
     public function accountStatement(Request $request)
