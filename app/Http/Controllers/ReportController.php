@@ -397,7 +397,6 @@ class ReportController extends TenantAwareController
     {
         $accounts = $this->tenantQuery(Account::class)
             ->where('type', $type)
-            ->where('is_header', false)
             ->where('is_active', true)
             ->orderBy('code')
             ->get()
