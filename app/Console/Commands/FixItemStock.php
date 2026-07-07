@@ -25,11 +25,11 @@ class FixItemStock extends Command
 
                 $totalIn = (float) StockMovement::where('item_id', $item->id)
                     ->where('warehouse_id', $iw->warehouse_id)
-                    ->where('type', 'in')->sum('quantity');
+                    ->whereIn('type', ['in', 'purchase', 'return_in'])->sum('quantity');
 
                 $totalOut = (float) StockMovement::where('item_id', $item->id)
                     ->where('warehouse_id', $iw->warehouse_id)
-                    ->where('type', 'out')->sum('quantity');
+                    ->whereIn('type', ['out', 'sale', 'return_out'])->sum('quantity');
 
                 $correct = (float) $item->opening_stock + $totalIn - $totalOut;
                 if ($correct < 0) $correct = 0;
