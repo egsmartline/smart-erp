@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Models\FiscalYear;
 use App\Models\JournalEntry;
 use App\Models\JournalEntryLine;
+use App\Models\Tax;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -88,12 +89,30 @@ class JournalService
         }
     }
 
+    private function getTaxAccount(int $tenantId): ?Account
+    {
+        $tax = Tax::where('tenant_id', $tenantId)->first();
+        if ($tax && $tax->account_id) {
+            return Account::find($tax->account_id);
+        }
+        return $this->getAccountByCode($tenantId, '2102');
+    }
+
+    private function getPurchaseTaxAccount(int $tenantId): ?Account
+    {
+        $tax = Tax::where('tenant_id', $tenantId)->first();
+        if ($tax && $tax->purchase_account_id) {
+            return Account::find($tax->purchase_account_id);
+        }
+        return $this->getAccountByCode($tenantId, '2102');
+    }
+
     public function buildSalesInvoiceLines(array $invoiceData, int $tenantId): array
     {
         $lines = [];
         $arAccount = $this->getAccountByCode($tenantId, '1103');
         $revenueAccount = $this->getAccountByCode($tenantId, '41');
-        $taxAccount = $this->getAccountByCode($tenantId, '2102');
+        $taxAccount = $this->getTaxAccount($tenantId);
 
         if ($arAccount) {
             $lines[] = ['account_id' => $arAccount->id, 'debit' => $invoiceData['total'], 'credit' => 0];
@@ -116,7 +135,7 @@ class JournalService
         $lines = [];
         $apAccount = $this->getAccountByCode($tenantId, '2101');
         $inventoryAccount = $this->getAccountByCode($tenantId, '1104');
-        $taxAccount = $this->getAccountByCode($tenantId, '2102');
+        $taxAccount = $this->getPurchaseTaxAccount($tenantId);
 
         $netAmount = $invoiceData['subtotal'] - ($invoiceData['discount_amount'] ?? 0);
 
