@@ -9,6 +9,7 @@ use App\Models\PurchaseInvoice;
 use App\Models\Customer;
 use App\Models\Supplier;
 use App\Models\Item;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 
 class ReportController extends TenantAwareController
