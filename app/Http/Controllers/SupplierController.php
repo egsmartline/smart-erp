@@ -36,12 +36,18 @@ class SupplierController extends TenantAwareController
             'country' => 'nullable|string|max:100',
             'tax_number' => 'nullable|string|max:50',
             'credit_limit' => 'nullable|numeric|min:0',
+            'opening_balance' => 'nullable|numeric|min:0',
+            'opening_balance_type' => 'nullable|in:debit,credit',
             'notes' => 'nullable|string',
         ]);
 
         $validated['tenant_id'] = $this->getTenantId();
         $validated['is_active'] = true;
-        $validated['balance'] = 0;
+        $validated['opening_balance'] = $validated['opening_balance'] ?? 0;
+        $validated['opening_balance_type'] = $validated['opening_balance_type'] ?? 'debit';
+        $validated['balance'] = $validated['opening_balance_type'] === 'credit'
+            ? -$validated['opening_balance']
+            : $validated['opening_balance'];
 
         Supplier::create($validated);
 
@@ -75,9 +81,17 @@ class SupplierController extends TenantAwareController
             'country' => 'nullable|string|max:100',
             'tax_number' => 'nullable|string|max:50',
             'credit_limit' => 'nullable|numeric|min:0',
+            'opening_balance' => 'nullable|numeric|min:0',
+            'opening_balance_type' => 'nullable|in:debit,credit',
             'is_active' => 'boolean',
             'notes' => 'nullable|string',
         ]);
+
+        $validated['opening_balance'] = $validated['opening_balance'] ?? 0;
+        $validated['opening_balance_type'] = $validated['opening_balance_type'] ?? 'debit';
+        $validated['balance'] = $validated['opening_balance_type'] === 'credit'
+            ? -$validated['opening_balance']
+            : $validated['opening_balance'];
 
         $supplier->update($validated);
 

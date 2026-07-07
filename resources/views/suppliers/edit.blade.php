@@ -60,6 +60,17 @@
                     <label for="credit_limit" class="mb-1 block text-sm font-medium text-gray-700">حد الائتمان</label>
                     <input type="number" name="credit_limit" id="credit_limit" value="{{ old('credit_limit', $supplier->credit_limit) }}" step="0.01" min="0" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
+                <div>
+                    <label for="opening_balance" class="mb-1 block text-sm font-medium text-gray-700">الرصيد الافتتاحي</label>
+                    <input type="number" name="opening_balance" id="opening_balance" value="{{ old('opening_balance', $supplier->opening_balance) }}" step="0.01" min="0" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="opening_balance_type" class="mb-1 block text-sm font-medium text-gray-700">نوع الرصيد</label>
+                    <select name="opening_balance_type" id="opening_balance_type" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <option value="debit" {{ old('opening_balance_type', $supplier->opening_balance_type) === 'debit' ? 'selected' : '' }}>مدين (له)</option>
+                        <option value="credit" {{ old('opening_balance_type', $supplier->opening_balance_type) === 'credit' ? 'selected' : '' }}>دائن (عليه)</option>
+                    </select>
+                </div>
                 <div class="flex items-end">
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" name="is_active" value="1" {{ old('is_active', $supplier->is_active) ? 'checked' : '' }} class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">

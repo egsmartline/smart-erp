@@ -25,6 +25,8 @@ class Supplier extends Model
         'country',
         'tax_number',
         'credit_limit',
+        'opening_balance',
+        'opening_balance_type',
         'balance',
         'is_active',
         'notes',
@@ -34,6 +36,7 @@ class Supplier extends Model
     {
         return [
             'credit_limit' => 'decimal:2',
+            'opening_balance' => 'decimal:2',
             'balance' => 'decimal:2',
             'is_active' => 'boolean',
         ];
