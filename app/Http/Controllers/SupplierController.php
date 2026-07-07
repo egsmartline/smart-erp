@@ -57,7 +57,7 @@ class SupplierController extends TenantAwareController
     public function show(Supplier $supplier)
     {
         $this->authorizeTenant($supplier);
-        $supplier->load(['purchaseInvoices' => fn($q) => $q->latest()->limit(20), 'payments' => fn($q) => $q->latest()->limit(20)]);
+        $supplier->load(['purchaseInvoices' => fn($q) => $q->latest(), 'payments' => fn($q) => $q->latest()]);
         return view('suppliers.show', compact('supplier'));
     }
 

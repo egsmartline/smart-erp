@@ -59,7 +59,7 @@ class CustomerController extends TenantAwareController
     public function show(Customer $customer)
     {
         $this->authorizeTenant($customer);
-        $customer->load(['salesInvoices' => fn($q) => $q->latest()->limit(20), 'payments' => fn($q) => $q->latest()->limit(20)]);
+        $customer->load(['salesInvoices' => fn($q) => $q->latest(), 'payments' => fn($q) => $q->latest()]);
         return view('customers.show', compact('customer'));
     }
 

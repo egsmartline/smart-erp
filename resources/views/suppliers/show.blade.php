@@ -66,14 +66,57 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @php $runningBalance = 0; @endphp
-                    @forelse($supplier->purchaseInvoices->sortByDesc('invoice_date') as $invoice)
-                        @php $runningBalance += $invoice->total; @endphp
+                    @php
+                        $openingBal = (float) ($supplier->opening_balance ?? 0);
+                        $runningBalance = $supplier->opening_balance_type === 'credit' ? $openingBal : -$openingBal;
+                        $transactions = collect();
+
+                        foreach ($supplier->purchaseInvoices as $inv) {
+                            $transactions->push([
+                                'date' => $inv->invoice_date ?? $inv->created_at,
+                                'type' => 'invoice',
+                                'type_label' => 'فاتورة شراء',
+                                'badge_class' => 'bg-orange-100 text-orange-800',
+                                'reference' => $inv->invoice_number,
+                                'amount' => (float) $inv->total,
+                                'sort' => ($inv->invoice_date?->format('Y-m-d') ?? '0000-00-00') . '|' . $inv->created_at,
+                            ]);
+                        }
+
+                        foreach ($supplier->payments as $pay) {
+                            $amount = (float) $pay->amount;
+                            if ($pay->type === 'payment') $amount = -$amount;
+                            $transactions->push([
+                                'date' => $pay->date,
+                                'type' => 'payment',
+                                'type_label' => $pay->payment_method === 'bank_transfer' ? 'تحويل بنكي' : ($pay->payment_method === 'check' ? 'شيك' : 'نقداً'),
+                                'badge_class' => 'bg-emerald-100 text-emerald-800',
+                                'reference' => $pay->payment_number,
+                                'amount' => $amount,
+                                'sort' => ($pay->date ? $pay->date->format('Y-m-d') : '0000-00-00') . '|' . $pay->created_at,
+                            ]);
+                        }
+
+                        $transactions = $transactions->sortBy('sort');
+                    @endphp
+
+                    @if($runningBalance != 0)
+                        <tr class="border-b border-gray-100 bg-gray-50 font-semibold">
+                            <td class="px-4 py-3">—</td>
+                            <td class="px-4 py-3"><span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-200 text-gray-700">رصيد افتتاحي</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">—</td>
+                            <td class="px-4 py-3 text-left font-mono">{{ number_format($runningBalance, 2) }}</td>
+                            <td class="px-4 py-3 text-left font-mono">{{ number_format($runningBalance, 2) }}</td>
+                        </tr>
+                    @endif
+
+                    @forelse($transactions as $tx)
+                        @php $runningBalance += $tx['amount']; @endphp
                         <tr class="border-b border-gray-100 hover:bg-gray-50">
-                            <td class="px-4 py-3">{{ $invoice->invoice_date?->format('Y-m-d') ?? '-' }}</td>
-                            <td class="px-4 py-3"><span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-orange-100 text-orange-800">فاتورة شراء</span></td>
-                            <td class="px-4 py-3 font-mono text-xs">{{ $invoice->invoice_number }}</td>
-                            <td class="px-4 py-3 text-left font-mono text-red-600">{{ number_format($invoice->total, 2) }}</td>
+                            <td class="px-4 py-3">{{ $tx['date']?->format('Y-m-d') ?? '-' }}</td>
+                            <td class="px-4 py-3"><span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $tx['badge_class'] }}">{{ $tx['type_label'] }}</span></td>
+                            <td class="px-4 py-3 font-mono text-xs">{{ $tx['reference'] }}</td>
+                            <td class="px-4 py-3 text-left font-mono {{ $tx['amount'] >= 0 ? 'text-red-600' : 'text-emerald-600' }}">{{ number_format(abs($tx['amount']), 2) }}</td>
                             <td class="px-4 py-3 text-left font-mono">{{ number_format($runningBalance, 2) }}</td>
                         </tr>
                     @empty
