@@ -60,6 +60,7 @@
                             <th class="px-4 py-3 font-semibold text-gray-700">التاريخ</th>
                             <th class="px-4 py-3 font-semibold text-gray-700">رقم القيد</th>
                             <th class="px-4 py-3 font-semibold text-gray-700">البيان</th>
+                            <th class="px-4 py-3 font-semibold text-gray-700">الطرف</th>
                             <th class="px-4 py-3 font-semibold text-gray-700 text-left">مدين</th>
                             <th class="px-4 py-3 font-semibold text-gray-700 text-left">دائن</th>
                             <th class="px-4 py-3 font-semibold text-gray-700 text-left">الرصيد</th>
@@ -67,7 +68,7 @@
                     </thead>
                     <tbody>
                         <tr class="border-b border-gray-100 bg-gray-50/50 font-bold">
-                            <td colspan="3" class="px-4 py-2 text-gray-700">الرصيد الافتتاحي</td>
+                            <td colspan="4" class="px-4 py-2 text-gray-700">الرصيد الافتتاحي</td>
                             <td class="px-4 py-2 text-left font-mono">-</td>
                             <td class="px-4 py-2 text-left font-mono">-</td>
                             <td class="px-4 py-2 text-left font-mono {{ $openingBalance >= 0 ? 'text-blue-600' : 'text-red-600' }}">
@@ -79,6 +80,7 @@
                                 <td class="px-4 py-2">{{ $line->journalEntry->date ?? '-' }}</td>
                                 <td class="px-4 py-2 font-mono text-xs">{{ $line->journalEntry->entry_number ?? '-' }}</td>
                                 <td class="px-4 py-2 text-gray-600">{{ $line->description ?? $line->journalEntry->description ?? '-' }}</td>
+                                <td class="px-4 py-2">{{ $line->partner_name ?? '-' }}</td>
                                 <td class="px-4 py-2 text-left font-mono">{{ $line->debit > 0 ? number_format($line->debit, 2) : '-' }}</td>
                                 <td class="px-4 py-2 text-left font-mono">{{ $line->credit > 0 ? number_format($line->credit, 2) : '-' }}</td>
                                 <td class="px-4 py-2 text-left font-mono font-bold {{ $line->running_balance >= 0 ? 'text-gray-900' : 'text-red-600' }}">
@@ -86,10 +88,10 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="6" class="px-4 py-8 text-center text-gray-500">لا توجد حركات في هذه الفترة</td></tr>
+                            <tr><td colspan="7" class="px-4 py-8 text-center text-gray-500">لا توجد حركات في هذه الفترة</td></tr>
                         @endforelse
                         <tr class="border-t-2 border-gray-300 bg-gray-100 font-bold">
-                            <td colspan="3" class="px-4 py-3">الإجمالي</td>
+                            <td colspan="4" class="px-4 py-3">الإجمالي</td>
                             <td class="px-4 py-3 text-left font-mono text-blue-700">{{ number_format($totalDebit, 2) }}</td>
                             <td class="px-4 py-3 text-left font-mono text-emerald-700">{{ number_format($totalCredit, 2) }}</td>
                             <td class="px-4 py-3 text-left font-mono {{ $closingBalance >= 0 ? 'text-blue-700' : 'text-red-700' }}">

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\JournalEntry;
 use App\Models\JournalEntryLine;
 use App\Models\Account;
 use App\Models\SalesInvoice;
@@ -354,6 +355,39 @@ class ReportController extends TenantAwareController
                     ? $running + $l->debit - $l->credit
                     : $running - $l->debit + $l->credit;
                 $running = $l->running_balance;
+                return $l;
+            });
+
+            $partnerNames = collect();
+            $refs = $lines->pluck('journalEntry.reference')->filter();
+            $saleRefs = $refs->filter(fn($r) => str_starts_with($r, 'INV-S-'))->values();
+            $purchaseRefs = $refs->filter(fn($r) => str_starts_with($r, 'INV-P-'))->values();
+
+            if ($saleRefs->isNotEmpty()) {
+                $invoices = SalesInvoice::where('tenant_id', $this->getTenantId())
+                    ->whereIn('reference', $saleRefs)
+                    ->with('customer:id,name,name_ar')
+                    ->get()
+                    ->keyBy('reference');
+                foreach ($invoices as $ref => $inv) {
+                    $partnerNames[$ref] = $inv->customer?->name ?? $inv->customer?->name_ar ?? '-';
+                }
+            }
+
+            if ($purchaseRefs->isNotEmpty()) {
+                $invoices = PurchaseInvoice::where('tenant_id', $this->getTenantId())
+                    ->whereIn('reference', $purchaseRefs)
+                    ->with('supplier:id,name,name_ar')
+                    ->get()
+                    ->keyBy('reference');
+                foreach ($invoices as $ref => $inv) {
+                    $partnerNames[$ref] = $inv->supplier?->name ?? $inv->supplier?->name_ar ?? '-';
+                }
+            }
+
+            $lines = $lines->map(function ($l) use ($partnerNames) {
+                $ref = $l->journalEntry->reference ?? '';
+                $l->partner_name = $partnerNames[$ref] ?? null;
                 return $l;
             });
 
