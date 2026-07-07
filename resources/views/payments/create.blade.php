@@ -166,8 +166,28 @@
                 accountField.style.display = 'block';
                 customerField.style.display = showCustomer ? 'block' : 'none';
                 supplierField.style.display = isPayment ? 'block' : 'none';
-                treasuryField.style.display = showTreasury ? 'block' : 'none';
-                bankAccountField.style.display = showBank ? 'block' : 'none';
+
+                const treasurySelect = document.getElementById('treasury_id');
+                const bankSelect = document.getElementById('bank_account_id');
+
+                if (showTreasury) {
+                    treasuryField.style.display = 'block';
+                    treasurySelect.disabled = false;
+                } else {
+                    treasuryField.style.display = 'none';
+                    treasurySelect.value = '';
+                    treasurySelect.disabled = true;
+                }
+
+                if (showBank) {
+                    bankAccountField.style.display = 'block';
+                    bankSelect.disabled = false;
+                } else {
+                    bankAccountField.style.display = 'none';
+                    bankSelect.value = '';
+                    bankSelect.disabled = true;
+                }
+
                 chequeField.style.display = showCheque ? 'block' : 'none';
             }
 

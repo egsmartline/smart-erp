@@ -84,7 +84,7 @@ class PaymentController extends TenantAwareController
         try {
             $payment = Payment::create($validated);
 
-            if (!empty($validated['treasury_id'])) {
+            if ($validated['payment_method'] === 'cash' && !empty($validated['treasury_id'])) {
                 $treasury = CashTreasury::findOrFail($validated['treasury_id']);
                 $treasury->increment('current_balance', $validated['amount'] * $direction);
                 TreasuryTransaction::create([
@@ -98,9 +98,7 @@ class PaymentController extends TenantAwareController
                     'description' => $validated['notes'] ?? (($validated['type'] === 'receipt' ? 'قبض' : 'صرف') . ' - ' . $validated['payment_number']),
                     'user_id' => $validated['user_id'],
                 ]);
-            }
-
-            if (!empty($validated['bank_account_id'])) {
+            } elseif ($validated['payment_method'] === 'bank_transfer' && !empty($validated['bank_account_id'])) {
                 $bankAccount = BankAccount::findOrFail($validated['bank_account_id']);
                 $bankAccount->increment('current_balance', $validated['amount'] * $direction);
                 BankTransaction::create([
@@ -194,15 +192,13 @@ class PaymentController extends TenantAwareController
 
         $direction = $payment->type === 'receipt' ? -1 : 1;
 
-        if ($payment->treasury_id) {
+        if ($payment->payment_method === 'cash' && $payment->treasury_id) {
             $treasury = CashTreasury::find($payment->treasury_id);
             if ($treasury) {
                 $treasury->increment('current_balance', $payment->amount * $direction);
             }
             TreasuryTransaction::where('reference_type', 'payment')->where('reference_id', $payment->id)->delete();
-        }
-
-        if ($payment->bank_account_id) {
+        } elseif ($payment->payment_method === 'bank_transfer' && $payment->bank_account_id) {
             $bankAccount = BankAccount::find($payment->bank_account_id);
             if ($bankAccount) {
                 $bankAccount->increment('current_balance', $payment->amount * $direction);
