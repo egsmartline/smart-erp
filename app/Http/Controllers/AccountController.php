@@ -29,11 +29,11 @@ class AccountController extends Controller
         $accounts = $query->with('parent')->orderBy('code')->get();
 
         $accountTypes = [
-            'assets' => 'أصول',
-            'liabilities' => 'خصوم',
+            'asset' => 'أصول',
+            'liability' => 'خصوم',
             'equity' => 'حقوق ملكية',
             'revenue' => 'إيرادات',
-            'expenses' => 'مصروفات',
+            'expense' => 'مصروفات',
         ];
 
         return view('accounts.index', compact('accounts', 'accountTypes'));
@@ -47,11 +47,11 @@ class AccountController extends Controller
             ->get();
 
         $accountTypes = [
-            'assets' => 'أصول',
-            'liabilities' => 'خصوم',
+            'asset' => 'أصول',
+            'liability' => 'خصوم',
             'equity' => 'حقوق ملكية',
             'revenue' => 'إيرادات',
-            'expenses' => 'مصروفات',
+            'expense' => 'مصروفات',
         ];
 
         return view('accounts.create', compact('accounts', 'accountTypes'));
@@ -63,7 +63,7 @@ class AccountController extends Controller
             'code' => 'required|string|max:10|unique:chart_of_accounts,code,NULL,id,tenant_id,' . Auth::user()->tenant_id,
             'name' => 'required|string|max:255',
             'name_en' => 'nullable|string|max:255',
-            'type' => 'required|in:assets,liabilities,equity,revenue,expenses',
+            'type' => 'required|in:asset,liability,equity,revenue,expense',
             'sub_type' => 'nullable|string|max:255',
             'parent_id' => 'nullable|exists:chart_of_accounts,id',
             'opening_balance' => 'required|numeric|min:0',
@@ -89,7 +89,7 @@ class AccountController extends Controller
             ->orderBy('id')
             ->get();
 
-        $isDebitNature = in_array($account->type, ['assets', 'expenses']);
+        $isDebitNature = in_array($account->type, ['asset', 'expense']);
         $runningBalance = $account->opening_balance;
 
         foreach ($allLines as $line) {
@@ -126,11 +126,11 @@ class AccountController extends Controller
             ->get();
 
         $accountTypes = [
-            'assets' => 'أصول',
-            'liabilities' => 'خصوم',
+            'asset' => 'أصول',
+            'liability' => 'خصوم',
             'equity' => 'حقوق ملكية',
             'revenue' => 'إيرادات',
-            'expenses' => 'مصروفات',
+            'expense' => 'مصروفات',
         ];
 
         return view('accounts.edit', compact('account', 'accounts', 'accountTypes'));
@@ -144,7 +144,7 @@ class AccountController extends Controller
             'code' => 'required|string|max:10|unique:chart_of_accounts,code,' . $account->id . ',id,tenant_id,' . Auth::user()->tenant_id,
             'name' => 'required|string|max:255',
             'name_en' => 'nullable|string|max:255',
-            'type' => 'required|in:assets,liabilities,equity,revenue,expenses',
+            'type' => 'required|in:asset,liability,equity,revenue,expense',
             'sub_type' => 'nullable|string|max:255',
             'parent_id' => 'nullable|exists:chart_of_accounts,id',
             'opening_balance' => 'required|numeric|min:0',
