@@ -101,14 +101,14 @@ class ReportController extends TenantAwareController
         $dateFrom = $request->date_from ?? now()->startOfYear()->toDateString();
         $dateTo = $request->date_to ?? now()->toDateString();
 
-        $customers = $this->tenantQuery(Customer::class)->where('is_active', true)->get();
+        $customers = $this->tenantQuery(Customer::class)->where('is_active', true)->orderBy('name')->get();
 
         $customer = null;
         $transactions = collect();
         $openingBalance = 0;
 
         if ($customerId) {
-            $customer = Customer::find($customerId);
+            $customer = $this->tenantQuery(Customer::class)->find($customerId);
             $openingBal = (float) ($customer->opening_balance ?? 0);
             $openingBalance = $customer->opening_balance_type === 'credit' ? -$openingBal : $openingBal;
 
@@ -164,14 +164,14 @@ class ReportController extends TenantAwareController
         $dateFrom = $request->date_from ?? now()->startOfYear()->toDateString();
         $dateTo = $request->date_to ?? now()->toDateString();
 
-        $suppliers = $this->tenantQuery(Supplier::class)->where('is_active', true)->get();
+        $suppliers = $this->tenantQuery(Supplier::class)->where('is_active', true)->orderBy('name')->get();
 
         $supplier = null;
         $transactions = collect();
         $openingBalance = 0;
 
         if ($supplierId) {
-            $supplier = Supplier::find($supplierId);
+            $supplier = $this->tenantQuery(Supplier::class)->find($supplierId);
             $openingBal = (float) ($supplier->opening_balance ?? 0);
             $openingBalance = $supplier->opening_balance_type === 'credit' ? $openingBal : -$openingBal;
 
