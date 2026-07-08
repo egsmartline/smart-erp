@@ -90,7 +90,7 @@
             @endif
             @if($invoice->tax_amount > 0)
             <tr class="total-row">
-                <td colspan="5">الضريبة</td>
+                <td colspan="5">ضريبة القيمة المضافة</td>
                 <td class="ltr font-mono">{{ number_format($invoice->tax_amount, 2) }}</td>
             </tr>
             @endif

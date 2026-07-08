@@ -55,7 +55,7 @@
                                 <th class="px-2 py-1 font-semibold text-gray-700 text-center">الكمية</th>
                                 <th class="px-2 py-1 font-semibold text-gray-700 text-center">السعر</th>
                                 <th class="px-2 py-1 font-semibold text-gray-700 text-center">الخصم</th>
-                                <th class="px-2 py-1 font-semibold text-gray-700 text-center">الضريبة</th>
+                                <th class="px-2 py-1 font-semibold text-gray-700 text-center">ضريبة القيمة المضافة</th>
                                 <th class="px-2 py-1 font-semibold text-gray-700 text-center">الإجمالي</th>
                             </tr>
                         </thead>
@@ -88,7 +88,7 @@
                             @if($salesInvoice->tax_amount > 0)
                             <tr class="bg-gray-50">
                                 <td colspan="5" class="px-2 py-1"></td>
-                                <td class="px-2 py-1 text-center text-xs text-gray-600">الضريبة</td>
+                                <td class="px-2 py-1 text-center text-xs text-gray-600">ضريبة القيمة المضافة</td>
                                 <td class="px-2 py-1 text-center font-mono text-emerald-600">+ {{ number_format($salesInvoice->tax_amount, 2) }}</td>
                             </tr>
                             @endif
