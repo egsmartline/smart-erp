@@ -79,29 +79,24 @@
         </tbody>
         <tfoot>
             <tr class="total-row">
-                <td colspan="6" style="text-align: center;">
-                    <span>المجموع الفرعي:</span>
-                    <span class="ltr font-mono">{{ number_format($invoice->subtotal, 2) }}</span>
-                    @if($invoice->tax_amount > 0)
-                    <span style="margin: 0 8px; color: #9ca3af;">|</span>
-                    <span>ضريبة القيمة المضافة:</span>
-                    <span class="ltr font-mono">+{{ number_format($invoice->tax_amount, 2) }}</span>
-                    @endif
-                </td>
+                <td colspan="5">المجموع الفرعي</td>
+                <td class="ltr font-mono">{{ number_format($invoice->subtotal, 2) }}</td>
             </tr>
             @if($invoice->discount_amount > 0)
             <tr class="total-row">
-                <td colspan="6" style="text-align: center;">
-                    <span>الخصم:</span>
-                    <span class="ltr font-mono">-{{ number_format($invoice->discount_amount, 2) }}</span>
-                </td>
+                <td colspan="5">الخصم</td>
+                <td class="ltr font-mono">{{ number_format($invoice->discount_amount, 2) }}</td>
+            </tr>
+            @endif
+            @if($invoice->tax_amount > 0)
+            <tr class="total-row">
+                <td colspan="5">ضريبة القيمة المضافة</td>
+                <td class="ltr font-mono">{{ number_format($invoice->tax_amount, 2) }}</td>
             </tr>
             @endif
             <tr class="total-row final">
-                <td colspan="6" style="text-align: center;">
-                    <span>الإجمالي:</span>
-                    <span class="ltr font-mono">{{ number_format($invoice->total, 2) }}</span>
-                </td>
+                <td colspan="5">الإجمالي</td>
+                <td class="ltr font-mono">{{ number_format($invoice->total, 2) }}</td>
             </tr>
         </tfoot>
     </table>

@@ -74,29 +74,28 @@
                         </tbody>
                         <tfoot>
                             <tr class="bg-gray-50">
-                                <td colspan="7" class="px-2 py-1 text-center">
-                                    <span class="text-xs text-gray-600">المجموع الفرعي:</span>
-                                    <span class="font-mono mx-1">{{ number_format($salesInvoice->subtotal, 2) }}</span>
-                                    @if($salesInvoice->tax_amount > 0)
-                                    <span class="mx-1 text-gray-400">|</span>
-                                    <span class="text-xs text-gray-600">ضريبة القيمة المضافة:</span>
-                                    <span class="font-mono mx-1 text-emerald-600">+{{ number_format($salesInvoice->tax_amount, 2) }}</span>
-                                    @endif
-                                </td>
+                                <td colspan="5" class="px-2 py-1"></td>
+                                <td class="px-2 py-1 text-center text-xs text-gray-600">المجموع الفرعي</td>
+                                <td class="px-2 py-1 text-center font-mono">{{ number_format($salesInvoice->subtotal, 2) }}</td>
                             </tr>
                             @if($salesInvoice->discount_amount > 0)
                             <tr class="bg-gray-50">
-                                <td colspan="7" class="px-2 py-1 text-center">
-                                    <span class="text-xs text-gray-600">الخصم:</span>
-                                    <span class="font-mono mx-1 text-red-600">- {{ number_format($salesInvoice->discount_amount, 2) }}</span>
-                                </td>
+                                <td colspan="5" class="px-2 py-1"></td>
+                                <td class="px-2 py-1 text-center text-xs text-gray-600">الخصم</td>
+                                <td class="px-2 py-1 text-center font-mono text-red-600">- {{ number_format($salesInvoice->discount_amount, 2) }}</td>
+                            </tr>
+                            @endif
+                            @if($salesInvoice->tax_amount > 0)
+                            <tr class="bg-gray-50">
+                                <td colspan="5" class="px-2 py-1"></td>
+                                <td class="px-2 py-1 text-center text-xs text-gray-600">ضريبة القيمة المضافة</td>
+                                <td class="px-2 py-1 text-center font-mono text-emerald-600">+ {{ number_format($salesInvoice->tax_amount, 2) }}</td>
                             </tr>
                             @endif
                             <tr class="bg-blue-50">
-                                <td colspan="7" class="px-2 py-1 text-center">
-                                    <span class="text-xs font-bold text-gray-800">الإجمالي:</span>
-                                    <span class="font-mono text-base font-bold text-blue-700 mx-1">{{ number_format($salesInvoice->total, 2) }} {{ $salesInvoice->currency->symbol ?? '' }}</span>
-                                </td>
+                                <td colspan="5" class="px-2 py-1"></td>
+                                <td class="px-2 py-1 text-center text-xs font-bold text-gray-800">الإجمالي</td>
+                                <td class="px-2 py-1 text-center font-mono text-base font-bold text-blue-700">{{ number_format($salesInvoice->total, 2) }} {{ $salesInvoice->currency->symbol ?? '' }}</td>
                             </tr>
                         </tfoot>
                     </table>
