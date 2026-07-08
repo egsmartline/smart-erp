@@ -192,21 +192,4 @@
 </x-app-layout>
 
 <style>
-    @media print {
-        @page { size: A4; margin: 1.5cm 1cm; }
-        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-        .no-print { display: none !important; }
-
-        body.print-with-logo .print-header { display: table !important; }
-        body.print-with-logo .print-header-minimal { display: none !important; }
-        body.print-without-logo .print-header-minimal { display: block !important; }
-        body.print-without-logo .print-header { display: none !important; }
-
-        .rounded-xl, .rounded-2xl, .rounded-lg { border-radius: 4px !important; }
-        .shadow-sm, .shadow, .shadow-md, .shadow-lg, .shadow-xl { box-shadow: none !important; }
-        .lg\:col-span-2 { width: 100% !important; float: none !important; }
-        .grid { display: block !important; }
-        .grid > * { display: block !important; width: 100% !important; }
-        header { display: none !important; }
-    }
 </style>
