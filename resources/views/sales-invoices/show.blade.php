@@ -131,8 +131,11 @@
                 <h4 class="text-sm font-bold text-gray-700 mb-3">إجراءات</h4>
                 <div class="space-y-2">
                     @if($salesInvoice->status === 'draft')
-                        <a href="{{ route('print.sales-invoice', $salesInvoice) }}" target="_blank" class="block w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition cursor-pointer text-center">
-                            طباعة الفاتورة
+                        <a href="{{ route('print.sales-invoice', [$salesInvoice, 'logo' => 1]) }}" target="_blank" class="block w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition cursor-pointer text-center">
+                            طباعة بشعار
+                        </a>
+                        <a href="{{ route('print.sales-invoice', [$salesInvoice, 'logo' => 0]) }}" target="_blank" class="block w-full rounded-lg bg-gray-500 px-4 py-2 text-sm font-medium text-white hover:bg-gray-600 transition cursor-pointer text-center">
+                            طباعة بدون شعار
                         </a>
                         <form action="{{ route('sales-invoices.post', $salesInvoice) }}" method="POST">
                             @csrf
@@ -151,8 +154,11 @@
                             </button>
                         </form>
                     @elseif($salesInvoice->status === 'posted')
-                        <a href="{{ route('print.sales-invoice', $salesInvoice) }}" target="_blank" class="block w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition cursor-pointer text-center">
-                            طباعة الفاتورة
+                        <a href="{{ route('print.sales-invoice', [$salesInvoice, 'logo' => 1]) }}" target="_blank" class="block w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition cursor-pointer text-center">
+                            طباعة بشعار
+                        </a>
+                        <a href="{{ route('print.sales-invoice', [$salesInvoice, 'logo' => 0]) }}" target="_blank" class="block w-full rounded-lg bg-gray-500 px-4 py-2 text-sm font-medium text-white hover:bg-gray-600 transition cursor-pointer text-center">
+                            طباعة بدون شعار
                         </a>
                         <a href="{{ route('sales-invoices.edit', $salesInvoice) }}" class="block w-full rounded-lg bg-gray-200 px-4 py-2 text-center text-sm font-medium text-gray-700 hover:bg-gray-300 transition">
                             تعديل الفاتورة

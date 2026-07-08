@@ -31,7 +31,7 @@
         <table class="header-table">
             <tr>
                 <td style="width: 60%;">
-                    @if($company && $company->logo)
+                    @if($showLogo && $company && $company->logo)
                         <img src="{{ asset('storage/' . $company->logo) }}" style="height: 50px;">
                     @endif
                     <div class="company-name">{{ $company->name ?? 'Smart ERP' }}</div>
