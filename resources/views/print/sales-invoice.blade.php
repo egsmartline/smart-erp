@@ -6,13 +6,7 @@
     <style>
         @page { size: A4; margin: 1.5cm 1cm; }
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'DejaVu Sans', 'Segoe UI', Arial, sans-serif; direction: rtl; text-align: right; font-size: 12px; color: #1f2937; background: white; padding: 20px; }
-        .toolbar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1f2937; color: white; padding: 12px 24px; border-radius: 12px; display: flex; gap: 16px; align-items: center; z-index: 999; box-shadow: 0 4px 24px rgba(0,0,0,0.3); }
-        .toolbar label { cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px; }
-        .toolbar input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
-        .toolbar button { background: #2563eb; color: white; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; }
-        .toolbar button:hover { background: #1d4ed8; }
-        @media print { .toolbar { display: none; } }
+        body { font-family: 'DejaVu Sans', 'Segoe UI', Arial, sans-serif; direction: rtl; text-align: right; font-size: 12px; color: #1f2937; background: white; padding: 20px; max-width: 800px; margin: 0 auto; }
         .header { border-bottom: 2px solid #2563eb; padding-bottom: 15px; margin-bottom: 20px; overflow: hidden; }
         .header-table { width: 100%; border-collapse: collapse; }
         .header-table td { border: none; padding: 5px; text-align: center; }
@@ -21,8 +15,8 @@
         .document-info h2 { color: #2563eb; font-size: 16px; margin: 0 0 5px 0; text-align: center; }
         .document-info p { font-size: 11px; margin: 2px 0; color: #374151; text-align: center; }
         table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-        th { background: #2563eb; color: white; padding: 8px; text-align: center; font-size: 11px; }
-        td { padding: 8px; border-bottom: 1px solid #e5e7eb; font-size: 11px; text-align: center; }
+        th { background: #2563eb; color: white; padding: 6px; text-align: center; font-size: 10px; }
+        td { padding: 6px; border-bottom: 1px solid #e5e7eb; font-size: 10px; text-align: center; }
         .total-row td { font-weight: bold; background: #f3f4f6; }
         .total-row.final td { background: #2563eb; color: white; }
         .ltr { direction: ltr; unicode-bidi: embed; }
@@ -30,22 +24,14 @@
         .font-mono { font-family: 'Courier New', monospace; }
     </style>
 </head>
-<body>
-    <div class="toolbar" id="toolbar">
-        <label>
-            <input type="checkbox" id="logoCheckbox" checked onchange="toggleLogo(this.checked)">
-            إظهار الشعار
-        </label>
-        <button onclick="window.print()">طباعة</button>
-    </div>
-
+<body onload="window.print()">
     <div class="header">
         <table class="header-table">
             <tr>
                 <td style="width: 60%;">
-                    <div id="logoContainer">
+                    <div>
                         @if($company && $company->logo)
-                            <img id="logoImg" src="{{ asset('storage/' . $company->logo) }}" style="height: 50px;">
+                            <img src="{{ asset('storage/' . $company->logo) }}" style="height: 50px;">
                         @endif
                     </div>
                     <div class="company-name">{{ $company->name ?? 'Smart ERP' }}</div>
@@ -71,12 +57,12 @@
     <table>
         <thead>
             <tr>
-                <th style="width: 5%;">#</th>
-                <th style="width: 40%;">الصنف</th>
+                <th style="width: 4%;">#</th>
+                <th style="width: 34%;">الصنف</th>
                 <th style="width: 12%;">الكمية</th>
-                <th style="width: 15%;">السعر</th>
-                <th style="width: 13%;">الخصم</th>
-                <th style="width: 15%;">الإجمالي</th>
+                <th style="width: 17%;">السعر</th>
+                <th style="width: 14%;">الخصم</th>
+                <th style="width: 19%;">الإجمالي</th>
             </tr>
         </thead>
         <tbody>
@@ -118,12 +104,5 @@
     <div class="footer">
         <p>تم إنشاء هذا المستند بواسطة نظام Smart ERP</p>
     </div>
-
-    <script>
-        function toggleLogo(show) {
-            var el = document.getElementById('logoContainer');
-            if (el) el.style.display = show ? '' : 'none';
-        }
-    </script>
 </body>
 </html>

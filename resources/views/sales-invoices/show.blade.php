@@ -127,7 +127,7 @@
         </div>
 
         <div class="space-y-4">
-            <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-4">
+            <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-4 no-print">
                 <h4 class="text-sm font-bold text-gray-700 mb-3">إجراءات</h4>
                 <div class="space-y-2">
                     @if($salesInvoice->status === 'draft')
