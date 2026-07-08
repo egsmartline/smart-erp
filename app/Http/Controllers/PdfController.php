@@ -17,6 +17,7 @@ class PdfController extends TenantAwareController
         $invoice->load(['customer', 'lines.item']);
         $company = Company::where('tenant_id', $this->getTenantId())->first();
         $pdf = Pdf::loadView('pdf.sales-invoice', compact('invoice', 'company'));
+        $pdf->setOptions(['defaultFont' => 'DejaVu Sans', 'isRemoteEnabled' => true]);
         $pdf->setPaper('a4');
         if (request()->has('print')) {
             return $pdf->stream("فاتورة-بيع-{$invoice->invoice_number}.pdf");
@@ -30,6 +31,7 @@ class PdfController extends TenantAwareController
         $invoice->load(['supplier', 'lines.item']);
         $company = Company::where('tenant_id', $this->getTenantId())->first();
         $pdf = Pdf::loadView('pdf.purchase-invoice', compact('invoice', 'company'));
+        $pdf->setOptions(['defaultFont' => 'DejaVu Sans', 'isRemoteEnabled' => true]);
         $pdf->setPaper('a4');
         if (request()->has('print')) {
             return $pdf->stream("فاتورة-شراء-{$invoice->invoice_number}.pdf");
@@ -43,6 +45,7 @@ class PdfController extends TenantAwareController
         $order->load(['supplier', 'lines.item']);
         $company = Company::where('tenant_id', $this->getTenantId())->first();
         $pdf = Pdf::loadView('pdf.purchase-order', compact('order', 'company'));
+        $pdf->setOptions(['defaultFont' => 'DejaVu Sans', 'isRemoteEnabled' => true]);
         $pdf->setPaper('a4');
         return $pdf->download("أمر-شراء-{$order->order_number}.pdf");
     }
@@ -53,6 +56,7 @@ class PdfController extends TenantAwareController
         $quotation->load(['customer', 'lines.item']);
         $company = Company::where('tenant_id', $this->getTenantId())->first();
         $pdf = Pdf::loadView('pdf.quotation', compact('quotation', 'company'));
+        $pdf->setOptions(['defaultFont' => 'DejaVu Sans', 'isRemoteEnabled' => true]);
         $pdf->setPaper('a4');
         return $pdf->download("عرض-سعر-{$quotation->quote_number}.pdf");
     }
