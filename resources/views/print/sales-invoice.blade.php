@@ -19,8 +19,8 @@
         td { padding: 8px; border-bottom: 1px solid #e5e7eb; font-size: 11px; text-align: center; }
         .total-row td { font-weight: bold; background: #f3f4f6; }
         .total-row.final td { background: #2563eb; color: white; }
-        .ltr { direction: ltr; unicode-bidi: embed; }
-        .rtl { direction: rtl; unicode-bidi: embed; }
+        .ltr { direction: ltr; unicode-bidi: embed; text-align: center; }
+        .rtl { direction: rtl; unicode-bidi: embed; text-align: center; }
         .footer { margin-top: 20px; border-top: 1px solid #d1d5db; padding-top: 10px; font-size: 10px; color: #9ca3af; text-align: center; }
 
         .font-mono { font-family: 'Courier New', monospace; }
