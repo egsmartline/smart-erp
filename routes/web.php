@@ -54,6 +54,7 @@ use App\Http\Controllers\TradeController;
 use App\Http\Controllers\SalesDeliveryNoteController;
 use App\Http\Controllers\PurchaseReceiptNoteController;
 use App\Http\Controllers\PdfController;
+use App\Http\Controllers\PrintController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -288,4 +289,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::get('pdf/purchase-invoice/{invoice}', [PdfController::class, 'purchaseInvoice'])->name('pdf.purchase-invoice');
     Route::get('pdf/purchase-order/{order}', [PdfController::class, 'purchaseOrder'])->name('pdf.purchase-order');
     Route::get('pdf/quotation/{quotation}', [PdfController::class, 'quotation'])->name('pdf.quotation');
+
+    // Print
+    Route::get('print/sales-invoice/{invoice}', [PrintController::class, 'salesInvoice'])->name('print.sales-invoice');
 });
