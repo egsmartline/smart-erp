@@ -287,11 +287,11 @@ class ReportController extends TenantAwareController
     public function inventoryReport(Request $request)
     {
         $items = $this->tenantQuery(Item::class)
-            ->with(['category', 'unit'])
+            ->with(['category', 'unit', 'warehouses'])
             ->orderBy('name')
             ->get();
 
-        $totalValue = $items->sum(fn($item) => $item->current_stock * $item->purchase_price);
+        $totalValue = $items->sum(fn($item) => $item->warehouses->sum('quantity') * ($item->cost_price ?? 0));
 
         $totalSales = SalesInvoice::where('tenant_id', $this->getTenantId())
             ->where('status', 'posted')
