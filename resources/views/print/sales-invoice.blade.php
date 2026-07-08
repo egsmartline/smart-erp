@@ -17,7 +17,7 @@
         table { width: 100%; border-collapse: collapse; margin: 10px 0; }
         th { background: #2563eb; color: white; padding: 6px; text-align: center; font-size: 10px; }
         td { padding: 6px; border-bottom: 1px solid #e5e7eb; font-size: 10px; text-align: center; }
-        .total-row td { font-weight: bold; background: #f3f4f6; }
+        .total-row td { font-weight: bold; background: #f3f4f6; white-space: nowrap; }
         .total-row.final td { background: #2563eb; color: white; }
         .ltr { direction: ltr; unicode-bidi: embed; }
         .footer { margin-top: 20px; border-top: 1px solid #d1d5db; padding-top: 10px; font-size: 10px; color: #9ca3af; text-align: center; }
