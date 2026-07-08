@@ -131,9 +131,9 @@
                 <h4 class="text-sm font-bold text-gray-700 mb-3">إجراءات</h4>
                 <div class="space-y-2">
                     @if($salesInvoice->status === 'draft')
-                        <button @click="$root.closest('[x-data]')?.__x?.$data.printModalOpen = true" class="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition cursor-pointer">
+                        <a href="{{ route('pdf.sales-invoice', $salesInvoice) }}?print=1" target="_blank" class="block w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition cursor-pointer text-center">
                             طباعة الفاتورة
-                        </button>
+                        </a>
                         <form action="{{ route('sales-invoices.post', $salesInvoice) }}" method="POST">
                             @csrf
                             <button type="submit" class="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition cursor-pointer" onclick="return confirm('هل أنت متأكد من الترحيل؟')">
@@ -151,9 +151,9 @@
                             </button>
                         </form>
                     @elseif($salesInvoice->status === 'posted')
-                        <button @click="$root.closest('[x-data]')?.__x?.$data.printModalOpen = true" class="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition cursor-pointer">
+                        <a href="{{ route('pdf.sales-invoice', $salesInvoice) }}?print=1" target="_blank" class="block w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition cursor-pointer text-center">
                             طباعة الفاتورة
-                        </button>
+                        </a>
                         <a href="{{ route('sales-invoices.edit', $salesInvoice) }}" class="block w-full rounded-lg bg-gray-200 px-4 py-2 text-center text-sm font-medium text-gray-700 hover:bg-gray-300 transition">
                             تعديل الفاتورة
                         </a>
@@ -193,13 +193,20 @@
 
 <style>
     @media print {
-        body * { display: none !important; }
-        #printArea, #printArea * { display: block !important; }
-        #printArea { position: absolute; left: 0; top: 0; width: 100%; }
-        .print-header, .print-header-minimal { display: none !important; }
+        @page { size: A4; margin: 1.5cm 1cm; }
+        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        .no-print { display: none !important; }
+
         body.print-with-logo .print-header { display: table !important; }
         body.print-with-logo .print-header-minimal { display: none !important; }
         body.print-without-logo .print-header-minimal { display: block !important; }
         body.print-without-logo .print-header { display: none !important; }
+
+        .rounded-xl, .rounded-2xl, .rounded-lg { border-radius: 4px !important; }
+        .shadow-sm, .shadow, .shadow-md, .shadow-lg, .shadow-xl { box-shadow: none !important; }
+        .lg\:col-span-2 { width: 100% !important; float: none !important; }
+        .grid { display: block !important; }
+        .grid > * { display: block !important; width: 100% !important; }
+        header { display: none !important; }
     }
 </style>

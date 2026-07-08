@@ -18,6 +18,9 @@ class PdfController extends TenantAwareController
         $company = Company::where('tenant_id', $this->getTenantId())->first();
         $pdf = Pdf::loadView('pdf.sales-invoice', compact('invoice', 'company'));
         $pdf->setPaper('a4');
+        if (request()->has('print')) {
+            return $pdf->stream("فاتورة-بيع-{$invoice->invoice_number}.pdf");
+        }
         return $pdf->download("فاتورة-بيع-{$invoice->invoice_number}.pdf");
     }
 
@@ -28,6 +31,9 @@ class PdfController extends TenantAwareController
         $company = Company::where('tenant_id', $this->getTenantId())->first();
         $pdf = Pdf::loadView('pdf.purchase-invoice', compact('invoice', 'company'));
         $pdf->setPaper('a4');
+        if (request()->has('print')) {
+            return $pdf->stream("فاتورة-شراء-{$invoice->invoice_number}.pdf");
+        }
         return $pdf->download("فاتورة-شراء-{$invoice->invoice_number}.pdf");
     }
 
