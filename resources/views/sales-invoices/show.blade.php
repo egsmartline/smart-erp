@@ -47,55 +47,55 @@
                 </div>
 
                 <div class="overflow-x-auto mb-6">
-                    <table class="w-full text-right text-sm">
+                    <table class="w-full text-right text-xs">
                         <thead>
                             <tr class="border-b border-gray-200 bg-gray-50">
-                                <th class="px-3 py-2 font-semibold text-gray-700">#</th>
-                                <th class="px-3 py-2 font-semibold text-gray-700">الصنف</th>
-                                <th class="px-3 py-2 font-semibold text-gray-700 text-left">الكمية</th>
-                                <th class="px-3 py-2 font-semibold text-gray-700 text-left">السعر</th>
-                                <th class="px-3 py-2 font-semibold text-gray-700 text-left">الخصم</th>
-                                <th class="px-3 py-2 font-semibold text-gray-700 text-left">الضريبة</th>
-                                <th class="px-3 py-2 font-semibold text-gray-700 text-left">الإجمالي</th>
+                                <th class="px-2 py-1 font-semibold text-gray-700">#</th>
+                                <th class="px-2 py-1 font-semibold text-gray-700">الصنف</th>
+                                <th class="px-2 py-1 font-semibold text-gray-700 text-center">الكمية</th>
+                                <th class="px-2 py-1 font-semibold text-gray-700 text-center">السعر</th>
+                                <th class="px-2 py-1 font-semibold text-gray-700 text-center">الخصم</th>
+                                <th class="px-2 py-1 font-semibold text-gray-700 text-center">الضريبة</th>
+                                <th class="px-2 py-1 font-semibold text-gray-700 text-center">الإجمالي</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($salesInvoice->lines as $index => $line)
                                 <tr class="border-b border-gray-100">
-                                    <td class="px-3 py-2">{{ $index + 1 }}</td>
-                                    <td class="px-3 py-2 font-medium text-gray-900">{{ $line->item->name ?? '-' }}</td>
-                                    <td class="px-3 py-2 text-left font-mono">{{ number_format($line->quantity, 2) }}</td>
-                                    <td class="px-3 py-2 text-left font-mono">{{ number_format($line->unit_price, 2) }}</td>
-                                    <td class="px-3 py-2 text-left font-mono">{{ number_format($line->discount_amount, 2) }}</td>
-                                    <td class="px-3 py-2 text-left font-mono">{{ number_format($line->tax_amount, 2) }}</td>
-                                    <td class="px-3 py-2 text-left font-mono font-medium">{{ number_format($line->total, 2) }}</td>
+                                    <td class="px-2 py-1 text-center">{{ $index + 1 }}</td>
+                                    <td class="px-2 py-1 font-medium text-gray-900">{{ $line->item->name ?? '-' }}</td>
+                                    <td class="px-2 py-1 text-center font-mono">{{ number_format($line->quantity, 2) }}</td>
+                                    <td class="px-2 py-1 text-center font-mono">{{ number_format($line->unit_price, 2) }}</td>
+                                    <td class="px-2 py-1 text-center font-mono">{{ number_format($line->discount_amount, 2) }}</td>
+                                    <td class="px-2 py-1 text-center font-mono">{{ number_format($line->tax_amount, 2) }}</td>
+                                    <td class="px-2 py-1 text-center font-mono font-medium">{{ number_format($line->total, 2) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
                         <tfoot>
                             <tr class="bg-gray-50 font-bold">
-                                <td colspan="5" class="px-3 py-3"></td>
-                                <td class="px-3 py-3 text-left text-sm text-gray-600">المجموع الفرعي</td>
-                                <td class="px-3 py-3 text-left font-mono">{{ number_format($salesInvoice->subtotal, 2) }}</td>
+                                <td colspan="5" class="px-2 py-1"></td>
+                                <td class="px-2 py-1 text-center text-xs text-gray-600">المجموع الفرعي</td>
+                                <td class="px-2 py-1 text-center font-mono">{{ number_format($salesInvoice->subtotal, 2) }}</td>
                             </tr>
                             @if($salesInvoice->discount_amount > 0)
                             <tr class="bg-gray-50">
-                                <td colspan="5" class="px-3 py-3"></td>
-                                <td class="px-3 py-3 text-left text-sm text-gray-600">الخصم</td>
-                                <td class="px-3 py-3 text-left font-mono text-red-600">- {{ number_format($salesInvoice->discount_amount, 2) }}</td>
+                                <td colspan="5" class="px-2 py-1"></td>
+                                <td class="px-2 py-1 text-center text-xs text-gray-600">الخصم</td>
+                                <td class="px-2 py-1 text-center font-mono text-red-600">- {{ number_format($salesInvoice->discount_amount, 2) }}</td>
                             </tr>
                             @endif
                             @if($salesInvoice->tax_amount > 0)
                             <tr class="bg-gray-50">
-                                <td colspan="5" class="px-3 py-3"></td>
-                                <td class="px-3 py-3 text-left text-sm text-gray-600">الضريبة</td>
-                                <td class="px-3 py-3 text-left font-mono text-emerald-600">+ {{ number_format($salesInvoice->tax_amount, 2) }}</td>
+                                <td colspan="5" class="px-2 py-1"></td>
+                                <td class="px-2 py-1 text-center text-xs text-gray-600">الضريبة</td>
+                                <td class="px-2 py-1 text-center font-mono text-emerald-600">+ {{ number_format($salesInvoice->tax_amount, 2) }}</td>
                             </tr>
                             @endif
                             <tr class="bg-blue-50">
-                                <td colspan="5" class="px-3 py-3"></td>
-                                <td class="px-3 py-3 text-left text-sm font-bold text-gray-800">الإجمالي</td>
-                                <td class="px-3 py-3 text-left font-mono text-lg font-bold text-blue-700">{{ number_format($salesInvoice->total, 2) }} {{ $salesInvoice->currency->symbol ?? '' }}</td>
+                                <td colspan="5" class="px-2 py-1"></td>
+                                <td class="px-2 py-1 text-center text-xs font-bold text-gray-800">الإجمالي</td>
+                                <td class="px-2 py-1 text-center font-mono text-base font-bold text-blue-700">{{ number_format($salesInvoice->total, 2) }} {{ $salesInvoice->currency->symbol ?? '' }}</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -108,19 +108,21 @@
                     </div>
                 @endif
 
-                <div class="grid grid-cols-3 gap-4 border-t border-gray-200 pt-4">
+                <div class="flex items-center justify-around gap-4 border-t border-gray-200 pt-4 text-center">
                     @php $curSym = $salesInvoice->currency->symbol ?? ''; @endphp
                     <div>
                         <p class="text-xs text-gray-500">الإجمالي</p>
-                        <p class="text-lg font-bold font-mono text-gray-900">{{ number_format($salesInvoice->total, 2) }} {{ $curSym }}</p>
+                        <p class="text-base font-bold font-mono text-gray-900">{{ number_format($salesInvoice->total, 2) }} {{ $curSym }}</p>
                     </div>
+                    <div class="h-8 w-px bg-gray-300"></div>
                     <div>
                         <p class="text-xs text-gray-500">المدفوع</p>
-                        <p class="text-lg font-bold font-mono text-emerald-600">{{ number_format($salesInvoice->paid_amount, 2) }} {{ $curSym }}</p>
+                        <p class="text-base font-bold font-mono text-emerald-600">{{ number_format($salesInvoice->paid_amount, 2) }} {{ $curSym }}</p>
                     </div>
+                    <div class="h-8 w-px bg-gray-300"></div>
                     <div>
                         <p class="text-xs text-gray-500">المستحق</p>
-                        <p class="text-lg font-bold font-mono text-red-600">{{ number_format($salesInvoice->due_amount, 2) }} {{ $curSym }}</p>
+                        <p class="text-base font-bold font-mono text-red-600">{{ number_format($salesInvoice->due_amount, 2) }} {{ $curSym }}</p>
                     </div>
                 </div>
             </div>
