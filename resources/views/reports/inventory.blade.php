@@ -7,9 +7,19 @@
     </x-slot>
 
     <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6 mb-6">
-        <div class="rounded-xl bg-blue-50 border border-blue-200 p-6 text-center">
-            <div class="text-sm text-blue-600 mb-2">إجمالي قيمة المخزون</div>
-            <div class="text-3xl font-bold text-blue-700">{{ number_format($totalValue, 2) }} ج.م</div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="rounded-xl bg-blue-50 border border-blue-200 p-6 text-center">
+                <div class="text-sm text-blue-600 mb-2">إجمالي قيمة المخزون</div>
+                <div class="text-3xl font-bold text-blue-700">{{ number_format($totalValue, 2) }} ج.م</div>
+            </div>
+            <div class="rounded-xl bg-green-50 border border-green-200 p-6 text-center">
+                <div class="text-sm text-green-600 mb-2">إجمالي المبيعات</div>
+                <div class="text-3xl font-bold text-green-700">{{ number_format($totalSales, 2) }} ج.م</div>
+            </div>
+            <div class="rounded-xl bg-amber-50 border border-amber-200 p-6 text-center">
+                <div class="text-sm text-amber-600 mb-2">إجمالي المشتريات</div>
+                <div class="text-3xl font-bold text-amber-700">{{ number_format($totalPurchases, 2) }} ج.م</div>
+            </div>
         </div>
     </div>
 

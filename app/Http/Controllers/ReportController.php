@@ -293,7 +293,15 @@ class ReportController extends TenantAwareController
 
         $totalValue = $items->sum(fn($item) => $item->current_stock * $item->purchase_price);
 
-        return view('reports.inventory', compact('items', 'totalValue'));
+        $totalSales = SalesInvoice::where('tenant_id', $this->getTenantId())
+            ->where('status', 'posted')
+            ->sum('total');
+
+        $totalPurchases = PurchaseInvoice::where('tenant_id', $this->getTenantId())
+            ->where('status', 'posted')
+            ->sum('total');
+
+        return view('reports.inventory', compact('items', 'totalValue', 'totalSales', 'totalPurchases'));
     }
 
     public function cashFlow(Request $request)
