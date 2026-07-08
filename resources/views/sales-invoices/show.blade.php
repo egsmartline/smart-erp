@@ -196,5 +196,10 @@
         body * { display: none !important; }
         #printArea, #printArea * { display: block !important; }
         #printArea { position: absolute; left: 0; top: 0; width: 100%; }
+        .print-header, .print-header-minimal { display: none !important; }
+        body.print-with-logo .print-header { display: table !important; }
+        body.print-with-logo .print-header-minimal { display: none !important; }
+        body.print-without-logo .print-header-minimal { display: block !important; }
+        body.print-without-logo .print-header { display: none !important; }
     }
 </style>

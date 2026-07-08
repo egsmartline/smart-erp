@@ -85,6 +85,10 @@
         {{-- Print Styles --}}
         .print-only { display: none; }
         .print-header, .print-header-minimal { display: none; }
+        body.print-with-logo .print-header { display: table !important; }
+        body.print-with-logo .print-header-minimal { display: none !important; }
+        body.print-without-logo .print-header-minimal { display: block !important; }
+        body.print-without-logo .print-header { display: none !important; }
 
         {{-- Print Header with Logo --}}
         .print-header-table { width: 100%; border-collapse: collapse; }
@@ -111,7 +115,10 @@
             .mr-64, .mr-20 { margin-right: 0 !important; }
 
             {{-- Print header --}}
-            .print-header, .print-header-minimal { display: none !important; }
+            body.print-with-logo .print-header { display: table !important; }
+            body.print-with-logo .print-header-minimal { display: none !important; }
+            body.print-without-logo .print-header-minimal { display: block !important; }
+            body.print-without-logo .print-header { display: none !important; }
 
             header, .topbar, .top-bar, [class*="topbar"], [class*="top-bar"] { display: none !important; }
 
