@@ -19,11 +19,10 @@
         td { padding: 8px; border-bottom: 1px solid #e5e7eb; font-size: 11px; text-align: center; }
         .total-row td { font-weight: bold; background: #f3f4f6; }
         .total-row.final td { background: #2563eb; color: white; }
-        .ltr { direction: ltr; text-align: left; unicode-bidi: embed; }
-        .rtl { direction: rtl; text-align: right; unicode-bidi: embed; }
+        .ltr { direction: ltr; unicode-bidi: embed; }
+        .rtl { direction: rtl; unicode-bidi: embed; }
         .footer { margin-top: 20px; border-top: 1px solid #d1d5db; padding-top: 10px; font-size: 10px; color: #9ca3af; text-align: center; }
-        .text-right { text-align: right; }
-        .text-left { text-align: left; }
+
         .font-mono { font-family: 'Courier New', monospace; }
     </style>
 </head>
@@ -70,7 +69,7 @@
             @foreach($invoice->lines as $i => $line)
             <tr>
                 <td class="ltr">{{ $i + 1 }}</td>
-                <td class="text-right">{{ $line->item->name ?? '' }}</td>
+                <td>{{ $line->item->name ?? '' }}</td>
                 <td class="ltr font-mono">{{ number_format($line->quantity, 2) }}</td>
                 <td class="ltr font-mono">{{ number_format($line->unit_price, 2) }}</td>
                 <td class="ltr font-mono">{{ number_format($line->discount_amount ?? 0, 2) }}</td>
@@ -80,23 +79,23 @@
         </tbody>
         <tfoot>
             <tr class="total-row">
-                <td colspan="5" class="text-left">الإجمالي قبل الخصم</td>
+                <td colspan="5">الإجمالي قبل الخصم</td>
                 <td class="ltr font-mono">{{ number_format($invoice->subtotal, 2) }}</td>
             </tr>
             @if($invoice->discount_amount > 0)
             <tr class="total-row">
-                <td colspan="5" class="text-left">الخصم</td>
+                <td colspan="5">الخصم</td>
                 <td class="ltr font-mono">{{ number_format($invoice->discount_amount, 2) }}</td>
             </tr>
             @endif
             @if($invoice->tax_amount > 0)
             <tr class="total-row">
-                <td colspan="5" class="text-left">الضريبة</td>
+                <td colspan="5">الضريبة</td>
                 <td class="ltr font-mono">{{ number_format($invoice->tax_amount, 2) }}</td>
             </tr>
             @endif
             <tr class="total-row final">
-                <td colspan="5" class="text-left">الإجمالي</td>
+                <td colspan="5">الإجمالي</td>
                 <td class="ltr font-mono">{{ number_format($invoice->total, 2) }}</td>
             </tr>
         </tfoot>
