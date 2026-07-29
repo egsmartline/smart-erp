@@ -382,6 +382,7 @@
                         <ul x-show="open" x-collapse class="mt-1 mr-6 space-y-1">
                             <li><a href="{{ route('document-archives.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('document-archives.index') || request()->routeIs('document-archives.show') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">جميع المستندات</span></a></li>
                             <li><a href="{{ route('document-archives.create') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('document-archives.create') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">رفع مستند جديد</span></a></li>
+                            <li><a href="{{ route('document-archives.categories') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('document-archives.categories*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">التصنيفات</span></a></li>
                         </ul>
                     </li>
 

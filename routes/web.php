@@ -134,6 +134,10 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     // Document Archives
     Route::resource('document-archives', DocumentArchiveController::class);
     Route::get('document-archives/{documentArchive}/download', [DocumentArchiveController::class, 'download'])->name('document-archives.download');
+    Route::get('document-archives/categories', [DocumentArchiveController::class, 'categories'])->name('document-archives.categories');
+    Route::post('document-archives/categories', [DocumentArchiveController::class, 'categoriesStore'])->name('document-archives.categories-store');
+    Route::put('document-archives/categories/{category}', [DocumentArchiveController::class, 'categoriesUpdate'])->name('document-archives.categories-update');
+    Route::delete('document-archives/categories/{category}', [DocumentArchiveController::class, 'categoriesDestroy'])->name('document-archives.categories-destroy');
 
     // Purchase Returns
     Route::resource('purchase-returns', PurchaseReturnController::class);

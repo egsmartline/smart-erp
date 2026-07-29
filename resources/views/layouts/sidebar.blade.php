@@ -323,6 +323,10 @@
                     <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
                     رفع مستند جديد
                 </a>
+                <a href="{{ route('document-archives.categories') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('document-archives.categories*') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                    التصنيفات
+                </a>
             </div>
         </div>
 

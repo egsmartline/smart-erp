@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DocumentArchive;
+use App\Models\DocumentArchiveCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -33,18 +34,17 @@ class DocumentArchiveController extends TenantAwareController
         }
 
         $documents = $query->with('uploader')->latest()->paginate(20);
-        $categories = $this->tenantQuery(DocumentArchive::class)
-            ->whereNotNull('category')
-            ->select('category')
-            ->distinct()
-            ->pluck('category');
+        $categories = $this->tenantQuery(DocumentArchiveCategory::class)
+            ->orderBy('sort_order')->orderBy('name')->pluck('name');
 
         return view('document-archives.index', compact('documents', 'categories'));
     }
 
     public function create()
     {
-        return view('document-archives.create');
+        $categories = $this->tenantQuery(DocumentArchiveCategory::class)
+            ->orderBy('sort_order')->orderBy('name')->get();
+        return view('document-archives.create', compact('categories'));
     }
 
     public function store(Request $request)
@@ -94,7 +94,9 @@ class DocumentArchiveController extends TenantAwareController
             abort(403);
         }
 
-        return view('document-archives.edit', compact('documentArchive'));
+        $categories = $this->tenantQuery(DocumentArchiveCategory::class)
+            ->orderBy('sort_order')->orderBy('name')->get();
+        return view('document-archives.edit', compact('documentArchive', 'categories'));
     }
 
     public function update(Request $request, DocumentArchive $documentArchive)
@@ -161,5 +163,61 @@ class DocumentArchiveController extends TenantAwareController
         }
 
         return Storage::disk('public')->download($documentArchive->file_path, $documentArchive->file_name);
+    }
+
+    public function categories()
+    {
+        $categories = $this->tenantQuery(DocumentArchiveCategory::class)
+            ->orderBy('sort_order')->orderBy('name')->paginate(20);
+        return view('document-archives.categories', compact('categories'));
+    }
+
+    public function categoriesStore(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+            'description' => 'nullable|string|max:255',
+            'sort_order' => 'nullable|integer|min:0',
+        ]);
+
+        $this->tenantQuery(DocumentArchiveCategory::class)->create([
+            'tenant_id' => $this->getTenantId(),
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'sort_order' => $validated['sort_order'] ?? 0,
+        ]);
+
+        return redirect()->route('document-archives.categories')
+            ->with('success', 'تم إضافة التصنيف بنجاح');
+    }
+
+    public function categoriesUpdate(Request $request, DocumentArchiveCategory $category)
+    {
+        if ($category->tenant_id !== $this->getTenantId()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+            'description' => 'nullable|string|max:255',
+            'sort_order' => 'nullable|integer|min:0',
+        ]);
+
+        $category->update($validated);
+
+        return redirect()->route('document-archives.categories')
+            ->with('success', 'تم تحديث التصنيف بنجاح');
+    }
+
+    public function categoriesDestroy(DocumentArchiveCategory $category)
+    {
+        if ($category->tenant_id !== $this->getTenantId()) {
+            abort(403);
+        }
+
+        $category->delete();
+
+        return redirect()->route('document-archives.categories')
+            ->with('success', 'تم حذف التصنيف بنجاح');
     }
 }
