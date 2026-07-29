@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <title>فاتورة مبيعات - {{ $invoice->invoice_number }}</title>
     <style>
+        .version-marker { position: fixed; top: 0; left: 0; background: red; color: white; padding: 4px 8px; font-size: 14px; z-index: 9999; border-radius: 0 0 4px 0; }
         @page { size: A4; margin: 1.5cm 1cm; }
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'DejaVu Sans', 'Segoe UI', Arial, sans-serif; direction: rtl; text-align: right; font-size: 19px; color: #1f2937; background: white; padding: 10px 15px; width: 100%; margin: 0 auto; }
@@ -25,6 +26,7 @@
     </style>
 </head>
 <body onload="window.print()">
+    <div class="version-marker">✓ V2.0</div>
     <div class="header">
         <table class="header-table">
             <tr>

@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <style>
+        .version-marker { position: fixed; top: 0; left: 0; background: red; color: white; padding: 4px 8px; font-size: 14px; z-index: 9999; border-radius: 0 0 4px 0; }
         body { font-family: 'DejaVu Sans', Arial, sans-serif; direction: rtl; text-align: right; font-size: 17px; }
         .header { border-bottom: 2px solid #2563eb; padding-bottom: 15px; margin-bottom: 20px; }
         .company-name { font-size: 24px; font-weight: bold; color: #2563eb; }
@@ -22,6 +23,7 @@
     </style>
 </head>
 <body>
+    <div class="version-marker">✓ V2.0</div>
     <div class="header">
         <table style="border: none; margin: 0;">
             <tr style="border: none;">
