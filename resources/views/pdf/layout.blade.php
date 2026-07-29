@@ -3,17 +3,17 @@
 <head>
     <meta charset="utf-8">
     <style>
-        body { font-family: 'DejaVu Sans', Arial, sans-serif; direction: rtl; text-align: right; font-size: 14px; }
+        body { font-family: 'DejaVu Sans', Arial, sans-serif; direction: rtl; text-align: right; font-size: 17px; }
         .header { border-bottom: 2px solid #2563eb; padding-bottom: 15px; margin-bottom: 20px; }
-        .company-name { font-size: 22px; font-weight: bold; color: #2563eb; }
-        .company-info { font-size: 14px; color: #666; }
+        .company-name { font-size: 24px; font-weight: bold; color: #2563eb; }
+        .company-info { font-size: 15px; color: #666; }
         .company-info span { display: inline-block; }
         table.data-table { width: 100%; table-layout: fixed; border-collapse: collapse; margin: 15px 0; }
-        th { background: #2563eb; color: white; padding: 6px; text-align: right; font-size: 14px; }
-        td { padding: 6px; border-bottom: 1px solid #eee; font-size: 14px; text-align: right; overflow: hidden; }
+        th { background: #2563eb; color: white; padding: 6px; text-align: right; font-size: 17px; }
+        td { padding: 6px; border-bottom: 1px solid #eee; font-size: 17px; text-align: right; overflow: hidden; }
         .total-row { font-weight: bold; background: #f3f4f6; }
-        .footer { margin-top: 20px; border-top: 1px solid #ddd; padding-top: 10px; font-size: 14px; color: #666; }
-        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 14px; }
+        .footer { margin-top: 20px; border-top: 1px solid #ddd; padding-top: 10px; font-size: 15px; color: #666; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 15px; }
         .badge-draft { background: #fef3c7; color: #92400e; }
         .badge-posted { background: #d1fae5; color: #065f46; }
         .badge-paid { background: #dbeafe; color: #1e40af; }
