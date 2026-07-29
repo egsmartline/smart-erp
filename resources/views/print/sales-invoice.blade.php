@@ -6,7 +6,7 @@
     <style>
         @page { size: A4; margin: 1.5cm 1cm; }
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'DejaVu Sans', 'Segoe UI', Arial, sans-serif; direction: rtl; text-align: right; font-size: 16px; color: #1f2937; background: white; padding: 20px; max-width: 900px; margin: 0 auto; }
+        body { font-family: 'DejaVu Sans', 'Segoe UI', Arial, sans-serif; direction: rtl; text-align: right; font-size: 16px; color: #1f2937; background: white; padding: 10px 15px; width: 100%; margin: 0 auto; }
         .header { border-bottom: 2px solid #2563eb; padding-bottom: 15px; margin-bottom: 20px; overflow: hidden; }
         .header-table { width: 100%; border-collapse: collapse; }
         .header-table td { border: none; padding: 4px; text-align: center; }
@@ -14,10 +14,10 @@
         .company-info { font-size: 14px; color: #6b7280; line-height: 1.6; text-align: center; }
         .document-info h2 { color: #2563eb; font-size: 20px; margin: 0 0 5px 0; text-align: center; }
         .document-info p { font-size: 20px; margin: 2px 0; color: #374151; text-align: center; }
-        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-        th { background: #2563eb; color: white; padding: 5px; text-align: center; font-size: 18px; }
-        td { padding: 5px; border-bottom: 1px solid #e5e7eb; font-size: 18px; text-align: center; }
-        .total-row td { font-weight: bold; background: #f3f4f6; font-size: 18px; white-space: nowrap !important; }
+        table.data-table { width: 100%; table-layout: fixed; border-collapse: collapse; margin: 10px 0; }
+        th { background: #2563eb; color: white; padding: 4px; text-align: center; font-size: 16px; }
+        td { padding: 4px; border-bottom: 1px solid #e5e7eb; font-size: 16px; text-align: center; overflow: hidden; }
+        .total-row td { font-weight: bold; background: #f3f4f6; font-size: 16px; white-space: nowrap !important; }
         .total-row.final td { background: #2563eb; color: white; }
         .ltr { direction: ltr; unicode-bidi: embed; }
         .footer { margin-top: 20px; border-top: 1px solid #d1d5db; padding-top: 10px; font-size: 14px; color: #9ca3af; text-align: center; }
@@ -59,14 +59,14 @@
 
     <p style="text-align: center;"><strong>العميل:</strong> {{ $invoice->customer->name ?? '' }}</p>
 
-    <table>
+    <table class="data-table">
         <thead>
             <tr>
-                <th style="width: 4%;">#</th>
-                <th style="width: 34%;">الصنف</th>
-                <th style="width: 12%;">الكمية</th>
-                <th style="width: 17%;">السعر</th>
-                <th style="width: 14%;">الخصم</th>
+                <th style="width: 5%;">#</th>
+                <th style="width: 30%;">الصنف</th>
+                <th style="width: 13%;">الكمية</th>
+                <th style="width: 18%;">السعر</th>
+                <th style="width: 15%;">الخصم</th>
                 <th style="width: 19%;">الإجمالي</th>
             </tr>
         </thead>

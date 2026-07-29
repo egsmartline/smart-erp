@@ -31,7 +31,16 @@
             <tr><td><strong>الهاتف:</strong> {{ $customer->phone }}</td></tr>
         @endif
     </table>
-    <table>
+    <table class="data-table">
+        <colgroup>
+            <col style="width: 4%;">
+            <col style="width: 28%;">
+            <col style="width: 11%;">
+            <col style="width: 16%;">
+            <col style="width: 13%;">
+            <col style="width: 13%;">
+            <col style="width: 15%;">
+        </colgroup>
         <thead><tr><th>#</th><th>الصنف</th><th>الكمية</th><th>السعر</th><th>الخصم</th><th>الضريبة</th><th>الإجمالي</th></tr></thead>
         <tbody>
             @foreach($quotation->lines as $i => $line)

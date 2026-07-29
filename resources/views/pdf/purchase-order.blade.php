@@ -24,7 +24,15 @@
     <table>
         <tr><td><strong>المورد:</strong> {{ $order->supplier->name ?? '' }}</td></tr>
     </table>
-    <table>
+    <table class="data-table">
+        <colgroup>
+            <col style="width: 5%;">
+            <col style="width: 30%;">
+            <col style="width: 13%;">
+            <col style="width: 18%;">
+            <col style="width: 15%;">
+            <col style="width: 19%;">
+        </colgroup>
         <thead><tr><th>#</th><th>الصنف</th><th>الكمية</th><th>السعر</th><th>الخصم</th><th>الإجمالي</th></tr></thead>
         <tbody>
             @foreach($order->lines as $i => $line)
