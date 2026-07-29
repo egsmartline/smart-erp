@@ -370,12 +370,19 @@
                     </li>
 
                     {{-- أرشيف المستندات --}}
-                    <li>
-                        <a href="{{ route('document-archives.index') }}"
-                            class="menu-item w-full flex items-center gap-3 px-4 py-2.5 rounded-xl {{ request()->routeIs('document-archives.*') ? 'active' : 'hover:bg-primary-700' }} transition-all">
-                            <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
-                            <span x-show="sidebarOpen" class="whitespace-nowrap text-sm font-medium">أرشيف المستندات</span>
-                        </a>
+                    <li x-data="{ open: {{ request()->routeIs('document-archives.*') ? 'true' : 'false' }} }">
+                        <button @click="open = !open"
+                            class="menu-item w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl {{ request()->routeIs('document-archives.*') ? 'active' : 'hover:bg-primary-700' }} transition-all">
+                            <div class="flex items-center gap-3">
+                                <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+                                <span x-show="sidebarOpen" class="whitespace-nowrap text-sm font-medium">أرشيف المستندات</span>
+                            </div>
+                            <svg x-show="sidebarOpen" class="h-4 w-4 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <ul x-show="open" x-collapse class="mt-1 mr-6 space-y-1">
+                            <li><a href="{{ route('document-archives.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('document-archives.index') || request()->routeIs('document-archives.show') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">جميع المستندات</span></a></li>
+                            <li><a href="{{ route('document-archives.create') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('document-archives.create') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">رفع مستند جديد</span></a></li>
+                        </ul>
                     </li>
 
                     {{-- الإعدادات --}}

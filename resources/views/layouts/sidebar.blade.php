@@ -306,10 +306,25 @@
         </div>
 
         <!-- أرشيف المستندات -->
-        <a href="{{ route('document-archives.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('document-archives.*') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
-            أرشيف المستندات
-        </a>
+        <div x-data="{ open: {{ request()->routeIs('document-archives.*') ? 'true' : 'false' }} }">
+            <button @click="open = !open" class="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition {{ request()->routeIs('document-archives.*') ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
+                <div class="flex items-center gap-3">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+                    أرشيف المستندات
+                </div>
+                <svg class="h-4 w-4 transform transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div x-show="open" x-collapse class="mr-8 mt-1 space-y-1">
+                <a href="{{ route('document-archives.index') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('document-archives.index') || request()->routeIs('document-archives.show') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                    جميع المستندات
+                </a>
+                <a href="{{ route('document-archives.create') }}" class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition {{ request()->routeIs('document-archives.create') ? 'bg-blue-600/20 text-blue-400' : 'text-gray-400 hover:bg-gray-800 hover:text-white' }}">
+                    <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+                    رفع مستند جديد
+                </a>
+            </div>
+        </div>
 
         <!-- الإعدادات -->
         <div x-data="{ open: {{ in_array(true, [request()->routeIs('settings.*'), request()->routeIs('currencies.*'), request()->routeIs('fiscal-years.*'), request()->routeIs('import.*')]) ? 'true' : 'false' }} }">
