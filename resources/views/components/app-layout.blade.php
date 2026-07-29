@@ -369,6 +369,15 @@
                         </ul>
                     </li>
 
+                    {{-- أرشيف المستندات --}}
+                    <li>
+                        <a href="{{ route('document-archives.index') }}"
+                            class="menu-item w-full flex items-center gap-3 px-4 py-2.5 rounded-xl {{ request()->routeIs('document-archives.*') ? 'active' : 'hover:bg-primary-700' }} transition-all">
+                            <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+                            <span x-show="sidebarOpen" class="whitespace-nowrap text-sm font-medium">أرشيف المستندات</span>
+                        </a>
+                    </li>
+
                     {{-- الإعدادات --}}
                     <li x-data="{ open: {{ in_array(true, [request()->routeIs('settings.*'), request()->routeIs('currencies.*'), request()->routeIs('fiscal-years.*'), request()->routeIs('backups.*'), request()->routeIs('audit-log.*'), request()->routeIs('import.*')]) ? 'true' : 'false' }} }">
                         <button @click="open = !open"

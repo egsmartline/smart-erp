@@ -155,6 +155,12 @@ class PermissionSeeder extends Seeder
                 ['slug' => 'manage_roles', 'name' => 'إدارة الصلاحيات'],
                 ['slug' => 'manage_users', 'name' => 'إدارة المستخدمين'],
             ],
+            'document_archives' => [
+                ['slug' => 'view_document_archives', 'name' => 'عرض أرشيف المستندات'],
+                ['slug' => 'create_document_archives', 'name' => 'رفع مستند'],
+                ['slug' => 'edit_document_archives', 'name' => 'تعديل مستند'],
+                ['slug' => 'delete_document_archives', 'name' => 'حذف مستند'],
+            ],
         ];
 
         $tenants = Tenant::all();
@@ -206,6 +212,7 @@ class PermissionSeeder extends Seeder
                         'view_budgets', 'create_budgets', 'edit_budgets',
                         'view_reports', 'export_reports',
                         'view_settings',
+                        'view_document_archives', 'create_document_archives', 'edit_document_archives', 'delete_document_archives',
                     ],
                 ],
                 'warehouse_keeper' => [

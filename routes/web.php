@@ -53,6 +53,7 @@ use App\Http\Controllers\ImportController;
 use App\Http\Controllers\TradeController;
 use App\Http\Controllers\SalesDeliveryNoteController;
 use App\Http\Controllers\DiscountNoteController;
+use App\Http\Controllers\DocumentArchiveController;
 use App\Http\Controllers\PurchaseReceiptNoteController;
 use App\Http\Controllers\PdfController;
 use App\Http\Controllers\PrintController;
@@ -129,6 +130,10 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     // Discount Notes
     Route::resource('discount-notes', DiscountNoteController::class);
     Route::post('discount-notes/{discountNote}/post', [DiscountNoteController::class, 'post'])->name('discount-notes.post');
+
+    // Document Archives
+    Route::resource('document-archives', DocumentArchiveController::class);
+    Route::get('document-archives/{documentArchive}/download', [DocumentArchiveController::class, 'download'])->name('document-archives.download');
 
     // Purchase Returns
     Route::resource('purchase-returns', PurchaseReturnController::class);
