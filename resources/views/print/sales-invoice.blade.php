@@ -13,7 +13,7 @@
         .company-name { font-size: 22px; font-weight: bold; color: #2563eb; text-align: center; }
         .company-info { font-size: 14px; color: #6b7280; line-height: 1.6; text-align: center; }
         .document-info h2 { color: #2563eb; font-size: 20px; margin: 0 0 5px 0; text-align: center; }
-        .document-info p { font-size: 14px; margin: 2px 0; color: #374151; text-align: center; }
+        .document-info p { font-size: 20px; margin: 2px 0; color: #374151; text-align: center; }
         table { width: 100%; border-collapse: collapse; margin: 10px 0; }
         th { background: #2563eb; color: white; padding: 5px; text-align: center; font-size: 16px; }
         td { padding: 5px; border-bottom: 1px solid #e5e7eb; font-size: 16px; text-align: center; }
