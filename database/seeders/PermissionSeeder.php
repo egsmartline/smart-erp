@@ -62,6 +62,12 @@ class PermissionSeeder extends Seeder
                 ['slug' => 'create_sales_returns', 'name' => 'إضافة مرتجع بيع'],
                 ['slug' => 'delete_sales_returns', 'name' => 'حذف مرتجع بيع'],
             ],
+            'discount_notes' => [
+                ['slug' => 'view_discount_notes', 'name' => 'عرض إشعارات الخصم'],
+                ['slug' => 'create_discount_notes', 'name' => 'إضافة إشعار خصم'],
+                ['slug' => 'edit_discount_notes', 'name' => 'تعديل إشعار خصم'],
+                ['slug' => 'delete_discount_notes', 'name' => 'حذف إشعار خصم'],
+            ],
             'purchase_returns' => [
                 ['slug' => 'view_purchase_returns', 'name' => 'عرض مرتجعات الشراء'],
                 ['slug' => 'create_purchase_returns', 'name' => 'إضافة مرتجع شراء'],

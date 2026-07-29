@@ -10,6 +10,7 @@
     dbStatus: 'checking',
     init() {
         this.checkDb();
+        if (window.innerWidth >= 1024) this.sidebarOpen = true;
     },
     checkDb() {
         fetch('/health/db').then(r => r.json()).then(d => { this.dbStatus = d.status === 'connected' ? 'online' : 'offline'; }).catch(() => { this.dbStatus = 'offline'; });
@@ -24,7 +25,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ config('app.name', 'Smart ERP') }}</title>
+    <title>{{ config('app.name', 'Business ERP') }}</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('icon.svg') }}">
+    <link rel="apple-touch-icon" href="{{ asset('icon-192.svg') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -177,7 +180,7 @@
     <div class="flex min-h-screen">
         {{-- Sidebar --}}
         <aside :class="sidebarOpen ? 'w-64' : 'w-20'"
-            class="fixed right-0 top-0 h-full bg-primary-800 text-white sidebar-transition z-40 flex flex-col no-print">
+            class="fixed right-0 top-0 h-full bg-primary-800 text-white sidebar-transition z-40 flex flex-col no-print lg:w-64">
 
             {{-- Logo --}}
             <div class="flex-shrink-0 p-6 border-b border-primary-700 flex justify-center">
@@ -224,9 +227,9 @@
                     </li>
 
                     {{-- المبيعات --}}
-                    <li x-data="{ open: {{ in_array(true, [request()->routeIs('sales-invoices.*'), request()->routeIs('sales-returns.*'), request()->routeIs('quotations.*'), request()->routeIs('customers.*'), request()->routeIs('sales-delivery-notes.*')]) ? 'true' : 'false' }} }">
+                    <li x-data="{ open: {{ in_array(true, [request()->routeIs('sales-invoices.*'), request()->routeIs('sales-returns.*'), request()->routeIs('discount-notes.*'), request()->routeIs('quotations.*'), request()->routeIs('customers.*'), request()->routeIs('sales-delivery-notes.*')]) ? 'true' : 'false' }} }">
                         <button @click="open = !open"
-                            class="menu-item w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl {{ request()->routeIs('sales-invoices.*') || request()->routeIs('sales-returns.*') || request()->routeIs('quotations.*') || request()->routeIs('customers.*') || request()->routeIs('sales-delivery-notes.*') ? 'active' : 'hover:bg-primary-700' }} transition-all">
+                            class="menu-item w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl {{ request()->routeIs('sales-invoices.*') || request()->routeIs('sales-returns.*') || request()->routeIs('discount-notes.*') || request()->routeIs('quotations.*') || request()->routeIs('customers.*') || request()->routeIs('sales-delivery-notes.*') ? 'active' : 'hover:bg-primary-700' }} transition-all">
                             <div class="flex items-center gap-3">
                                 <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                                 <span x-show="sidebarOpen" class="whitespace-nowrap text-sm font-medium">المبيعات</span>
@@ -236,6 +239,7 @@
                         <ul x-show="open" x-collapse class="mt-1 mr-6 space-y-1">
                             <li><a href="{{ route('sales-invoices.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('sales-invoices.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">فواتير البيع</span></a></li>
                             <li><a href="{{ route('sales-returns.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('sales-returns.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">مرتجعات المبيعات</span></a></li>
+                            <li><a href="{{ route('discount-notes.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('discount-notes.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">إشعارات الخصم</span></a></li>
                             <li><a href="{{ route('quotations.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('quotations.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">عروض الأسعار</span></a></li>
                             <li><a href="{{ route('sales-delivery-notes.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('sales-delivery-notes.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">إذن تسليم</span></a></li>
                             <li><a href="{{ route('customers.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('customers.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">العملاء</span></a></li>
@@ -263,9 +267,9 @@
                     </li>
 
                     {{-- المخزون --}}
-                    <li x-data="{ open: {{ in_array(true, [request()->routeIs('items.*'), request()->routeIs('warehouses.*'), request()->routeIs('stock-movements.*'), request()->routeIs('inventory-count.*'), request()->routeIs('inventory-adjustments.*'), request()->routeIs('stock-transfers.*'), request()->routeIs('reordering-rules.*'), request()->routeIs('item-categories.*'), request()->routeIs('item-units.*')]) ? 'true' : 'false' }} }">
+                    <li x-data="{ open: {{ in_array(true, [request()->routeIs('items.*'), request()->routeIs('warehouses.*'), request()->routeIs('barcodes.*'), request()->routeIs('stock-movements.*'), request()->routeIs('inventory-count.*'), request()->routeIs('inventory-adjustments.*'), request()->routeIs('stock-transfers.*'), request()->routeIs('reordering-rules.*'), request()->routeIs('item-categories.*'), request()->routeIs('item-units.*')]) ? 'true' : 'false' }} }">
                         <button @click="open = !open"
-                            class="menu-item w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl {{ request()->routeIs('items.*') || request()->routeIs('warehouses.*') || request()->routeIs('stock-movements.*') || request()->routeIs('inventory-count.*') || request()->routeIs('inventory-adjustments.*') || request()->routeIs('stock-transfers.*') || request()->routeIs('reordering-rules.*') || request()->routeIs('item-categories.*') || request()->routeIs('item-units.*') ? 'active' : 'hover:bg-primary-700' }} transition-all">
+                            class="menu-item w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl {{ request()->routeIs('items.*') || request()->routeIs('warehouses.*') || request()->routeIs('barcodes.*') || request()->routeIs('stock-movements.*') || request()->routeIs('inventory-count.*') || request()->routeIs('inventory-adjustments.*') || request()->routeIs('stock-transfers.*') || request()->routeIs('reordering-rules.*') || request()->routeIs('item-categories.*') || request()->routeIs('item-units.*') ? 'active' : 'hover:bg-primary-700' }} transition-all">
                             <div class="flex items-center gap-3">
                                 <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                                 <span x-show="sidebarOpen" class="whitespace-nowrap text-sm font-medium">المخزون</span>
@@ -277,6 +281,7 @@
                             <li><a href="{{ route('item-categories.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('item-categories.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">التصنيفات</span></a></li>
                             <li><a href="{{ route('item-units.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('item-units.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">الوحدات</span></a></li>
                             <li><a href="{{ route('warehouses.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('warehouses.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">المخازن</span></a></li>
+                            <li><a href="{{ route('barcodes.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('barcodes.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">طباعة باركود</span></a></li>
                             <li><a href="{{ route('stock-movements.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('stock-movements.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">حركات المخزون</span></a></li>
                             <li><a href="{{ route('inventory-count.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('inventory-count.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">جرد المخزون</span></a></li>
                             <li><a href="{{ route('inventory-adjustments.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('inventory-adjustments.*') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">تسوية المخزون</span></a></li>
@@ -410,7 +415,7 @@
                 </form>
             </div>
             {{-- Sidebar Toggle --}}
-            <div class="flex-shrink-0 p-3 border-t border-primary-700">
+            <div class="flex-shrink-0 p-3 border-t border-primary-700 lg:hidden">
                 <button @click="sidebarOpen = !sidebarOpen"
                     class="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl hover:bg-primary-700 transition-all text-primary-300 hover:text-white">
                     <svg class="h-5 w-5 transition-transform" :class="sidebarOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
@@ -420,7 +425,7 @@
         </aside>
 
         {{-- Main Content --}}
-        <div :class="sidebarOpen ? 'mr-64' : 'mr-20'" class="flex-1 sidebar-transition min-h-screen">
+        <div :class="sidebarOpen ? 'mr-64' : 'mr-20'" class="flex-1 sidebar-transition min-h-screen lg:mr-64">
             {{-- Print headers at top of page --}}
             <div class="print-header print-only">
                 @php $printCompany = \App\Models\Company::where('tenant_id', session('current_tenant_id'))->first(); @endphp
@@ -453,7 +458,7 @@
             </div>
 
             <div class="print-header-minimal print-only" style="text-align:center; padding:10px;">
-                <div style="font-size:14px; font-weight:700; color:#2563eb;">{{ config('app.name', 'Smart ERP') }}</div>
+                <div style="font-size:14px; font-weight:700; color:#2563eb;">{{ config('app.name', 'Business ERP') }}</div>
                 <div style="font-size:9px; color:#9ca3af;">{{ now()->format('Y/m/d h:i A') }}</div>
             </div>
 

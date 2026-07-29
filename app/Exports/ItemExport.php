@@ -11,7 +11,7 @@ class ItemExport implements FromCollection, WithHeadings, WithMapping
 {
     public function collection()
     {
-        return Item::with(['category', 'unit', 'purchaseCurrency', 'salesCurrency'])
+        return Item::with(['category', 'unit', 'purchaseCurrency', 'salesCurrency', 'warehouses.warehouse'])
             ->where('tenant_id', session('current_tenant_id'))
             ->get();
     }
@@ -24,6 +24,7 @@ class ItemExport implements FromCollection, WithHeadings, WithMapping
             'سعر الشراء', 'عملة الشراء', 'سعر البيع', 'عملة البيع',
             'نسبة الضريبة %',
             'الحد الأدنى', 'الحد الأقصى', 'مستوى إعادة الطلب', 'الرصيد الافتتاحي',
+            'المخزن',
             'يتطلب أرقام تسلسلية', 'له تاريخ صلاحية',
             'الوصف', 'الحالة',
         ];
@@ -31,6 +32,8 @@ class ItemExport implements FromCollection, WithHeadings, WithMapping
 
     public function map($item): array
     {
+        $warehouseNames = $item->warehouses->pluck('warehouse.name')->filter()->implode(', ');
+
         return [
             $item->name,
             $item->sku,
@@ -46,6 +49,7 @@ class ItemExport implements FromCollection, WithHeadings, WithMapping
             $item->maximum_stock,
             $item->reorder_level,
             $item->opening_stock,
+            $warehouseNames ?: null,
             $item->has_serial_numbers ? 'نعم' : 'لا',
             $item->has_expiry_date ? 'نعم' : 'لا',
             $item->description,

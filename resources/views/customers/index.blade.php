@@ -3,6 +3,10 @@
         <div class="flex items-center justify-between">
             <h2 class="text-xl font-bold text-gray-800">العملاء</h2>
             <div class="flex items-center gap-2">
+                <a href="{{ route('customers.balance-report') }}" class="inline-flex items-center gap-1.5 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100 transition" title="تقرير المستحقات">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/></svg>
+                    تقرير المستحقات
+                </a>
                 <a href="{{ route('import.export', 'customers') }}" class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100 transition" title="تصدير"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> تصدير</a>
                 <a href="{{ route('import.index') }}?type=customers" class="inline-flex items-center gap-1.5 rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 transition" title="استيراد"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg> استيراد</a>
                 <button @click="$root.closest('[x-data]')?.__x?.$data.printModalOpen = true" class="no-print inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg> طباعة</button>
@@ -56,6 +60,7 @@
                         <th class="px-4 py-3 font-semibold text-gray-700">الهاتف</th>
                         <th class="px-4 py-3 font-semibold text-gray-700">التصنيف</th>
                         <th class="px-4 py-3 font-semibold text-gray-700 text-left">الرصيد</th>
+                        <th class="px-4 py-3 font-semibold text-gray-700 text-center">العملة</th>
                         <th class="px-4 py-3 font-semibold text-gray-700 text-center">الحالة</th>
                         <th class="px-4 py-3 font-semibold text-gray-700 text-center">إجراءات</th>
                     </tr>
@@ -85,6 +90,9 @@
                                 {{ number_format($customer->balance, 2) }}
                             </td>
                             <td class="px-4 py-3 text-center">
+                                <span class="text-xs font-medium text-gray-600">{{ $customer->openingBalanceCurrency?->code ?? '—' }}</span>
+                            </td>
+                            <td class="px-4 py-3 text-center">
                                 <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $customer->is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600' }}">
                                     {{ $customer->is_active ? 'نشط' : 'غير نشط' }}
                                 </span>
@@ -106,7 +114,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-4 py-8 text-center text-gray-500">لا يوجد عملاء</td>
+                            <td colspan="9" class="px-4 py-8 text-center text-gray-500">لا يوجد عملاء</td>
                         </tr>
                     @endforelse
                 </tbody>

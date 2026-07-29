@@ -11,6 +11,7 @@ use App\Models\Customer;
 use App\Models\Supplier;
 use App\Models\Item;
 use App\Models\Payment;
+use App\Models\DiscountNote;
 use Illuminate\Http\Request;
 
 class ReportController extends TenantAwareController
@@ -151,6 +152,24 @@ class ReportController extends TenantAwareController
                 ]);
             }
 
+            $discountNotes = DiscountNote::where('tenant_id', $this->getTenantId())
+                ->where('customer_id', $customerId)
+                ->whereBetween('date', [$dateFrom, $dateTo])
+                ->get();
+
+            foreach ($discountNotes as $dn) {
+                $transactions->push([
+                    'date' => $dn->date,
+                    'type' => 'إشعار خصم',
+                    'badge' => 'bg-orange-100 text-orange-800',
+                    'reference' => $dn->note_number,
+                    'amount' => -(float) $dn->amount,
+                    'paid' => 0,
+                    'due' => 0,
+                    'payment_status' => null,
+                ]);
+            }
+
             $transactions = $transactions->sortBy(function ($t) {
                 return ($t['date'] ? $t['date']->format('Y-m-d') : '0000-00-00');
             })->values();
@@ -168,23 +187,33 @@ class ReportController extends TenantAwareController
         $suppliers = $this->tenantQuery(Supplier::class)->where('is_active', true)->orderBy('name')->get();
 
         $supplier = null;
-        $transactions = collect();
-        $openingBalance = 0;
+        $currencyGroups = [];
 
         if ($supplierId) {
-            $supplier = $this->tenantQuery(Supplier::class)->find($supplierId);
+            $supplier = $this->tenantQuery(Supplier::class)->with('openingBalanceCurrency')->find($supplierId);
             $openingBal = (float) ($supplier->opening_balance ?? 0);
-            $openingBalance = $supplier->opening_balance_type === 'credit' ? $openingBal : -$openingBal;
+            $openingBalSign = $supplier->opening_balance_type === 'credit' ? -$openingBal : $openingBal;
+
+            $openingCurrencyCode = $supplier->openingBalanceCurrency?->code ?? 'default';
 
             $invoices = PurchaseInvoice::where('tenant_id', $this->getTenantId())
                 ->where('supplier_id', $supplierId)
                 ->whereBetween('date', [$dateFrom, $dateTo])
-                ->with('supplier')
+                ->with('currency')
                 ->get();
 
             foreach ($invoices as $inv) {
-                $transactions->push([
-                    'date' => $inv->invoice_date ?? $inv->created_at,
+                $curCode = $inv->currency?->code ?? 'default';
+                if (!isset($currencyGroups[$curCode])) {
+                    $currencyGroups[$curCode] = [
+                        'currency' => $inv->currency,
+                        'openingBalance' => 0,
+                        'runningBalance' => 0,
+                        'transactions' => collect(),
+                    ];
+                }
+                $currencyGroups[$curCode]['transactions']->push([
+                    'date' => $inv->date ?? $inv->created_at,
                     'type' => 'فاتورة شراء',
                     'badge' => 'bg-orange-100 text-orange-800',
                     'reference' => $inv->invoice_number,
@@ -199,10 +228,20 @@ class ReportController extends TenantAwareController
                 ->where('supplier_id', $supplierId)
                 ->whereBetween('date', [$dateFrom, $dateTo])
                 ->where('type', 'payment')
+                ->with('currency')
                 ->get();
 
             foreach ($payments as $pay) {
-                $transactions->push([
+                $curCode = $pay->currency?->code ?? 'default';
+                if (!isset($currencyGroups[$curCode])) {
+                    $currencyGroups[$curCode] = [
+                        'currency' => $pay->currency,
+                        'openingBalance' => 0,
+                        'runningBalance' => 0,
+                        'transactions' => collect(),
+                    ];
+                }
+                $currencyGroups[$curCode]['transactions']->push([
                     'date' => $pay->date,
                     'type' => 'سند صرف',
                     'badge' => 'bg-emerald-100 text-emerald-800',
@@ -214,12 +253,28 @@ class ReportController extends TenantAwareController
                 ]);
             }
 
-            $transactions = $transactions->sortBy(function ($t) {
-                return ($t['date'] ? $t['date']->format('Y-m-d') : '0000-00-00');
-            })->values();
+            if (!isset($currencyGroups[$openingCurrencyCode])) {
+                $currencyGroups[$openingCurrencyCode] = [
+                    'currency' => $supplier->openingBalanceCurrency,
+                    'openingBalance' => 0,
+                    'runningBalance' => 0,
+                    'transactions' => collect(),
+                ];
+            }
+            $currencyGroups[$openingCurrencyCode]['openingBalance'] += $openingBalSign;
+            $currencyGroups[$openingCurrencyCode]['runningBalance'] += $openingBalSign;
+
+            foreach ($currencyGroups as $code => &$group) {
+                $group['transactions'] = $group['transactions']->sortBy(function ($t) {
+                    return ($t['date'] ? $t['date']->format('Y-m-d') : '0000-00-00');
+                })->values();
+            }
+            unset($group);
+
+            $currencyGroups = array_filter($currencyGroups, fn($g) => $g['openingBalance'] != 0 || $g['transactions']->isNotEmpty());
         }
 
-        return view('reports.supplier-statement', compact('suppliers', 'supplier', 'transactions', 'openingBalance', 'supplierId', 'dateFrom', 'dateTo'));
+        return view('reports.supplier-statement', compact('suppliers', 'supplier', 'currencyGroups', 'supplierId', 'dateFrom', 'dateTo'));
     }
 
     public function vatReport(Request $request)

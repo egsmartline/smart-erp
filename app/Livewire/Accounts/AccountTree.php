@@ -47,6 +47,48 @@ class AccountTree extends Component
 
         $this->accounts = $query->orderBy('code')->get()->toArray();
         $this->rootAccounts = collect($this->accounts)->whereNull('parent_id')->toArray();
+        $this->calculateAggregatedBalances();
+    }
+
+    private function calculateAggregatedBalances(): void
+    {
+        $balanceMap = [];
+        foreach ($this->accounts as &$acc) {
+            $balanceMap[$acc['id']] = (float)($acc['current_balance'] ?? 0);
+        }
+        unset($acc);
+
+        $childrenByParent = [];
+        foreach ($this->accounts as $acc) {
+            if ($acc['parent_id']) {
+                $childrenByParent[$acc['parent_id']][] = $acc['id'];
+            }
+        }
+
+        $this->sumDescendantBalances($balanceMap, $childrenByParent);
+
+        foreach ($this->accounts as &$acc) {
+            $acc['aggregated_balance'] = $balanceMap[$acc['id']] ?? 0;
+        }
+        unset($acc);
+    }
+
+    private function sumDescendantBalances(array &$balanceMap, array $childrenByParent): void
+    {
+        $changed = true;
+        while ($changed) {
+            $changed = false;
+            foreach ($childrenByParent as $parentId => $childIds) {
+                $sum = $balanceMap[$parentId];
+                foreach ($childIds as $cid) {
+                    $sum += $balanceMap[$cid] ?? 0;
+                }
+                if (abs($sum - $balanceMap[$parentId]) > 0.001) {
+                    $balanceMap[$parentId] = $sum;
+                    $changed = true;
+                }
+            }
+        }
     }
 
     public function toggleExpand(int $nodeId): void

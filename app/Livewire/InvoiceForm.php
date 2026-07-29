@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Supplier;
 use App\Models\Warehouse;
 use App\Models\Currency;
+use App\Models\Tax;
 use Livewire\Component;
 
 class InvoiceForm extends Component
@@ -146,7 +147,7 @@ class InvoiceForm extends Component
             'quantity' => 1,
             'unit_price' => 0,
             'discount_percent' => 0,
-            'tax_rate' => 15,
+            'tax_rate' => $this->getDefaultTaxRate(),
         ];
     }
 
@@ -272,7 +273,7 @@ class InvoiceForm extends Component
             $this->lines[$index]['description'] = $item->name_en ?? $item->name;
             $this->lines[$index]['quantity'] = 1;
             $this->lines[$index]['unit_price'] = $this->type === 'sale' ? $item->selling_price : $item->purchase_price;
-            $this->lines[$index]['tax_rate'] = $item->tax_rate ?? 15;
+            $this->lines[$index]['tax_rate'] = $item->tax_rate ?? $this->getDefaultTaxRate();
             $this->itemSearches[$index] = $item->name ?? '';
         }
 
@@ -287,6 +288,13 @@ class InvoiceForm extends Component
         $this->filteredSuppliers = [];
         $this->filteredItems = [];
         $this->searchingLineIndex = null;
+    }
+
+    private function getDefaultTaxRate(): float
+    {
+        $tax = Tax::where('is_default', true)->orWhere('is_active', true)->first();
+
+        return $tax ? (float) $tax->rate : 15;
     }
 
     public function getFormData(): array

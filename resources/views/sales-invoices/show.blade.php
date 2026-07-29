@@ -50,13 +50,13 @@
                     <table class="w-full text-right text-xs">
                         <thead>
                             <tr class="border-b border-gray-200 bg-gray-50">
-                                <th class="px-2 py-1 font-semibold text-gray-700">#</th>
-                                <th class="px-2 py-1 font-semibold text-gray-700">الصنف</th>
-                                <th class="px-2 py-1 font-semibold text-gray-700 text-center">الكمية</th>
-                                <th class="px-2 py-1 font-semibold text-gray-700 text-center">السعر</th>
-                                <th class="px-2 py-1 font-semibold text-gray-700 text-center">الخصم</th>
-                                <th class="px-2 py-1 font-semibold text-gray-700 text-center">ضريبة القيمة المضافة</th>
-                                <th class="px-2 py-1 font-semibold text-gray-700 text-center">الإجمالي</th>
+                                <th class="px-3 py-2 font-semibold text-gray-700" style="width:30px">#</th>
+                                <th class="px-3 py-2 font-semibold text-gray-700">الصنف</th>
+                                <th class="px-3 py-2 font-semibold text-gray-700 text-left">الكمية</th>
+                                <th class="px-3 py-2 font-semibold text-gray-700 text-left">السعر</th>
+                                <th class="px-3 py-2 font-semibold text-gray-700 text-left">الخصم</th>
+                                <th class="px-3 py-2 font-semibold text-gray-700 text-left">الضريبة</th>
+                                <th class="px-3 py-2 font-semibold text-gray-700 text-left">الإجمالي</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -188,4 +188,12 @@
 </x-app-layout>
 
 <style>
+    @media print {
+        .no-print { display: none !important; }
+        #printArea { box-shadow: none !important; border: none !important; border-radius: 0 !important; padding: 10px !important; }
+        .overflow-x-auto { overflow: visible !important; }
+        table { font-size: 11px !important; }
+        table th, table td { padding: 4px 6px !important; }
+        .font-mono { font-size: 11px !important; }
+    }
 </style>

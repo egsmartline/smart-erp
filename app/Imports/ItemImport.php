@@ -6,6 +6,8 @@ use App\Models\Item;
 use App\Models\ItemCategory;
 use App\Models\ItemUnit;
 use App\Models\Currency;
+use App\Models\Warehouse;
+use App\Models\ItemWarehouse;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Imports\HeadingRowFormatter;
@@ -16,6 +18,7 @@ class ItemImport implements ToModel, WithHeadingRow
     private $categoryCache;
     private $unitCache;
     private $currencyCache;
+    private $warehouseCache;
 
     public function __construct()
     {
@@ -23,6 +26,7 @@ class ItemImport implements ToModel, WithHeadingRow
         $this->categoryCache = [];
         $this->unitCache = [];
         $this->currencyCache = [];
+        $this->warehouseCache = [];
         HeadingRowFormatter::default('none');
     }
 
@@ -55,7 +59,7 @@ class ItemImport implements ToModel, WithHeadingRow
             $unitId = $this->unitCache[$unitName];
         }
 
-        return new Item([
+        $item = new Item([
             'tenant_id' => $this->tenantId,
             'name' => $name,
             'sku' => $row['رمز الصنف (SKU)'] ?? $row['الكود'] ?? $row['رمز الصنف'] ?? $row['sku'] ?? $row['code'] ?? null,
@@ -76,6 +80,28 @@ class ItemImport implements ToModel, WithHeadingRow
             'description' => $row['الوصف'] ?? $row['description'] ?? null,
             'is_active' => in_array($row['الحالة'] ?? $row['status'] ?? $row['is_active'] ?? 'نشط', ['نشط', 'active', '1', 1], true),
         ]);
+
+        $warehouseRaw = $row['المخزن'] ?? $row['warehouse'] ?? null;
+        if ($warehouseRaw) {
+            $warehouseNames = array_map('trim', explode(',', $warehouseRaw));
+            foreach ($warehouseNames as $wName) {
+                if (empty($wName)) continue;
+                if (!isset($this->warehouseCache[$wName])) {
+                    $wh = Warehouse::where('tenant_id', $this->tenantId)
+                        ->where('name', $wName)->first();
+                    $this->warehouseCache[$wName] = $wh?->id;
+                }
+                if ($this->warehouseCache[$wName]) {
+                    $item->warehouses()->create([
+                        'tenant_id' => $this->tenantId,
+                        'warehouse_id' => $this->warehouseCache[$wName],
+                        'quantity' => 0,
+                    ]);
+                }
+            }
+        }
+
+        return $item;
     }
 
     private function resolveCurrency($code)

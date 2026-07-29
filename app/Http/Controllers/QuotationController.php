@@ -9,6 +9,8 @@ use App\Models\SalesInvoiceLine;
 use App\Models\Customer;
 use App\Models\Item;
 use App\Models\Warehouse;
+use App\Models\Currency;
+use App\Models\Tax;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -45,9 +47,12 @@ class QuotationController extends TenantAwareController
     {
         $customers = $this->tenantQuery(Customer::class)->where('is_active', true)->get();
         $warehouses = $this->tenantQuery(Warehouse::class)->where('is_active', true)->get();
+        $items = Item::where('is_active', true)->get();
+        $currencies = Currency::where('is_active', true)->get();
         $quotationNumber = $this->generateQuotationNumber();
+        $defaultTaxRate = $this->getDefaultTaxRate();
 
-        return view('quotations.create', compact('customers', 'warehouses', 'quotationNumber'));
+        return view('quotations.create', compact('customers', 'warehouses', 'items', 'currencies', 'quotationNumber', 'defaultTaxRate'));
     }
 
     public function store(Request $request)
@@ -117,8 +122,6 @@ class QuotationController extends TenantAwareController
                 'discount_percent' => 0,
                 'tax_amount' => $totalTax,
                 'total' => $grandTotal,
-                'currency_code' => 'SAR',
-                'exchange_rate' => 1,
                 'status' => 'draft',
                 'notes' => $validated['notes'] ?? null,
                 'terms' => $validated['terms'] ?? null,
@@ -372,6 +375,13 @@ class QuotationController extends TenantAwareController
         $quotation->update(['status' => 'rejected']);
 
         return back()->with('success', 'تم رفض عرض الأسعار');
+    }
+
+    private function getDefaultTaxRate(): float
+    {
+        $tax = Tax::where('is_default', true)->orWhere('is_active', true)->first();
+
+        return $tax ? (float) $tax->rate : 15;
     }
 
     protected function generateQuotationNumber(): string

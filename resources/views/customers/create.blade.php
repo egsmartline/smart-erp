@@ -105,6 +105,19 @@
                     </select>
                 </div>
 
+                <div>
+                    <label for="opening_balance_currency_id" class="mb-1 block text-sm font-medium text-gray-700">عملة الرصيد الافتتاحي</label>
+                    <select name="opening_balance_currency_id" id="opening_balance_currency_id"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <option value="">العملة الافتراضية</option>
+                        @foreach ($currencies as $currency)
+                            <option value="{{ $currency->id }}" {{ old('opening_balance_currency_id') == $currency->id ? 'selected' : '' }}>
+                                {{ $currency->name }} ({{ $currency->code }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
                 <div class="md:col-span-2 lg:col-span-3">
                     <label for="notes" class="mb-1 block text-sm font-medium text-gray-700">ملاحظات</label>
                     <textarea name="notes" id="notes" rows="3"

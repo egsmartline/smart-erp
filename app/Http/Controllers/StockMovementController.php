@@ -34,7 +34,11 @@ class StockMovementController extends TenantAwareController
             $query->where('created_at', '<=', $request->date_to . ' 23:59:59');
         }
 
-        $stockMovements = $query->latest('created_at')->paginate(20)->withQueryString();
+        if ($request->boolean('all')) {
+            $stockMovements = $query->latest('created_at')->get();
+        } else {
+            $stockMovements = $query->latest('created_at')->paginate(20)->withQueryString();
+        }
         $items = Item::where('tenant_id', $this->getTenantId())->orderBy('name')->get();
         $warehouses = Warehouse::where('tenant_id', $this->getTenantId())->orderBy('name')->get();
 

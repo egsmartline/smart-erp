@@ -118,7 +118,7 @@
             </div>
         </div>
 
-        <div class="space-y-4">
+        <div class="space-y-4 no-print">
             <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-4">
                 <h4 class="text-sm font-bold text-gray-700 mb-3">إجراءات</h4>
                 <div class="space-y-2">
@@ -172,10 +172,4 @@
     </div>
 </x-app-layout>
 
-<style>
-    @media print {
-        body * { display: none !important; }
-        #printArea, #printArea * { display: block !important; }
-        #printArea { position: absolute; left: 0; top: 0; width: 100%; }
-    }
-</style>
+

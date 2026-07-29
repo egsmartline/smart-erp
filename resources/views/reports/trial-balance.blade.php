@@ -23,7 +23,7 @@
 
     <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6" id="report-content">
         <div class="text-center mb-6">
-            <h3 class="text-lg font-bold text-gray-800">شركة Smart ERP</h3>
+            <h3 class="text-lg font-bold text-gray-800">شركة Business ERP</h3>
             <h4 class="text-md font-semibold text-gray-600">ميزان المراجعة</h4>
             <p class="text-sm text-gray-500">بتاريخ: {{ \Carbon\Carbon::parse($dateTo)->format('Y/m/d') }}</p>
         </div>

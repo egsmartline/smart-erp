@@ -9,6 +9,7 @@ use App\Imports\AccountImport;
 use App\Models\Item;
 use App\Models\ItemCategory;
 use App\Models\ItemUnit;
+use App\Models\ItemWarehouse;
 use App\Models\Currency;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -19,6 +20,7 @@ class ImportController extends TenantAwareController
     private $categoryCache = [];
     private $unitCache = [];
     private $currencyCache = [];
+    private $warehouseCache = [];
 
     public function index()
     {
@@ -79,7 +81,7 @@ class ImportController extends TenantAwareController
                 'first_data_row' => $rows[1] ?? null,
             ];
 
-            $skipped = 0;
+            $updated = 0;
             for ($i = 1; $i < count($rows); $i++) {
                 $row = $rows[$i];
                 $name = $this->getVal($row, $colMap, 'name');
@@ -103,21 +105,10 @@ class ImportController extends TenantAwareController
                 }
                 $unitId = $this->unitCache[$unitName] ?? null;
 
-                $sku = $this->getVal($row, $colMap, 'sku');
-                if ($sku && Item::where('tenant_id', $tenantId)->where('sku', $sku)->withTrashed()->exists()) {
-                    $base = $sku;
-                    $n = 1;
-                    while (Item::where('tenant_id', $tenantId)->where('sku', $base . '-' . $n)->withTrashed()->exists()) {
-                        $n++;
-                    }
-                    $sku = $base . '-' . $n;
-                    $skipped++;
-                }
-
-                Item::create([
+                $data = [
                     'tenant_id' => $tenantId,
                     'name' => $name,
-                    'sku' => $sku,
+                    'sku' => $this->getVal($row, $colMap, 'sku'),
                     'barcode' => $this->getVal($row, $colMap, 'barcode'),
                     'category_id' => $categoryId,
                     'unit_id' => $unitId,
@@ -134,13 +125,79 @@ class ImportController extends TenantAwareController
                     'has_expiry_date' => in_array(mb_strtolower(trim($this->getVal($row, $colMap, 'has_expiry_date') ?? 'لا')), ['نعم', 'yes', '1', 1, 'true'], true),
                     'description' => $this->getVal($row, $colMap, 'description'),
                     'is_active' => in_array(mb_strtolower(trim($this->getVal($row, $colMap, 'is_active') ?? 'نشط')), ['نشط', 'active', '1', 1, 'true'], true),
-                ]);
+                ];
+
+                $sku = $data['sku'];
+                $existingItem = null;
+                if ($sku) {
+                    $existingItem = Item::where('tenant_id', $tenantId)->where('sku', $sku)->first();
+                }
+
+                if ($existingItem) {
+                    $oldOpening = (float) $existingItem->opening_stock;
+                    $existingItem->update(collect($data)->except('tenant_id')->toArray());
+                    $item = $existingItem;
+                    $updated++;
+
+                    $newOpening = (float) $item->opening_stock;
+                    $diff = $newOpening - $oldOpening;
+                    if ($diff != 0) {
+                        $iw = ItemWarehouse::where('item_id', $item->id)->first();
+                        if ($iw) {
+                            $iw->increment('quantity', $diff);
+                        } elseif ($diff > 0) {
+                            $whId = $this->findDefaultWarehouse($tenantId);
+                            if ($whId) {
+                                ItemWarehouse::create([
+                                    'tenant_id' => $tenantId,
+                                    'item_id' => $item->id,
+                                    'warehouse_id' => $whId,
+                                    'quantity' => $newOpening,
+                                ]);
+                            }
+                        }
+                    }
+                } else {
+                    $item = Item::create($data);
+
+                    $opening = (float) ($data['opening_stock'] ?? 0);
+                    if ($opening > 0) {
+                        $whId = $this->findDefaultWarehouse($tenantId);
+                        if ($whId) {
+                            ItemWarehouse::create([
+                                'tenant_id' => $tenantId,
+                                'item_id' => $item->id,
+                                'warehouse_id' => $whId,
+                                'quantity' => $opening,
+                            ]);
+                        }
+                    }
+                }
                 $count++;
+
+                $warehouseRaw = $this->getVal($row, $colMap, 'warehouse');
+                if ($warehouseRaw && $item) {
+                    $warehouseNames = array_map('trim', explode(',', $warehouseRaw));
+                    foreach ($warehouseNames as $wName) {
+                        if (empty($wName)) continue;
+                        if (!isset($this->warehouseCache[$wName])) {
+                            $wh = \App\Models\Warehouse::where('tenant_id', $tenantId)
+                                ->where('name', $wName)->first();
+                            $this->warehouseCache[$wName] = $wh?->id;
+                        }
+                        if ($this->warehouseCache[$wName]) {
+                            $item->warehouses()->firstOrCreate(
+                                ['tenant_id' => $tenantId, 'warehouse_id' => $this->warehouseCache[$wName]],
+                                ['quantity' => 0]
+                            );
+                        }
+                    }
+                }
             }
 
             $msg = "تم استيراد $count صنف بنجاح";
-            if ($skipped > 0) {
-                $msg .= " (تم تعديل $skipped كود مكرر تلقائياً)";
+            if ($updated > 0) {
+                $msg .= " ($updated صنف تم تحديثه)";
             }
             return back()->with('success', $msg)->with('import_debug', $debug);
         } catch (\Exception $e) {
@@ -185,6 +242,7 @@ class ImportController extends TenantAwareController
             'له تاريخ صلاحية' => 'has_expiry_date', 'has_expiry_date' => 'has_expiry_date',
             'الوصف' => 'description', 'description' => 'description',
             'الحالة' => 'is_active', 'status' => 'is_active', 'is_active' => 'is_active',
+            'المخزن' => 'warehouse', 'warehouse' => 'warehouse', 'مستودع' => 'warehouse',
         ];
 
         $normalized = [];
@@ -225,6 +283,16 @@ class ImportController extends TenantAwareController
             $this->currencyCache[$code] = $c?->id;
         }
         return $this->currencyCache[$code];
+    }
+
+    private function findDefaultWarehouse($tenantId)
+    {
+        if (!isset($this->warehouseCache['_default'])) {
+            $wh = \App\Models\Warehouse::where('tenant_id', $tenantId)->where('is_default', true)->first()
+                ?? \App\Models\Warehouse::where('tenant_id', $tenantId)->first();
+            $this->warehouseCache['_default'] = $wh?->id;
+        }
+        return $this->warehouseCache['_default'];
     }
 
     public function export($type)

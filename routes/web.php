@@ -52,6 +52,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\TradeController;
 use App\Http\Controllers\SalesDeliveryNoteController;
+use App\Http\Controllers\DiscountNoteController;
 use App\Http\Controllers\PurchaseReceiptNoteController;
 use App\Http\Controllers\PdfController;
 use App\Http\Controllers\PrintController;
@@ -94,11 +95,15 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::post('journal-entries/{journalEntry}/post', [JournalEntryController::class, 'post'])->name('journal-entries.post');
 
     Route::resource('customers', CustomerController::class);
+    Route::get('customers-balance-report', [CustomerController::class, 'balanceReport'])->name('customers.balance-report');
     Route::resource('suppliers', SupplierController::class);
     Route::resource('items', ItemController::class);
     Route::resource('item-categories', ItemCategoryController::class);
     Route::resource('item-units', ItemUnitController::class);
     Route::resource('warehouses', WarehouseController::class);
+    Route::get('barcodes', [\App\Http\Controllers\BarcodePrintController::class, 'index'])->name('barcodes.index');
+    Route::get('barcodes/print', [\App\Http\Controllers\BarcodePrintController::class, 'print'])->name('barcodes.print');
+    Route::get('barcodes/print-code', [\App\Http\Controllers\BarcodePrintController::class, 'printCode'])->name('barcodes.print-code');
 
     // Purchase Orders
     Route::resource('purchase-orders', PurchaseOrderController::class);
@@ -121,6 +126,10 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::resource('sales-returns', SalesReturnController::class);
     Route::post('sales-returns/{salesReturn}/post', [SalesReturnController::class, 'post'])->name('sales-returns.post');
 
+    // Discount Notes
+    Route::resource('discount-notes', DiscountNoteController::class);
+    Route::post('discount-notes/{discountNote}/post', [DiscountNoteController::class, 'post'])->name('discount-notes.post');
+
     // Purchase Returns
     Route::resource('purchase-returns', PurchaseReturnController::class);
     Route::post('purchase-returns/{purchaseReturn}/post', [PurchaseReturnController::class, 'post'])->name('purchase-returns.post');
@@ -137,6 +146,11 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::get('/api/suppliers/search', [PurchaseInvoiceController::class, 'searchSuppliers'])->name('api.suppliers.search');
     Route::get('/api/items/search', [SalesInvoiceController::class, 'searchItems'])->name('api.items.search');
 
+    Route::get('payments/bulk-create', [PaymentController::class, 'bulkCreate'])->name('payments.bulk-create');
+    Route::post('payments/bulk-store', [PaymentController::class, 'bulkStore'])->name('payments.bulk-store');
+    Route::get('payments/{payment}/voucher', [PaymentController::class, 'voucher'])->name('payments.voucher');
+    Route::get('payments/{payment}/receipt-voucher', [PaymentController::class, 'receiptVoucher'])->name('payments.receipt-voucher');
+    Route::get('payments/{payment}/payment-voucher', [PaymentController::class, 'paymentVoucher'])->name('payments.payment-voucher');
     Route::resource('payments', PaymentController::class);
     Route::get('cash-treasuries/balances', [CashTreasuryController::class, 'balances'])->name('cash-treasuries.balances');
     Route::resource('cash-treasuries', CashTreasuryController::class);

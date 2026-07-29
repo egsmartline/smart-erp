@@ -28,11 +28,32 @@ class ItemController extends TenantAwareController
             $query->where('category_id', $request->category_id);
         }
 
-        $items = $query->latest()->paginate(20);
+        if ($request->filled('unit_id')) {
+            $query->where('unit_id', $request->unit_id);
+        }
+
+        if ($request->filled('warehouse_id')) {
+            $query->whereHas('warehouses', fn($q) => $q->where('warehouse_id', $request->warehouse_id));
+        }
+
+        if ($request->boolean('all')) {
+            $items = $query->orderBy('sku')->get();
+        } else {
+            $items = $query->orderBy('sku')->paginate(20);
+        }
         $categories = $this->tenantQuery(ItemCategory::class)->get();
         $units = $this->tenantQuery(ItemUnit::class)->get();
+        $warehouses = $this->tenantQuery(\App\Models\Warehouse::class)->get();
 
-        return view('items.index', compact('items', 'categories', 'units'));
+        $lastSkuPerCategory = \DB::table('items')
+            ->select('category_id', \DB::raw('MAX(sku) as last_sku'))
+            ->where('tenant_id', $this->getTenantId())
+            ->whereNotNull('sku')
+            ->where('sku', '!=', '')
+            ->groupBy('category_id')
+            ->pluck('last_sku', 'category_id');
+
+        return view('items.index', compact('items', 'categories', 'units', 'warehouses', 'lastSkuPerCategory'));
     }
 
     public function create()
@@ -42,7 +63,15 @@ class ItemController extends TenantAwareController
         $warehouses = $this->tenantQuery(\App\Models\Warehouse::class)->get();
         $currencies = $this->tenantQuery(Currency::class)->get();
 
-        return view('items.create', compact('categories', 'units', 'warehouses', 'currencies'));
+        $lastSkuPerCategory = \DB::table('items')
+            ->select('category_id', \DB::raw('MAX(sku) as last_sku'))
+            ->where('tenant_id', $this->getTenantId())
+            ->whereNotNull('sku')
+            ->where('sku', '!=', '')
+            ->groupBy('category_id')
+            ->pluck('last_sku', 'category_id');
+
+        return view('items.create', compact('categories', 'units', 'warehouses', 'currencies', 'lastSkuPerCategory'));
     }
 
     public function store(Request $request)
@@ -62,13 +91,19 @@ class ItemController extends TenantAwareController
             'tax_rate' => 'nullable|numeric|min:0|max:100',
             'minimum_stock' => 'nullable|numeric|min:0',
             'opening_stock' => 'nullable|numeric|min:0',
-            'default_warehouse' => 'nullable|exists:warehouses,id',
+            'warehouses' => 'nullable|array',
+            'warehouses.*' => 'exists:warehouses,id',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
 
         $validated['tenant_id'] = $this->getTenantId();
         $validated['is_active'] = $request->boolean('is_active', true);
+
+        // Auto-set barcode from SKU if not provided
+        if (empty($validated['barcode']) && !empty($validated['sku'])) {
+            $validated['barcode'] = $validated['sku'];
+        }
 
         if ($request->hasFile('image')) {
             $file = $request->file('image');
@@ -79,8 +114,23 @@ class ItemController extends TenantAwareController
 
         $item = Item::create($validated);
 
-        if (($validated['opening_stock'] ?? 0) > 0) {
-            $warehouseId = $validated['default_warehouse'] ?? $this->tenantQuery(\App\Models\Warehouse::class)->where('is_default', true)->value('id');
+        $openingStock = (float) ($validated['opening_stock'] ?? 0);
+        $selectedWarehouses = $request->input('warehouses', []);
+        if (!empty($selectedWarehouses)) {
+            foreach ($selectedWarehouses as $whId) {
+                $quantity = 0;
+                if ($openingStock > 0 && $whId === ($selectedWarehouses[0] ?? null)) {
+                    $quantity = $openingStock;
+                }
+                ItemWarehouse::create([
+                    'tenant_id' => $this->getTenantId(),
+                    'item_id' => $item->id,
+                    'warehouse_id' => $whId,
+                    'quantity' => $quantity,
+                ]);
+            }
+        } elseif ($openingStock > 0) {
+            $warehouseId = $this->tenantQuery(\App\Models\Warehouse::class)->where('is_default', true)->value('id');
             if (!$warehouseId) {
                 $warehouseId = $this->tenantQuery(\App\Models\Warehouse::class)->value('id');
             }
@@ -89,7 +139,7 @@ class ItemController extends TenantAwareController
                     'tenant_id' => $this->getTenantId(),
                     'item_id' => $item->id,
                     'warehouse_id' => $warehouseId,
-                    'quantity' => $validated['opening_stock'],
+                    'quantity' => $openingStock,
                 ]);
             }
         }
@@ -130,12 +180,18 @@ class ItemController extends TenantAwareController
             'tax_rate' => 'nullable|numeric|min:0|max:100',
             'minimum_stock' => 'nullable|numeric|min:0',
             'opening_stock' => 'nullable|numeric|min:0',
-            'default_warehouse' => 'nullable|exists:warehouses,id',
+            'warehouses' => 'nullable|array',
+            'warehouses.*' => 'exists:warehouses,id',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
         ]);
 
         $validated['is_active'] = $request->boolean('is_active', true);
+
+        // Auto-set barcode from SKU if not provided
+        if (empty($validated['barcode']) && !empty($validated['sku'])) {
+            $validated['barcode'] = $validated['sku'];
+        }
 
         if ($request->hasFile('image')) {
             if ($item->image && file_exists(public_path($item->image))) {
@@ -157,8 +213,7 @@ class ItemController extends TenantAwareController
             if ($iw) {
                 $iw->increment('quantity', $diff);
             } elseif ($diff > 0) {
-                $warehouseId = $validated['default_warehouse']
-                    ?? $this->tenantQuery(Warehouse::class)->where('is_default', true)->value('id')
+                $warehouseId = $validated['default_warehouse'] ?? $this->tenantQuery(Warehouse::class)->where('is_default', true)->value('id')
                     ?? $this->tenantQuery(Warehouse::class)->value('id');
                 if ($warehouseId) {
                     ItemWarehouse::create([
@@ -167,6 +222,25 @@ class ItemController extends TenantAwareController
                         'warehouse_id' => $warehouseId,
                         'quantity' => $newOpening,
                     ]);
+                }
+            }
+        }
+
+        $selectedWarehouses = $request->input('warehouses', []);
+        if ($selectedWarehouses) {
+            $existingWhIds = $item->warehouses->pluck('warehouse_id')->toArray();
+            foreach ($selectedWarehouses as $whId) {
+                $item->warehouses()->firstOrCreate(
+                    ['tenant_id' => $this->getTenantId(), 'warehouse_id' => $whId],
+                    ['quantity' => 0]
+                );
+            }
+            foreach ($existingWhIds as $whId) {
+                if (!in_array($whId, $selectedWarehouses)) {
+                    $iw = ItemWarehouse::where('item_id', $item->id)->where('warehouse_id', $whId)->first();
+                    if ($iw && $iw->quantity == 0) {
+                        $iw->delete();
+                    }
                 }
             }
         }

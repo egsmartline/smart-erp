@@ -29,55 +29,73 @@
         </form>
     </div>
 
-    <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6">
-        @if($supplier)
-            <div class="mb-4 text-sm">
-                <span class="text-gray-500">المورد: </span>
-                <span class="font-semibold">{{ $supplier->name }}</span>
-                <span class="mx-4 text-gray-300">|</span>
-                <span class="text-gray-500">الرصيد الافتتاحي: </span>
-                <span class="font-semibold {{ $openingBalance >= 0 ? 'text-red-600' : 'text-emerald-600' }}">{{ number_format($openingBalance, 2) }}</span>
-            </div>
-        @endif
-        <div class="overflow-x-auto">
-            <table class="w-full text-right text-sm">
-                <thead>
-                    <tr class="border-b-2 border-gray-300 bg-gray-50">
-                        <th class="px-4 py-3 font-semibold">التاريخ</th>
-                        <th class="px-4 py-3 font-semibold">البيان</th>
-                        <th class="px-4 py-3 font-semibold">المرجع</th>
-                        <th class="px-4 py-3 font-semibold text-left">مدين</th>
-                        <th class="px-4 py-3 font-semibold text-left">دائن</th>
-                        <th class="px-4 py-3 font-semibold text-left">الرصيد</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @php $runningBal = $openingBalance; @endphp
-                    @if($openingBalance != 0)
-                        <tr class="border-b border-gray-100 bg-gray-50 font-semibold">
-                            <td class="px-4 py-2">—</td>
-                            <td class="px-4 py-2">رصيد افتتاحي</td>
-                            <td class="px-4 py-2">—</td>
-                            <td class="px-4 py-2 text-left font-mono">{{ $openingBalance > 0 ? number_format($openingBalance, 2) : '-' }}</td>
-                            <td class="px-4 py-2 text-left font-mono">{{ $openingBalance < 0 ? number_format(abs($openingBalance), 2) : '-' }}</td>
-                            <td class="px-4 py-2 text-left font-mono">{{ number_format($runningBal, 2) }}</td>
-                        </tr>
-                    @endif
-                    @forelse($transactions as $tx)
-                        @php $runningBal += $tx['amount']; @endphp
-                        <tr class="border-b border-gray-100 hover:bg-gray-50">
-                            <td class="px-4 py-2">{{ $tx['date']?->format('Y-m-d') ?? '-' }}</td>
-                            <td class="px-4 py-2"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ $tx['badge'] }}">{{ $tx['type'] }}</span></td>
-                            <td class="px-4 py-2 font-mono text-xs">{{ $tx['reference'] }}</td>
-                            <td class="px-4 py-2 text-left font-mono text-red-600">{{ $tx['amount'] > 0 ? number_format($tx['amount'], 2) : '-' }}</td>
-                            <td class="px-4 py-2 text-left font-mono text-emerald-600">{{ $tx['amount'] < 0 ? number_format(abs($tx['amount']), 2) : '-' }}</td>
-                            <td class="px-4 py-2 text-left font-mono {{ $runningBal >= 0 ? 'text-red-600' : 'text-emerald-600' }}">{{ number_format($runningBal, 2) }}</td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="6" class="px-4 py-8 text-center text-gray-500">اختر مورداً لعرض البيانات</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
+    @if($supplier)
+        <div class="mb-4 text-sm flex flex-wrap items-center gap-x-4 gap-y-1">
+            <span class="text-gray-500">المورد: </span>
+            <span class="font-semibold">{{ $supplier->name }}</span>
         </div>
-    </div>
+
+        @forelse($currencyGroups as $code => $group)
+            @php
+                $curCode = $group['currency']?->code ?? 'ج.م';
+                $curSym = $group['currency']?->symbol ?? 'ج.م';
+            @endphp
+            <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6 mb-4">
+                <div class="mb-3 flex items-center gap-2">
+                    <span class="rounded-lg bg-blue-100 px-3 py-1 text-sm font-bold text-blue-800">{{ $curCode }}</span>
+                    <span class="text-sm text-gray-500">الرصيد الافتتاحي:</span>
+                    <span class="font-semibold {{ $group['openingBalance'] >= 0 ? 'text-red-600' : 'text-emerald-600' }}">{{ number_format($group['openingBalance'], 2) }}</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right text-sm">
+                        <thead>
+                            <tr class="border-b-2 border-gray-300 bg-gray-50">
+                                <th class="px-4 py-3 font-semibold">التاريخ</th>
+                                <th class="px-4 py-3 font-semibold">البيان</th>
+                                <th class="px-4 py-3 font-semibold">المرجع</th>
+                                <th class="px-4 py-3 font-semibold text-left">مدين</th>
+                                <th class="px-4 py-3 font-semibold text-left">دائن</th>
+                                <th class="px-4 py-3 font-semibold">العملة</th>
+                                <th class="px-4 py-3 font-semibold text-left">الرصيد</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @php $runningBal = $group['openingBalance']; @endphp
+                            @if($group['openingBalance'] != 0)
+                                <tr class="border-b border-gray-100 bg-gray-50 font-semibold">
+                                    <td class="px-4 py-2">—</td>
+                                    <td class="px-4 py-2">رصيد افتتاحي</td>
+                                    <td class="px-4 py-2">—</td>
+                                    <td class="px-4 py-2 text-left font-mono">{{ $group['openingBalance'] > 0 ? number_format($group['openingBalance'], 2) : '-' }}</td>
+                                    <td class="px-4 py-2 text-left font-mono">{{ $group['openingBalance'] < 0 ? number_format(abs($group['openingBalance']), 2) : '-' }}</td>
+                                    <td class="px-4 py-2 text-gray-600">{{ $curCode }}</td>
+                                    <td class="px-4 py-2 text-left font-mono">{{ number_format($runningBal, 2) }}</td>
+                                </tr>
+                            @endif
+                            @foreach($group['transactions'] as $tx)
+                                @php $runningBal += $tx['amount']; @endphp
+                                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                    <td class="px-4 py-2">{{ $tx['date']?->format('Y-m-d') ?? '-' }}</td>
+                                    <td class="px-4 py-2"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ $tx['badge'] }}">{{ $tx['type'] }}</span></td>
+                                    <td class="px-4 py-2 font-mono text-xs">{{ $tx['reference'] }}</td>
+                                    <td class="px-4 py-2 text-left font-mono text-red-600">{{ $tx['amount'] > 0 ? number_format($tx['amount'], 2) : '-' }}</td>
+                                    <td class="px-4 py-2 text-left font-mono text-emerald-600">{{ $tx['amount'] < 0 ? number_format(abs($tx['amount']), 2) : '-' }}</td>
+                                    <td class="px-4 py-2 text-gray-600">{{ $curCode }}</td>
+                                    <td class="px-4 py-2 text-left font-mono {{ $runningBal >= 0 ? 'text-red-600' : 'text-emerald-600' }}">{{ number_format($runningBal, 2) }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @empty
+            <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6">
+                <p class="text-center text-gray-500 py-8">اختر مورداً لعرض البيانات</p>
+            </div>
+        @endforelse
+    @else
+        <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6">
+            <p class="text-center text-gray-500 py-8">اختر مورداً لعرض البيانات</p>
+        </div>
+    @endif
 </x-app-layout>

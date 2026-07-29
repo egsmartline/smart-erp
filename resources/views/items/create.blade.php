@@ -20,6 +20,18 @@
         <form action="{{ route('items.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="col-span-full">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-xs font-medium text-gray-500 ml-1">آخر أكواد التصنيفات:</span>
+                        @foreach($categories as $cat)
+                            @if(isset($lastSkuPerCategory[$cat->id]))
+                                <span class="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs text-gray-700">
+                                    {{ $cat->name }}: <span class="font-mono font-bold text-blue-600">{{ $lastSkuPerCategory[$cat->id] }}</span>
+                                </span>
+                            @endif
+                        @endforeach
+                    </div>
+                </div>
                 <div>
                     <label for="name" class="mb-1 block text-sm font-medium text-gray-700">اسم الصنف <span class="text-red-500">*</span></label>
                     <input type="text" name="name" id="name" value="{{ old('name') }}" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
@@ -30,7 +42,10 @@
                 </div>
                 <div>
                     <label for="barcode" class="mb-1 block text-sm font-medium text-gray-700">الباركود</label>
-                    <input type="text" name="barcode" id="barcode" value="{{ old('barcode') }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <div class="flex gap-2">
+                        <input type="text" name="barcode" id="barcode" value="{{ old('barcode') }}" class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <button type="button" onclick="printItemBarcode()" class="rounded-lg bg-gray-600 px-3 py-2 text-sm font-medium text-white hover:bg-gray-700 transition whitespace-nowrap">طباعة باركود</button>
+                    </div>
                 </div>
                 <div>
                     <label for="image" class="mb-1 block text-sm font-medium text-gray-700">صورة الصنف</label>
@@ -101,13 +116,19 @@
                     <input type="number" name="opening_stock" id="opening_stock" value="{{ old('opening_stock', 0) }}" step="0.01" min="0" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
                 <div>
-                    <label for="default_warehouse" class="mb-1 block text-sm font-medium text-gray-700">المخزن الافتراضي</label>
-                    <select name="default_warehouse" id="default_warehouse" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                        <option value="">اختر المخزن</option>
-                        @foreach($warehouses as $warehouse)
-                            <option value="{{ $warehouse->id }}" {{ old('default_warehouse') == $warehouse->id ? 'selected' : '' }}>{{ $warehouse->name }}</option>
-                        @endforeach
-                    </select>
+                    <label class="mb-1 block text-sm font-medium text-gray-700">المخازن</label>
+                    <div class="rounded-lg border border-gray-300 p-3 space-y-2 max-h-48 overflow-y-auto">
+                        @forelse($warehouses as $warehouse)
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" name="warehouses[]" value="{{ $warehouse->id }}"
+                                    {{ in_array($warehouse->id, old('warehouses', [])) ? 'checked' : '' }}
+                                    class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm text-gray-700">{{ $warehouse->name }}</span>
+                            </label>
+                        @empty
+                            <p class="text-sm text-gray-500">لا توجد مخازن متاحة</p>
+                        @endforelse
+                    </div>
                 </div>
                 <div class="flex items-center gap-6 pt-6">
                     <label class="flex items-center gap-2 cursor-pointer">
@@ -133,4 +154,17 @@
             </div>
         </form>
     </div>
+
+    @push('scripts')
+    <script>
+        function printItemBarcode() {
+            var code = document.getElementById('barcode').value || document.getElementById('sku').value;
+            var name = document.getElementById('name').value || code;
+            var qty = parseInt(document.getElementById('opening_stock').value) || 1;
+            if (qty < 1) qty = 1;
+            if (!code) { alert('يرجى إدخال الباركود أو الكود أولاً'); return; }
+            window.open('{{ route("barcodes.print-code") }}?code=' + encodeURIComponent(code) + '&name=' + encodeURIComponent(name) + '&qty=' + qty, '_blank');
+        }
+    </script>
+    @endpush
 </x-app-layout>

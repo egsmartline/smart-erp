@@ -57,6 +57,7 @@
                         <th class="px-4 py-3 font-semibold text-gray-700 text-left">الإجمالي</th>
                         <th class="px-4 py-3 font-semibold text-gray-700 text-left">المدفوع</th>
                         <th class="px-4 py-3 font-semibold text-gray-700 text-left">المستحق</th>
+                        <th class="px-4 py-3 font-semibold text-gray-700">العملة</th>
                         <th class="px-4 py-3 font-semibold text-gray-700 text-center">الحالة</th>
                         <th class="px-4 py-3 font-semibold text-gray-700 text-center">إجراءات</th>
                     </tr>
@@ -73,6 +74,7 @@
                             <td class="px-4 py-3 text-left font-mono text-sm text-gray-900">{{ number_format($invoice->total, 2) }}</td>
                             <td class="px-4 py-3 text-left font-mono text-sm text-emerald-600">{{ number_format($invoice->paid_amount, 2) }}</td>
                             <td class="px-4 py-3 text-left font-mono text-sm text-red-600">{{ number_format($invoice->due_amount, 2) }}</td>
+                            <td class="px-4 py-3 text-gray-600">{{ $invoice->currency?->symbol ?? $invoice->currency?->code ?? 'ج.م' }}</td>
                             <td class="px-4 py-3 text-center">
                                 @if($invoice->status === 'draft')
                                     <span class="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">مسودة</span>
@@ -112,7 +114,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="px-4 py-8 text-center text-gray-500">لا توجد فواتير مشتريات</td>
+                            <td colspan="10" class="px-4 py-8 text-center text-gray-500">لا توجد فواتير مشتريات</td>
                         </tr>
                     @endforelse
                 </tbody>

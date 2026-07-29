@@ -7,6 +7,7 @@ use App\Models\CashTreasury;
 use App\Models\Payment;
 use App\Models\TreasuryTransaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CashTreasuryController extends TenantAwareController
 {
@@ -138,18 +139,87 @@ class CashTreasuryController extends TenantAwareController
         return redirect()->route('cash-treasuries.index')->with('success', 'تم تحديث الخزينة بنجاح');
     }
 
-    public function balances()
+    public function balances(Request $request)
     {
         $treasuries = $this->tenantQuery(CashTreasury::class)->with('currency')->orderBy('name')->get();
         $bankAccounts = $this->tenantQuery(BankAccount::class)->with('currency')->orderBy('account_name')->get();
 
+        $dateFrom = $request->date_from;
+        $dateTo = $request->date_to;
+        $hasFilter = $dateFrom || $dateTo;
+
+        if ($hasFilter) {
+            foreach ($treasuries as $t) {
+                $t->balance_at_date = $this->calcBalanceAtDate('cash_treasuries', $t->id, $t->opening_balance, $dateFrom, $dateTo);
+                $t->period_receipts = $this->sumTreasuryPayments($t->id, 'receipt', $dateFrom, $dateTo);
+                $t->period_payments = $this->sumTreasuryPayments($t->id, 'payment', $dateFrom, $dateTo);
+            }
+            foreach ($bankAccounts as $b) {
+                $b->balance_at_date = $this->calcBalanceAtDate('bank_accounts', $b->id, $b->opening_balance, $dateFrom, $dateTo);
+                $b->period_receipts = $this->sumBankPayments($b->id, 'receipt', $dateFrom, $dateTo);
+                $b->period_payments = $this->sumBankPayments($b->id, 'payment', $dateFrom, $dateTo);
+            }
+        }
+
         $treasuryByCurrency = $treasuries->groupBy(fn($t) => $t->currency->code ?? 'ج.م')
-            ->map(fn($group) => $group->sum('current_balance'));
+            ->map(fn($group) => $group->sum(fn($t) => $t->balance_at_date ?? $t->current_balance));
         $bankByCurrency = $bankAccounts->groupBy(fn($b) => $b->currency->code ?? 'ج.م')
-            ->map(fn($group) => $group->sum('current_balance'));
+            ->map(fn($group) => $group->sum(fn($b) => $b->balance_at_date ?? $b->current_balance));
         $allCurrencies = collect(array_keys($treasuryByCurrency->toArray() + $bankByCurrency->toArray()))->sort()->values();
 
-        return view('cash-treasuries.balances', compact('treasuries', 'bankAccounts', 'treasuryByCurrency', 'bankByCurrency', 'allCurrencies'));
+        return view('cash-treasuries.balances', compact('treasuries', 'bankAccounts', 'treasuryByCurrency', 'bankByCurrency', 'allCurrencies', 'dateFrom', 'dateTo', 'hasFilter'));
+    }
+
+    protected function calcBalanceAtDate($table, $id, $openingBalance, $dateFrom, $dateTo)
+    {
+        $query = DB::table('payments')
+            ->whereNull('deleted_at')
+            ->where(function ($q) use ($table, $id) {
+                if ($table === 'cash_treasuries') {
+                    $q->where('treasury_id', $id)->where('payment_method', 'cash');
+                } else {
+                    $q->where('bank_account_id', $id)->where('payment_method', 'bank_transfer');
+                }
+            })
+            ->where('tenant_id', $this->getTenantId());
+
+        $receipts = (clone $query)->where('type', 'receipt');
+        $payments = (clone $query)->where('type', 'payment');
+
+        if ($dateTo) {
+            $receipts->where('date', '<=', $dateTo);
+            $payments->where('date', '<=', $dateTo);
+        }
+
+        return $openingBalance
+            + (float) $receipts->sum('amount')
+            - (float) $payments->sum('amount');
+    }
+
+    protected function sumTreasuryPayments($treasuryId, $type, $dateFrom, $dateTo)
+    {
+        $q = DB::table('payments')
+            ->whereNull('deleted_at')
+            ->where('treasury_id', $treasuryId)
+            ->where('payment_method', 'cash')
+            ->where('type', $type)
+            ->where('tenant_id', $this->getTenantId());
+        if ($dateFrom) $q->where('date', '>=', $dateFrom);
+        if ($dateTo) $q->where('date', '<=', $dateTo);
+        return (float) $q->sum('amount');
+    }
+
+    protected function sumBankPayments($bankId, $type, $dateFrom, $dateTo)
+    {
+        $q = DB::table('payments')
+            ->whereNull('deleted_at')
+            ->where('bank_account_id', $bankId)
+            ->where('payment_method', 'bank_transfer')
+            ->where('type', $type)
+            ->where('tenant_id', $this->getTenantId());
+        if ($dateFrom) $q->where('date', '>=', $dateFrom);
+        if ($dateTo) $q->where('date', '<=', $dateTo);
+        return (float) $q->sum('amount');
     }
 
     public function destroy(CashTreasury $cashTreasury)

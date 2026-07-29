@@ -45,6 +45,7 @@
                         <th class="px-4 py-3 font-semibold text-gray-700">البريد الإلكتروني</th>
                         <th class="px-4 py-3 font-semibold text-gray-700">الهاتف</th>
                         <th class="px-4 py-3 font-semibold text-gray-700 text-left">الرصيد</th>
+                        <th class="px-4 py-3 font-semibold text-gray-700">العملة</th>
                         <th class="px-4 py-3 font-semibold text-gray-700 text-center">الحالة</th>
                         <th class="px-4 py-3 font-semibold text-gray-700 text-center">إجراءات</th>
                     </tr>
@@ -61,6 +62,7 @@
                             <td class="px-4 py-3 text-left font-mono text-sm {{ $supplier->balance > 0 ? 'text-red-600' : 'text-emerald-600' }}">
                                 {{ number_format($supplier->balance, 2) }}
                             </td>
+                            <td class="px-4 py-3 text-gray-600">{{ $supplier->openingBalanceCurrency?->code ?? 'ج.م' }}</td>
                             <td class="px-4 py-3 text-center">
                                 <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $supplier->is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600' }}">
                                     {{ $supplier->is_active ? 'نشط' : 'غير نشط' }}
@@ -83,7 +85,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-4 py-8 text-center text-gray-500">لا يوجد موردين</td>
+                            <td colspan="8" class="px-4 py-8 text-center text-gray-500">لا يوجد موردين</td>
                         </tr>
                     @endforelse
                 </tbody>

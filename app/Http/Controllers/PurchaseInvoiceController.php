@@ -20,7 +20,7 @@ class PurchaseInvoiceController extends TenantAwareController
     public function index(Request $request)
     {
         $query = $this->tenantQuery(PurchaseInvoice::class)
-            ->with('supplier');
+            ->with(['supplier', 'currency']);
 
         if ($request->filled('date_from')) {
             $query->where('date', '>=', $request->date_from);
@@ -65,6 +65,8 @@ class PurchaseInvoiceController extends TenantAwareController
             'due_date' => 'required|date|after_or_equal:date',
             'notes' => 'nullable|string',
             'discount_amount' => 'nullable|numeric|min:0',
+            'discount_type' => 'nullable|in:amount,percent',
+            'discount_percent_inv' => 'nullable|numeric|min:0|max:100',
             'tax_amount' => 'nullable|numeric|min:0',
             'shipping_amount' => 'nullable|numeric|min:0',
             'lines' => 'required|array|min:1',
@@ -114,7 +116,10 @@ class PurchaseInvoiceController extends TenantAwareController
                 ];
             }
 
-            $overallDiscount = $validated['discount_amount'] ?? 0;
+            $discType = $validated['discount_type'] ?? 'amount';
+            $overallDiscount = $discType === 'percent'
+                ? $subtotal * (($validated['discount_percent_inv'] ?? 0) / 100)
+                : ($validated['discount_amount'] ?? 0);
             $grandTotal = $subtotal - $totalDiscount - $overallDiscount + $totalTax + ($validated['shipping_amount'] ?? 0);
 
             $invoice = PurchaseInvoice::create([
@@ -128,7 +133,7 @@ class PurchaseInvoiceController extends TenantAwareController
                 'due_date' => $validated['due_date'],
                 'subtotal' => $subtotal,
                 'discount_amount' => $totalDiscount + $overallDiscount,
-                'discount_percent' => 0,
+                'discount_percent' => $discType === 'percent' ? ($validated['discount_percent_inv'] ?? 0) : 0,
                 'tax_amount' => $totalTax,
                 'shipping_cost' => $validated['shipping_amount'] ?? 0,
                 'total' => $grandTotal,
@@ -190,6 +195,8 @@ class PurchaseInvoiceController extends TenantAwareController
             'due_date' => 'required|date|after_or_equal:date',
             'notes' => 'nullable|string',
             'discount_amount' => 'nullable|numeric|min:0',
+            'discount_type' => 'nullable|in:amount,percent',
+            'discount_percent_inv' => 'nullable|numeric|min:0|max:100',
             'tax_amount' => 'nullable|numeric|min:0',
             'shipping_amount' => 'nullable|numeric|min:0',
             'lines' => 'required|array|min:1',
@@ -239,7 +246,10 @@ class PurchaseInvoiceController extends TenantAwareController
                 ];
             }
 
-            $overallDiscount = $validated['discount_amount'] ?? 0;
+            $discType = $validated['discount_type'] ?? 'amount';
+            $overallDiscount = $discType === 'percent'
+                ? $subtotal * (($validated['discount_percent_inv'] ?? 0) / 100)
+                : ($validated['discount_amount'] ?? 0);
             $grandTotal = $subtotal - $totalDiscount - $overallDiscount + $totalTax + ($validated['shipping_amount'] ?? 0);
 
             $purchaseInvoice->update([
@@ -250,6 +260,7 @@ class PurchaseInvoiceController extends TenantAwareController
                 'due_date' => $validated['due_date'],
                 'subtotal' => $subtotal,
                 'discount_amount' => $totalDiscount + $overallDiscount,
+                'discount_percent' => $discType === 'percent' ? ($validated['discount_percent_inv'] ?? 0) : 0,
                 'tax_amount' => $totalTax,
                 'shipping_cost' => $validated['shipping_amount'] ?? 0,
                 'total' => $grandTotal,

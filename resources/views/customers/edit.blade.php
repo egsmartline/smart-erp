@@ -106,6 +106,19 @@
                     </select>
                 </div>
 
+                <div>
+                    <label for="opening_balance_currency_id" class="mb-1 block text-sm font-medium text-gray-700">عملة الرصيد الافتتاحي</label>
+                    <select name="opening_balance_currency_id" id="opening_balance_currency_id"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <option value="">العملة الافتراضية</option>
+                        @foreach ($currencies as $currency)
+                            <option value="{{ $currency->id }}" {{ old('opening_balance_currency_id', $customer->opening_balance_currency_id) == $currency->id ? 'selected' : '' }}>
+                                {{ $currency->name }} ({{ $currency->code }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
                 <div class="flex items-end">
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" name="is_active" value="1" {{ old('is_active', $customer->is_active) ? 'checked' : '' }}

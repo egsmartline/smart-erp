@@ -1,3 +1,17 @@
+@push('styles')
+<style>
+    @media print {
+        table { font-size: 48px !important; }
+        th { font-size: 48px !important; padding: 20px 24px !important; }
+        td { font-size: 52px !important; padding: 20px 24px !important; }
+        .text-sm { font-size: 52px !important; }
+        body { font-size: 48px !important; }
+        h3 { font-size: 56px !important; }
+        .text-xs { font-size: 40px !important; }
+    }
+</style>
+@endpush
+
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center justify-between">

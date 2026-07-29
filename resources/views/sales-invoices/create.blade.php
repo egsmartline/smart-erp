@@ -102,7 +102,17 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="mb-1 block text-xs font-medium text-gray-600">خصم إضافي</label>
+                                <div class="flex gap-2 mb-1">
+                                    <label class="flex items-center gap-1 text-xs">
+                                        <input type="radio" name="discount_type" value="amount" checked> مبلغ
+                                    </label>
+                                    <label class="flex items-center gap-1 text-xs">
+                                        <input type="radio" name="discount_type" value="percent"> نسبة %
+                                    </label>
+                                </div>
                                 <input type="number" id="discount-amount" name="discount_amount" value="0" step="0.01" min="0"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                                <input type="number" id="discount-percent" name="discount_percent_inv" value="0" step="0.01" min="0" max="100" style="display:none"
                                     class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                             </div>
                             <div>
@@ -152,22 +162,15 @@
     </form>
 </x-app-layout>
 
-<div id="js-debug" style="margin: 10px 0; padding: 12px; border: 2px solid red; background: #fff3f3; border-radius: 8px; font-size: 14px;">
-    <strong>🔍 JavaScript Debug:</strong> <span id="js-status">⏳ جاري التحميل...</span>
-</div>
-
 <script>
 (function() {
-    var dbg = document.getElementById('js-status');
-    if (!dbg) { alert('NO DEBUG ELEMENT'); return; }
-
     var lineIdx = 0;
     var itemsData = <?php echo json_encode($items->map(fn($i) => [
         'id' => $i->id,
         'name' => $i->name,
         'sku' => $i->sku,
         'price' => $i->selling_price,
-        'tax' => $i->tax_rate ?? 15,
+        'tax' => $i->tax_rate ?: $defaultTaxRate,
     ])->values()->all()); ?>;
 
     var warehousesData = <?php echo json_encode($warehouses->map(fn($w) => [
@@ -177,11 +180,7 @@
 
     var defaultWarehouseId = '<?php echo old('warehouse_id', $warehouses->first()->id ?? ''); ?>';
 
-    dbg.textContent = '✅ Script loaded. Items: ' + itemsData.length + ' | IDs: ' + itemsData.map(function(x){return x.id}).join(',');
-
     var tbody = document.getElementById('lines-tbody');
-    if (!tbody) { dbg.textContent += ' | ❌ tbody NOT FOUND!'; return; }
-    dbg.textContent += ' | ✅ tbody found';
 
     function addLine() {
         try {
@@ -250,7 +249,7 @@
 
         var td6 = document.createElement('td');
         td6.className = 'px-3 py-2';
-        var inpTax = makeInput('tax_rate', '15', { min: '0', max: '100' });
+        var inpTax = makeInput('tax_rate', '<?php echo $defaultTaxRate; ?>', { min: '0', max: '100' });
         inpTax.className = inpTax.className.replace('w-20', 'w-16');
         td6.appendChild(inpTax);
 
@@ -293,7 +292,7 @@
         tr.appendChild(td8);
         tr.appendChild(td9);
         tbody.appendChild(tr);
-        } catch(e) { dbg.textContent = '❌ addLine error: ' + e.message; }
+        } catch(e) { /* ignore */ }
     }
 
     function getRow(el) {
@@ -317,6 +316,13 @@
         calcTotals();
     }
 
+    function toggleDiscountType() {
+        var type = document.querySelector('input[name="discount_type"]:checked').value;
+        document.getElementById('discount-amount').style.display = type === 'amount' ? '' : 'none';
+        document.getElementById('discount-percent').style.display = type === 'percent' ? '' : 'none';
+        calcTotals();
+    }
+
     function calcTotals() {
         var subtotal = 0, totalDisc = 0, totalTax = 0;
         var rows = tbody.querySelectorAll('tr');
@@ -334,7 +340,11 @@
             totalDisc += ld;
             totalTax += lt;
         }
-        var discAmt = parseFloat(document.getElementById('discount-amount').value) || 0;
+        var discType = document.querySelector('input[name="discount_type"]:checked')?.value || 'amount';
+        var discAmt = discType === 'percent'
+            ? (subtotal * (parseFloat(document.getElementById('discount-percent').value) || 0) / 100)
+            : (parseFloat(document.getElementById('discount-amount').value) || 0);
+        if (discType === 'percent') document.getElementById('discount-amount').value = discAmt.toFixed(2);
         var shipAmt = parseFloat(document.getElementById('shipping-amount').value) || 0;
         var grand = subtotal - totalDisc - discAmt + totalTax + shipAmt;
         document.getElementById('tot-subtotal').textContent = subtotal.toFixed(2);
@@ -346,7 +356,6 @@
 
     try {
         document.getElementById('btn-add-line').addEventListener('click', function() {
-            dbg.textContent += ' | clicked add';
             addLine();
         });
 
@@ -359,7 +368,7 @@
                 var opt = target.options[target.selectedIndex];
                 if (opt && opt.value) {
                     var price = parseFloat(opt.dataset.price) || 0;
-                    var tax = parseFloat(opt.dataset.tax) || 15;
+                    var tax = parseFloat(opt.dataset.tax) || <?php echo $defaultTaxRate; ?>;
                     tr.querySelector('[name$="[unit_price]"]').value = price;
                     tr.querySelector('[name$="[tax_rate]"]').value = tax;
                     tr.querySelector('[name$="[quantity]"]').value = '1';
@@ -379,7 +388,13 @@
         });
 
         document.getElementById('discount-amount').addEventListener('input', calcTotals);
+        document.getElementById('discount-percent').addEventListener('input', calcTotals);
         document.getElementById('shipping-amount').addEventListener('input', calcTotals);
+
+        document.querySelectorAll('input[name="discount_type"]').forEach(function(el) {
+            el.addEventListener('change', toggleDiscountType);
+        });
+        toggleDiscountType();
 
         document.getElementById('items-app').addEventListener('click', function(e) {
             var target = e.target;
@@ -394,9 +409,7 @@
         });
 
         addLine();
-        dbg.textContent += ' | ✅ init complete';
     } catch(e) {
-        dbg.textContent += ' | ❌ INIT ERROR: ' + e.message;
         alert('JavaScript Error: ' + e.message);
     }
 })();

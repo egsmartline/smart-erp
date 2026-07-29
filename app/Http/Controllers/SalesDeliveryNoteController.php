@@ -257,11 +257,26 @@ class SalesDeliveryNoteController extends TenantAwareController
             abort(403);
         }
 
-        if ($salesDeliveryNote->status !== 'draft') {
-            return back()->with('error', 'لا يمكن حذف إذن تسليم غير مسودة');
-        }
+        DB::transaction(function () use ($salesDeliveryNote) {
+            if ($salesDeliveryNote->status === 'confirmed') {
+                foreach ($salesDeliveryNote->lines as $line) {
+                    $itemWarehouse = ItemWarehouse::where('item_id', $line->item_id)
+                        ->where('warehouse_id', $salesDeliveryNote->warehouse_id)
+                        ->first();
+                    if ($itemWarehouse) {
+                        $itemWarehouse->increment('quantity', $line->quantity);
+                    }
 
-        $salesDeliveryNote->delete();
+                    StockMovement::where('reference_type', SalesDeliveryNote::class)
+                        ->where('reference_id', $salesDeliveryNote->id)
+                        ->where('item_id', $line->item_id)
+                        ->delete();
+                }
+            }
+
+            $salesDeliveryNote->lines()->delete();
+            $salesDeliveryNote->delete();
+        });
 
         return redirect()->route('sales-delivery-notes.index')
             ->with('success', 'تم حذف إذن التسليم بنجاح');

@@ -20,11 +20,13 @@ class RecalculatePaymentBalances extends Command
             $balance = (float) $treasury->opening_balance;
 
             $receipts = Payment::where('treasury_id', $treasury->id)
+                ->where('payment_method', 'cash')
                 ->where('type', 'receipt')
                 ->where('status', 'completed')
                 ->sum('amount');
 
             $payments = Payment::where('treasury_id', $treasury->id)
+                ->where('payment_method', 'cash')
                 ->where('type', 'payment')
                 ->where('status', 'completed')
                 ->sum('amount');
@@ -41,11 +43,13 @@ class RecalculatePaymentBalances extends Command
             $balance = (float) $account->opening_balance;
 
             $receipts = Payment::where('bank_account_id', $account->id)
+                ->where('payment_method', 'bank_transfer')
                 ->where('type', 'receipt')
                 ->where('status', 'completed')
                 ->sum('amount');
 
             $payments = Payment::where('bank_account_id', $account->id)
+                ->where('payment_method', 'bank_transfer')
                 ->where('type', 'payment')
                 ->where('status', 'completed')
                 ->sum('amount');

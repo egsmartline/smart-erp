@@ -1,9 +1,15 @@
 <x-app-layout>
     <x-slot name="header">
+        @unless(request()->boolean('all'))
         <h2 class="text-xl font-bold text-gray-800">حركات المخزون</h2>
+        @else
+        <h2 class="text-xl font-bold text-gray-800">طباعة حركات المخزون</h2>
+        <button onclick="window.print()" class="inline-flex items-center gap-2 rounded-lg bg-gray-600 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition no-print">طباعة</button>
+        @endunless
     </x-slot>
 
     <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6">
+        @unless(request()->boolean('all'))
         <form method="GET" class="mb-6 flex flex-wrap items-end gap-4">
             <div class="flex-1 min-w-[200px]">
                 <label class="mb-1 block text-sm font-medium text-gray-700">الصنف</label>
@@ -48,21 +54,23 @@
             </div>
             <button type="submit" class="rounded-lg bg-gray-600 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition">بحث</button>
             <a href="{{ route('stock-movements.index') }}" class="rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 transition">إعادة تعيين</a>
+            <a href="{{ route('stock-movements.index', ['all' => 1]) }}" target="_blank" class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg> طباعة</a>
         </form>
+        @endunless
 
         <div class="overflow-x-auto">
             <table class="w-full text-right text-sm">
                 <thead>
                     <tr class="border-b border-gray-200 bg-gray-50">
-                        <th class="px-4 py-3 font-semibold text-gray-700">التاريخ</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700">الصنف</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700">المخزن</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700">النوع</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700 text-left">الكمية</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700 text-left">تكلفة الوحدة</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700 text-left">التكلفة الإجمالية</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700">المرجع</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700">المستخدم</th>
+                        <th class="px-2 py-1.5 font-semibold text-gray-700 w-[110px]">التاريخ</th>
+                        <th class="px-2 py-1.5 font-semibold text-gray-700 w-auto min-w-[200px]">الصنف</th>
+                        <th class="px-2 py-1.5 font-semibold text-gray-700 w-[100px]">المخزن</th>
+                        <th class="px-2 py-1.5 font-semibold text-gray-700 w-[100px]">النوع</th>
+                        <th class="px-2 py-1.5 font-semibold text-gray-700 text-left w-[70px]">الكمية</th>
+                        <th class="px-2 py-1.5 font-semibold text-gray-700 text-left w-[90px]">تكلفة الوحدة</th>
+                        <th class="px-2 py-1.5 font-semibold text-gray-700 text-left w-[100px]">التكلفة</th>
+                        <th class="px-2 py-1.5 font-semibold text-gray-700 w-[100px]">المرجع</th>
+                        <th class="px-2 py-1.5 font-semibold text-gray-700 w-[100px]">المستخدم</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -82,37 +90,39 @@
                     @endphp
                     @forelse($stockMovements as $movement)
                         <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
-                            <td class="px-4 py-3 text-gray-600">{{ $movement->created_at->format('Y-m-d H:i') }}</td>
-                            <td class="px-4 py-3 font-medium text-gray-900">{{ $movement->item->name ?? '-' }}</td>
-                            <td class="px-4 py-3 text-gray-600">{{ $movement->warehouse->name ?? '-' }}</td>
-                            <td class="px-4 py-3">
+                            <td class="px-2 py-1 text-xs text-gray-600 w-[110px]">{{ $movement->created_at->format('Y-m-d H:i') }}</td>
+                            <td class="px-2 py-1 font-medium text-gray-900 w-auto min-w-[200px] text-xs">{{ $movement->item->name ?? '-' }}</td>
+                            <td class="px-2 py-1 text-gray-600 w-[100px] text-xs">{{ $movement->warehouse->name ?? '-' }}</td>
+                            <td class="px-2 py-1 w-[100px]">
                                 @php $typeInfo = $typeLabels[$movement->type] ?? ['label' => $movement->type, 'color' => 'bg-gray-100 text-gray-800']; @endphp
-                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $typeInfo['color'] }}">{{ $typeInfo['label'] }}</span>
+                                <span class="inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium {{ $typeInfo['color'] }}">{{ $typeInfo['label'] }}</span>
                             </td>
-                            <td class="px-4 py-3 text-left">
-                                <span class="font-mono text-sm {{ in_array($movement->type, $inTypes) ? 'text-green-600' : 'text-red-600' }}">
+                            <td class="px-2 py-1 text-left w-[70px]">
+                                <span class="font-mono text-xs {{ in_array($movement->type, $inTypes) ? 'text-green-600' : 'text-red-600' }}">
                                     {{ in_array($movement->type, $inTypes) ? '+' : '-' }}{{ number_format($movement->quantity, 2) }}
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-left font-mono text-sm">{{ number_format($movement->unit_cost, 2) }}</td>
-                            <td class="px-4 py-3 text-left font-mono text-sm">{{ number_format($movement->total_cost, 2) }}</td>
-                            <td class="px-4 py-3 text-gray-600">
+                            <td class="px-2 py-1 text-left font-mono text-xs w-[90px]">{{ number_format($movement->unit_cost, 2) }}</td>
+                            <td class="px-2 py-1 text-left font-mono text-xs w-[100px]">{{ number_format($movement->total_cost, 2) }}</td>
+                            <td class="px-2 py-1 text-gray-600 w-[100px] text-xs">
                                 @if($movement->reference_type && $movement->reference_id)
                                     {{ class_basename($movement->reference_type) }} #{{ $movement->reference_id }}
                                 @else
                                     -
                                 @endif
                             </td>
-                            <td class="px-4 py-3 text-gray-600">{{ $movement->creator->name ?? '-' }}</td>
+                            <td class="px-2 py-1 text-gray-600 w-[100px] text-xs">{{ $movement->creator->name ?? '-' }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="px-4 py-8 text-center text-gray-500">لا توجد حركات مخزون</td>
+                            <td colspan="9" class="px-2 py-8 text-center text-gray-500">لا توجد حركات مخزون</td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
+        @unless(request()->boolean('all'))
         <div class="mt-4">{{ $stockMovements->links() }}</div>
+        @endunless
     </div>
 </x-app-layout>

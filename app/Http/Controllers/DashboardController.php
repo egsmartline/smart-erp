@@ -9,7 +9,9 @@ use App\Models\PurchaseInvoice;
 use App\Models\Customer;
 use App\Models\Supplier;
 use App\Models\Item;
+use App\Models\Payment;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class DashboardController extends TenantAwareController
 {
@@ -40,15 +42,53 @@ class DashboardController extends TenantAwareController
             ->get();
 
         $accountsCount = Account::where('tenant_id', $tenantId)->count();
-        $journalEntriesCount = JournalEntry::where('tenant_id', $tenantId)->count();
-        $draftJournalEntriesCount = JournalEntry::where('tenant_id', $tenantId)->where('is_posted', false)->count();
-        $postedJournalEntriesCount = JournalEntry::where('tenant_id', $tenantId)->where('is_posted', true)->count();
-        $recentJournalEntries = JournalEntry::where('tenant_id', $tenantId)->with('creator')->latest()->take(5)->get();
+
+        $year = Carbon::now()->year;
+        $salesByMonth = SalesInvoice::where('tenant_id', $tenantId)
+            ->where('status', 'posted')
+            ->whereYear('date', $year)
+            ->selectRaw('MONTH(date) as month, SUM(total) as total')
+            ->groupBy('month')
+            ->pluck('total', 'month')
+            ->toArray();
+
+        $salesChartLabels = [];
+        $salesChartData = [];
+        $monthNames = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+        for ($m = 1; $m <= 12; $m++) {
+            $salesChartLabels[] = $monthNames[$m - 1];
+            $salesChartData[] = $salesByMonth[$m] ?? 0;
+        }
+
+        $receivableCustomers = Customer::where('tenant_id', $tenantId)
+            ->where('is_active', true)
+            ->with(['salesInvoices' => fn($q) => $q->select('id', 'tenant_id', 'customer_id', 'total'),
+                    'payments' => fn($q) => $q->select('id', 'tenant_id', 'customer_id', 'type', 'amount')])
+            ->get()
+            ->map(function ($c) {
+                $openingBal = (float) ($c->opening_balance ?? 0);
+                $balance = $c->opening_balance_type === 'credit' ? -$openingBal : $openingBal;
+                foreach ($c->salesInvoices as $inv) { $balance += (float) $inv->total; }
+                foreach ($c->payments as $pay) {
+                    $amount = (float) $pay->amount;
+                    if ($pay->type === 'receipt') $amount = -$amount;
+                    $balance += $amount;
+                }
+                $c->real_balance = $balance;
+                return $c;
+            })
+            ->filter(fn($c) => $c->real_balance > 0)
+            ->sortByDesc('real_balance')
+            ->take(10)
+            ->values();
+
+        $balanceChartLabels = $receivableCustomers->pluck('name')->toArray();
+        $balanceChartData = $receivableCustomers->pluck('real_balance')->toArray();
 
         return view('dashboard', compact(
             'stats', 'recentSales', 'recentPurchases',
-            'accountsCount', 'journalEntriesCount', 'draftJournalEntriesCount',
-            'postedJournalEntriesCount', 'recentJournalEntries'
+            'accountsCount', 'salesChartLabels', 'salesChartData',
+            'balanceChartLabels', 'balanceChartData'
         ));
     }
 

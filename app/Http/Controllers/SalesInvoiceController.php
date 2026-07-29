@@ -11,6 +11,7 @@ use App\Models\Currency;
 use App\Models\ItemWarehouse;
 use App\Models\StockMovement;
 use App\Models\JournalEntry;
+use App\Models\Tax;
 use App\Services\JournalService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -40,7 +41,7 @@ class SalesInvoiceController extends TenantAwareController
             });
         }
 
-        $invoices = $query->latest()->paginate(15);
+        $invoices = $query->orderBy('date', 'desc')->paginate(15);
         $customers = $this->tenantQuery(Customer::class)->where('is_active', true)->get();
 
         return view('sales-invoices.index', compact('invoices', 'customers'));
@@ -53,8 +54,9 @@ class SalesInvoiceController extends TenantAwareController
         $items = Item::where('is_active', true)->get();
         $currencies = Currency::where('is_active', true)->get();
         $invoiceNumber = $this->generateInvoiceNumber();
+        $defaultTaxRate = $this->getDefaultTaxRate();
 
-        return view('sales-invoices.create', compact('customers', 'warehouses', 'items', 'currencies', 'invoiceNumber'));
+        return view('sales-invoices.create', compact('customers', 'warehouses', 'items', 'currencies', 'invoiceNumber', 'defaultTaxRate'));
     }
 
     public function store(Request $request)
@@ -67,6 +69,8 @@ class SalesInvoiceController extends TenantAwareController
             'due_date' => 'required|date|after_or_equal:date',
             'notes' => 'nullable|string',
             'discount_amount' => 'nullable|numeric|min:0',
+            'discount_type' => 'nullable|in:amount,percent',
+            'discount_percent_inv' => 'nullable|numeric|min:0|max:100',
             'tax_amount' => 'nullable|numeric|min:0',
             'shipping_amount' => 'nullable|numeric|min:0',
             'lines' => 'required|array|min:1',
@@ -173,7 +177,9 @@ class SalesInvoiceController extends TenantAwareController
         $items = Item::where('is_active', true)->get();
         $currencies = Currency::where('is_active', true)->get();
 
-        return view('sales-invoices.edit', compact('salesInvoice', 'customers', 'warehouses', 'items', 'currencies'));
+        $defaultTaxRate = $this->getDefaultTaxRate();
+
+        return view('sales-invoices.edit', compact('salesInvoice', 'customers', 'warehouses', 'items', 'currencies', 'defaultTaxRate'));
     }
 
     public function update(Request $request, SalesInvoice $salesInvoice)
@@ -190,6 +196,8 @@ class SalesInvoiceController extends TenantAwareController
             'due_date' => 'required|date|after_or_equal:date',
             'notes' => 'nullable|string',
             'discount_amount' => 'nullable|numeric|min:0',
+            'discount_type' => 'nullable|in:amount,percent',
+            'discount_percent_inv' => 'nullable|numeric|min:0|max:100',
             'tax_amount' => 'nullable|numeric|min:0',
             'shipping_amount' => 'nullable|numeric|min:0',
             'lines' => 'required|array|min:1',
@@ -340,10 +348,6 @@ class SalesInvoiceController extends TenantAwareController
 
     public function destroy(SalesInvoice $salesInvoice)
     {
-        if ($salesInvoice->status !== 'draft') {
-            return back()->with('error', 'لا يمكن حذف فاتورة غير مسودة');
-        }
-
         DB::beginTransaction();
 
         try {
@@ -512,6 +516,13 @@ class SalesInvoiceController extends TenantAwareController
             ->get(['id', 'name', 'name_ar', 'sku', 'barcode', 'selling_price', 'cost_price', 'tax_rate']);
 
         return response()->json($items);
+    }
+
+    private function getDefaultTaxRate(): float
+    {
+        $tax = Tax::where('is_default', true)->orWhere('is_active', true)->first();
+
+        return $tax ? (float) $tax->rate : 15;
     }
 
     protected function generateInvoiceNumber(): string

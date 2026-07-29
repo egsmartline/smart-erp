@@ -11,12 +11,12 @@ class InventoryCountController extends TenantAwareController
 {
     public function index(Request $request)
     {
-        $query = ItemWarehouse::where('tenant_id', $this->getTenantId())
+        $query = ItemWarehouse::where('item_warehouses.tenant_id', $this->getTenantId())
             ->with(['item', 'warehouse'])
             ->whereHas('warehouse');
 
         if ($request->filled('warehouse_id')) {
-            $query->where('warehouse_id', $request->warehouse_id);
+            $query->where('item_warehouses.warehouse_id', $request->warehouse_id);
         }
 
         if ($request->filled('category_id')) {
@@ -32,7 +32,11 @@ class InventoryCountController extends TenantAwareController
             });
         }
 
-        $inventoryItems = $query->orderBy('created_at', 'desc')->paginate(20)->withQueryString();
+        $inventoryItems = $query
+            ->select('item_warehouses.*')
+            ->join('items', 'items.id', '=', 'item_warehouses.item_id')
+            ->orderBy('items.sku')
+            ->paginate(20)->withQueryString();
         $warehouses = Warehouse::where('tenant_id', $this->getTenantId())->orderBy('name')->get();
         $categories = ItemCategory::where('tenant_id', $this->getTenantId())->where('is_active', true)->orderBy('name')->get();
 

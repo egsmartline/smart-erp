@@ -16,12 +16,17 @@ class JournalService
     public function createEntry(array $data): JournalEntry
     {
         return DB::transaction(function () use ($data) {
+            $totalDebit = collect($data['lines'])->sum('debit');
+            $totalCredit = collect($data['lines'])->sum('credit');
+
             $entry = JournalEntry::create([
                 'tenant_id' => $data['tenant_id'],
                 'entry_number' => $this->generateEntryNumber($data['tenant_id'], $data['date']),
                 'date' => $data['date'],
                 'description' => $data['description'],
                 'reference' => $data['reference'] ?? null,
+                'total_debit' => $totalDebit,
+                'total_credit' => $totalCredit,
                 'fiscal_year_id' => $this->getFiscalYearId($data['tenant_id'], $data['date']),
                 'type' => $data['type'] ?? 'general',
                 'is_posted' => true,

@@ -31,7 +31,10 @@
                 </div>
                 <div>
                     <label for="barcode" class="mb-1 block text-sm font-medium text-gray-700">الباركود</label>
-                    <input type="text" name="barcode" id="barcode" value="{{ old('barcode', $item->barcode) }}" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <div class="flex gap-2">
+                        <input type="text" name="barcode" id="barcode" value="{{ old('barcode', $item->barcode) }}" class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <button type="button" onclick="printItemBarcode()" class="rounded-lg bg-gray-600 px-3 py-2 text-sm font-medium text-white hover:bg-gray-700 transition whitespace-nowrap">طباعة باركود</button>
+                    </div>
                 </div>
                 <div>
                     <label for="image" class="mb-1 block text-sm font-medium text-gray-700">صورة الصنف</label>
@@ -106,6 +109,25 @@
                     <label for="opening_stock" class="mb-1 block text-sm font-medium text-gray-700">الرصيد الافتتاحي</label>
                     <input type="number" name="opening_stock" id="opening_stock" value="{{ old('opening_stock', $item->opening_stock) }}" step="0.01" min="0" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-gray-700">المخازن</label>
+                    <div class="rounded-lg border border-gray-300 p-3 space-y-2 max-h-48 overflow-y-auto">
+                        @forelse($warehouses as $warehouse)
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" name="warehouses[]" value="{{ $warehouse->id }}"
+                                    {{ in_array($warehouse->id, old('warehouses', $item->warehouses->pluck('warehouse_id')->toArray())) ? 'checked' : '' }}
+                                    class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm text-gray-700">{{ $warehouse->name }}</span>
+                                @php $whQty = $item->warehouses->where('warehouse_id', $warehouse->id)->first()?->quantity ?? 0; @endphp
+                                @if($whQty > 0)
+                                    <span class="text-xs text-gray-400">(الرصيد: {{ number_format($whQty, 0) }})</span>
+                                @endif
+                            </label>
+                        @empty
+                            <p class="text-sm text-gray-500">لا توجد مخازن متاحة</p>
+                        @endforelse
+                    </div>
+                </div>
                 <div class="flex items-center gap-6 pt-6">
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" name="has_serial_numbers" value="1" {{ old('has_serial_numbers', $item->has_serial_numbers) ? 'checked' : '' }} class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
@@ -134,4 +156,17 @@
             </div>
         </form>
     </div>
+
+    @push('scripts')
+    <script>
+        function printItemBarcode() {
+            var code = document.getElementById('barcode').value || document.getElementById('sku').value;
+            var name = document.getElementById('name').value || code;
+            var qty = parseInt(document.getElementById('opening_stock').value) || 1;
+            if (qty < 1) qty = 1;
+            if (!code) { alert('يرجى إدخال الباركود أو الكود أولاً'); return; }
+            window.open('{{ route("barcodes.print-code") }}?code=' + encodeURIComponent(code) + '&name=' + encodeURIComponent(name) + '&qty=' + qty, '_blank');
+        }
+    </script>
+    @endpush
 </x-app-layout>

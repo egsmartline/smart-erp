@@ -28,6 +28,7 @@ class Customer extends Model
         'opening_balance',
         'opening_balance_type',
         'balance',
+        'opening_balance_currency_id',
         'is_active',
         'notes',
     ];
@@ -75,5 +76,15 @@ class Customer extends Model
     public function salesReturns(): HasMany
     {
         return $this->hasMany(SalesReturn::class);
+    }
+
+    public function openingBalanceCurrency(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class, 'opening_balance_currency_id');
+    }
+
+    public function discountNotes(): HasMany
+    {
+        return $this->hasMany(DiscountNote::class);
     }
 }

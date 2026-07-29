@@ -27,6 +27,7 @@ class Supplier extends Model
         'credit_limit',
         'opening_balance',
         'opening_balance_type',
+        'opening_balance_currency_id',
         'balance',
         'is_active',
         'notes',
@@ -75,5 +76,10 @@ class Supplier extends Model
     public function purchaseReturns(): HasMany
     {
         return $this->hasMany(PurchaseReturn::class);
+    }
+
+    public function openingBalanceCurrency(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class, 'opening_balance_currency_id');
     }
 }

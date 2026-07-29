@@ -49,7 +49,7 @@
                     <table class="w-full text-right text-sm">
                         <thead>
                             <tr class="border-b border-gray-200 bg-gray-50">
-                                <th class="px-3 py-2 font-semibold text-gray-700">#</th>
+                                <th class="px-3 py-2 font-semibold text-gray-700" style="width:30px">#</th>
                                 <th class="px-3 py-2 font-semibold text-gray-700">الصنف</th>
                                 <th class="px-3 py-2 font-semibold text-gray-700 text-left">الكمية</th>
                                 <th class="px-3 py-2 font-semibold text-gray-700 text-left">التكلفة</th>
@@ -197,7 +197,7 @@
 
 <style>
     @media print {
-        #printArea .no-print { display: none !important; }
+        .no-print { display: none !important; }
         #printArea { padding: 10px !important; margin: 0 !important; box-shadow: none !important; border: none !important; border-radius: 0 !important; }
         #printArea table { display: table !important; }
         #printArea thead { display: table-header-group !important; }
@@ -205,5 +205,9 @@
         #printArea tfoot { display: table-footer-group !important; }
         #printArea tr { display: table-row !important; }
         #printArea td, #printArea th { display: table-cell !important; }
+        .overflow-x-auto { overflow: visible !important; }
+        table { font-size: 11px !important; }
+        table th, table td { padding: 4px 6px !important; }
+        .font-mono { font-size: 11px !important; }
     }
 </style>

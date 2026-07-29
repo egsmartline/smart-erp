@@ -26,7 +26,7 @@
         <table style="border: none; margin: 0;">
             <tr style="border: none;">
                 <td style="border: none; width: 60%;">
-                    @if($company && $company->logo)
+                    @if(!empty($company) && $company->logo)
                         <img src="{{ public_path('storage/' . $company->logo) }}" style="height: 50px;">
                     @endif
                     <div class="company-name" dir="rtl">{{ $company->name ?? 'Smart ERP' }}</div>

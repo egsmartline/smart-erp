@@ -71,8 +71,14 @@
             <div id="items-app">
                 <div class="mb-4 flex items-center justify-between">
                     <h3 class="text-lg font-bold text-gray-800">أصناف الفاتورة</h3>
-                    <button type="button" id="btn-add-line"
-                        class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 transition cursor-pointer">
+                    <div class="flex gap-2">
+                        <button type="button" id="btn-print-barcodes"
+                            class="inline-flex items-center gap-2 rounded-lg bg-gray-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-700 transition cursor-pointer">
+                            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10v-1H7v1zM5 3h14v2H5V3zm0 4h14v2H5V7zm0 4h14v2H5v-2zm0 4h14v4H5v-4z"/></svg>
+                            طباعة باركود
+                        </button>
+                        <button type="button" id="btn-add-line"
+                            class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 transition cursor-pointer">
                         <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                         إضافة صنف
                     </button>
@@ -101,9 +107,23 @@
                         <h4 class="text-sm font-bold text-gray-700 mb-3">الخصومات والشحن</h4>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
+                                <label class="mb-1 block text-xs font-medium text-gray-600">نوع الخصم</label>
+                                <div class="flex gap-4">
+                                    <label class="flex items-center gap-1 text-sm">
+                                        <input type="radio" name="discount_type" value="amount" {{ old('discount_type', $purchaseInvoice->discount_percent > 0 ? 'percent' : 'amount') === 'percent' ? '' : 'checked' }}> مبلغ
+                                    </label>
+                                    <label class="flex items-center gap-1 text-sm">
+                                        <input type="radio" name="discount_type" value="percent" {{ old('discount_type', $purchaseInvoice->discount_percent > 0 ? 'percent' : 'amount') === 'percent' ? 'checked' : '' }}> نسبة %
+                                    </label>
+                                </div>
+                            </div>
+                            <div>
                                 <label class="mb-1 block text-xs font-medium text-gray-600">خصم إضافي</label>
                                 <input type="number" id="discount-amount" name="discount_amount" value="{{ old('discount_amount', $purchaseInvoice->discount_amount ?? '0') }}" step="0.01" min="0"
                                     class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                                <input type="number" id="discount-percent" name="discount_percent_inv" value="{{ old('discount_percent_inv', $purchaseInvoice->discount_percent ?? '0') }}" step="0.01" min="0" max="100"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                    style="display:{{ old('discount_type', $purchaseInvoice->discount_percent > 0 ? 'percent' : 'amount') === 'percent' ? '' : 'none' }}">
                             </div>
                             <div>
                                 <label class="mb-1 block text-xs font-medium text-gray-600">مصاريف شحن</label>
@@ -159,6 +179,7 @@
         'id' => $i->id,
         'name' => $i->name,
         'sku' => $i->sku,
+        'barcode' => $i->barcode,
         'price' => $i->cost_price,
         'tax' => $i->tax_rate ?? 15,
     ])->values()->all()); ?>;
@@ -307,7 +328,11 @@
             totalDisc += ld;
             totalTax += lt;
         }
-        var discAmt = parseFloat(document.getElementById('discount-amount').value) || 0;
+        var discType = document.querySelector('input[name="discount_type"]:checked')?.value || 'amount';
+        var discAmt = discType === 'percent'
+            ? subtotal * (parseFloat(document.getElementById('discount-percent').value) || 0) / 100
+            : (parseFloat(document.getElementById('discount-amount').value) || 0);
+        if (discType === 'percent') document.getElementById('discount-amount').value = discAmt.toFixed(2);
         var shipAmt = parseFloat(document.getElementById('shipping-amount').value) || 0;
         var grand = subtotal - totalDisc - discAmt + totalTax + shipAmt;
         document.getElementById('tot-subtotal').textContent = subtotal.toFixed(2);
@@ -317,8 +342,31 @@
         document.getElementById('tot-grand').textContent = grand.toFixed(2);
     }
 
+    function toggleDiscountType() {
+        var type = document.querySelector('input[name="discount_type"]:checked').value;
+        document.getElementById('discount-amount').style.display = type === 'amount' ? '' : 'none';
+        document.getElementById('discount-percent').style.display = type === 'percent' ? '' : 'none';
+        calcTotals();
+    }
+
     document.getElementById('btn-add-line').addEventListener('click', function() {
         addLine();
+    });
+
+    document.getElementById('btn-print-barcodes').addEventListener('click', function() {
+        var rows = tbody.querySelectorAll('tr');
+        var params = [];
+        for (var i = 0; i < rows.length; i++) {
+            var tr = rows[i];
+            var sel = tr.querySelector('select');
+            if (!sel || !sel.value) continue;
+            var itemId = parseInt(sel.value);
+            var qty = parseFloat(tr.querySelector('[name$="[quantity]"]').value) || 1;
+            if (qty < 1) qty = 1;
+            params.push(itemId + ':' + Math.round(qty));
+        }
+        if (params.length === 0) { alert('يرجى إضافة أصناف أولاً'); return; }
+        window.open('{{ route("barcodes.print") }}?d=' + params.join(','), '_blank');
     });
 
     document.getElementById('items-app').addEventListener('change', function(e) {
@@ -349,8 +397,14 @@
         }
     });
 
+    document.querySelectorAll('input[name="discount_type"]').forEach(function(el) {
+        el.addEventListener('change', toggleDiscountType);
+    });
     document.getElementById('discount-amount').addEventListener('input', calcTotals);
+    document.getElementById('discount-percent').addEventListener('input', calcTotals);
     document.getElementById('shipping-amount').addEventListener('input', calcTotals);
+
+    toggleDiscountType();
 
     document.getElementById('items-app').addEventListener('click', function(e) {
         var target = e.target;

@@ -79,6 +79,18 @@
                     </select>
                 </div>
 
+                <div id="invoice_field" style="display:none">
+                    <label for="invoice_id" class="mb-1 block text-sm font-medium text-gray-700">الفاتورة</label>
+                    <select name="invoice_id" id="invoice_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <option value="">اختر الفاتورة (إختياري)</option>
+                        @foreach($invoices as $inv)
+                            <option value="{{ $inv->id }}" data-customer="{{ $inv->customer_id }}" {{ old('invoice_id') == $inv->id ? 'selected' : '' }}>
+                                {{ $inv->invoice_number }} - {{ number_format($inv->due_amount, 2) }} (باقي)
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
                 <div id="supplier_field">
                     <label for="supplier_id" class="mb-1 block text-sm font-medium text-gray-700">المورد</label>
                     <select name="supplier_id" id="supplier_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
@@ -152,6 +164,27 @@
             const treasuryField = document.getElementById('treasury_field');
             const bankAccountField = document.getElementById('bank_account_field');
             const chequeField = document.getElementById('cheque_number_field');
+            const invoiceField = document.getElementById('invoice_field');
+            const invoiceSelect = document.getElementById('invoice_id');
+
+            function filterInvoices() {
+                const customerId = document.getElementById('customer_id').value;
+                const type = typeSelect.value;
+                if (type !== 'receipt' || !customerId) {
+                    invoiceField.style.display = 'none';
+                    invoiceSelect.value = '';
+                    return;
+                }
+                invoiceField.style.display = 'block';
+                let hasVisible = false;
+                Array.from(invoiceSelect.options).forEach(opt => {
+                    if (opt.value === '') return;
+                    const match = opt.dataset.customer === customerId;
+                    opt.style.display = match ? '' : 'none';
+                    if (match && opt.value === invoiceSelect.value) hasVisible = true;
+                });
+                if (!hasVisible) invoiceSelect.value = '';
+            }
 
             function toggleFields() {
                 const type = typeSelect.value;
@@ -189,10 +222,12 @@
                 }
 
                 chequeField.style.display = showCheque ? 'block' : 'none';
+                filterInvoices();
             }
 
             typeSelect.addEventListener('change', toggleFields);
             methodSelect.addEventListener('change', toggleFields);
+            document.getElementById('customer_id').addEventListener('change', filterInvoices);
             toggleFields();
         });
     </script>

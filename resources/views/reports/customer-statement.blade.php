@@ -43,38 +43,38 @@
             <table class="w-full text-right text-sm">
                 <thead>
                     <tr class="border-b-2 border-gray-300 bg-gray-50">
-                        <th class="px-4 py-3 font-semibold">التاريخ</th>
-                        <th class="px-4 py-3 font-semibold">البيان</th>
-                        <th class="px-4 py-3 font-semibold">المرجع</th>
-                        <th class="px-4 py-3 font-semibold text-left">مدين</th>
-                        <th class="px-4 py-3 font-semibold text-left">دائن</th>
-                        <th class="px-4 py-3 font-semibold text-left">الرصيد</th>
+                        <th class="px-3 py-1.5 font-semibold w-[15%] text-xs">التاريخ</th>
+                        <th class="px-3 py-1.5 font-semibold w-[20%] text-xs">البيان</th>
+                        <th class="px-3 py-1.5 font-semibold w-[25%] text-xs">المرجع</th>
+                        <th class="px-3 py-1.5 font-semibold text-left w-[13%] text-xs">مدين</th>
+                        <th class="px-3 py-1.5 font-semibold text-left w-[13%] text-xs">دائن</th>
+                        <th class="px-3 py-1.5 font-semibold text-left w-[14%] text-xs">الرصيد</th>
                     </tr>
                 </thead>
                 <tbody>
                     @php $runningBal = $openingBalance; @endphp
                     @if($openingBalance != 0)
                         <tr class="border-b border-gray-100 bg-gray-50 font-semibold">
-                            <td class="px-4 py-2">—</td>
-                            <td class="px-4 py-2">رصيد افتتاحي</td>
-                            <td class="px-4 py-2">—</td>
-                            <td class="px-4 py-2 text-left font-mono">{{ $openingBalance > 0 ? number_format($openingBalance, 2) : '-' }}</td>
-                            <td class="px-4 py-2 text-left font-mono">{{ $openingBalance < 0 ? number_format(abs($openingBalance), 2) : '-' }}</td>
-                            <td class="px-4 py-2 text-left font-mono">{{ number_format($runningBal, 2) }}</td>
+                            <td class="px-3 py-1 text-xs">—</td>
+                            <td class="px-3 py-1 text-xs">رصيد افتتاحي</td>
+                            <td class="px-3 py-1 text-xs">—</td>
+                            <td class="px-3 py-1 text-left font-mono text-xs">{{ $openingBalance > 0 ? number_format($openingBalance, 2) : '-' }}</td>
+                            <td class="px-3 py-1 text-left font-mono text-xs">{{ $openingBalance < 0 ? number_format(abs($openingBalance), 2) : '-' }}</td>
+                            <td class="px-3 py-1 text-left font-mono text-xs">{{ number_format($runningBal, 2) }}</td>
                         </tr>
                     @endif
                     @forelse($transactions as $tx)
                         @php $runningBal += $tx['amount']; @endphp
                         <tr class="border-b border-gray-100 hover:bg-gray-50">
-                            <td class="px-4 py-2">{{ $tx['date']?->format('Y-m-d') ?? '-' }}</td>
-                            <td class="px-4 py-2"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ $tx['badge'] }}">{{ $tx['type'] }}</span></td>
-                            <td class="px-4 py-2 font-mono text-xs">{{ $tx['reference'] }}</td>
-                            <td class="px-4 py-2 text-left font-mono text-red-600">{{ $tx['amount'] > 0 ? number_format($tx['amount'], 2) : '-' }}</td>
-                            <td class="px-4 py-2 text-left font-mono text-emerald-600">{{ $tx['amount'] < 0 ? number_format(abs($tx['amount']), 2) : '-' }}</td>
-                            <td class="px-4 py-2 text-left font-mono {{ $runningBal >= 0 ? 'text-red-600' : 'text-emerald-600' }}">{{ number_format($runningBal, 2) }}</td>
+                            <td class="px-3 py-1 text-xs">{{ $tx['date']?->format('Y-m-d') ?? '-' }}</td>
+                            <td class="px-3 py-1 text-xs"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ $tx['badge'] }}">{{ $tx['type'] }}</span></td>
+                            <td class="px-3 py-1 font-mono text-xs">{{ $tx['reference'] }}</td>
+                            <td class="px-3 py-1 text-left font-mono text-xs text-red-600">{{ $tx['amount'] > 0 ? number_format($tx['amount'], 2) : '-' }}</td>
+                            <td class="px-3 py-1 text-left font-mono text-xs text-emerald-600">{{ $tx['amount'] < 0 ? number_format(abs($tx['amount']), 2) : '-' }}</td>
+                            <td class="px-3 py-1 text-left font-mono text-xs {{ $runningBal >= 0 ? 'text-red-600' : 'text-emerald-600' }}">{{ number_format($runningBal, 2) }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="px-4 py-8 text-center text-gray-500">اختر عميلاً لعرض البيانات</td></tr>
+                        <tr><td colspan="6" class="px-3 py-4 text-center text-gray-500 text-xs">اختر عميلاً لعرض البيانات</td></tr>
                     @endforelse
                 </tbody>
             </table>
