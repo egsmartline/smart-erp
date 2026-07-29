@@ -15,8 +15,8 @@
         .document-info h2 { color: #2563eb; font-size: 18px; margin: 0 0 5px 0; text-align: center; }
         .document-info p { font-size: 12px; margin: 2px 0; color: #374151; text-align: center; }
         table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-        th { background: #2563eb; color: white; padding: 5px; text-align: center; font-size: 11px; }
-        td { padding: 5px; border-bottom: 1px solid #e5e7eb; font-size: 11px; text-align: center; }
+        th { background: #2563eb; color: white; padding: 5px; text-align: center; font-size: 12px; }
+        td { padding: 5px; border-bottom: 1px solid #e5e7eb; font-size: 12px; text-align: center; }
         .total-row td { font-weight: bold; background: #f3f4f6; white-space: nowrap !important; }
         .total-row.final td { background: #2563eb; color: white; }
         .ltr { direction: ltr; unicode-bidi: embed; }
