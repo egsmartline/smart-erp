@@ -107,7 +107,7 @@
     </table>
 
     <div class="footer">
-        <p>تم إنشاء هذا المستند بواسطة نظام Smart ERP</p>
+        <p>تم إنشاء هذا المستند بواسطة نظام Smart ERP <span style="color: #22c55e; font-weight: bold;">✓</span></p>
     </div>
 </body>
 </html>

@@ -44,7 +44,7 @@
     </div>
     @yield('content')
     <div class="footer" dir="rtl">
-        <p>تم إنشاء هذا المستند بواسطة نظام Smart ERP في {{ now()->format('Y/m/d H:i') }}</p>
+        <p>تم إنشاء هذا المستند بواسطة نظام Smart ERP في {{ now()->format('Y/m/d H:i') }} <span style="color: #22c55e; font-weight: bold;">✓</span></p>
     </div>
 </body>
 </html>
