@@ -9,8 +9,8 @@
         .company-info { font-size: 11px; color: #666; }
         .company-info span { display: inline-block; }
         table { width: 100%; border-collapse: collapse; margin: 15px 0; }
-        th { background: #2563eb; color: white; padding: 8px; text-align: right; font-size: 13px; }
-        td { padding: 8px; border-bottom: 1px solid #eee; font-size: 13px; text-align: right; }
+        th { background: #2563eb; color: white; padding: 8px; text-align: right; font-size: 14px; }
+        td { padding: 8px; border-bottom: 1px solid #eee; font-size: 14px; text-align: right; }
         .total-row { font-weight: bold; background: #f3f4f6; }
         .footer { margin-top: 20px; border-top: 1px solid #ddd; padding-top: 10px; font-size: 11px; color: #666; }
         .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; }
