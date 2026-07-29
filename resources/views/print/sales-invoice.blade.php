@@ -45,7 +45,12 @@
                     <div class="document-info">
                         <h2>فاتورة مبيعات</h2>
                         <p>رقم الفاتورة: <strong class="ltr">{{ $invoice->invoice_number }}</strong></p>
-                        <p>التاريخ: <strong class="ltr">{{ $invoice->date }}</strong></p>
+                        <p>
+                            <span>التاريخ: <strong class="ltr">{{ $invoice->date }}</strong></span>
+                            @if(isset($invoice->due_date) && $invoice->due_date)
+                                <span style="margin-right: 20px;">المستحق: <strong class="ltr">{{ $invoice->due_date }}</strong></span>
+                            @endif
+                        </p>
                     </div>
                 </td>
             </tr>

@@ -2,7 +2,12 @@
 @section('document-info')
     <h2 style="color: #2563eb; margin: 0;">فاتورة مبيعات</h2>
     <p dir="rtl">رقم الفاتورة: <strong dir="ltr">{{ $invoice->invoice_number }}</strong></p>
-    <p dir="rtl">التاريخ: <strong dir="ltr">{{ $invoice->date }}</strong></p>
+    <p dir="rtl">
+        <span>التاريخ: <strong dir="ltr">{{ $invoice->date }}</strong></span>
+        @if(isset($invoice->due_date) && $invoice->due_date)
+            <span style="margin-right: 20px;">المستحق: <strong dir="ltr">{{ $invoice->due_date }}</strong></span>
+        @endif
+    </p>
     <p>الحالة: <span class="badge badge-{{ $invoice->status }}">{{ $invoice->status === 'posted' ? 'مرحل' : ($invoice->status === 'paid' ? 'مدفوعة' : 'مسودة') }}</span></p>
 @endsection
 
