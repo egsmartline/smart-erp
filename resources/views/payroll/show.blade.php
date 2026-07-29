@@ -1,13 +1,13 @@
 @push('styles')
 <style>
     @media print {
-        table { font-size: 24px !important; }
-        th { font-size: 24px !important; padding: 10px 12px !important; }
-        td { font-size: 26px !important; padding: 10px 12px !important; }
-        .text-sm { font-size: 26px !important; }
-        body { font-size: 24px !important; }
-        h3 { font-size: 28px !important; }
-        .text-xs { font-size: 20px !important; }
+        table { font-size: 12px !important; }
+        th { font-size: 12px !important; padding: 5px 6px !important; }
+        td { font-size: 13px !important; padding: 5px 6px !important; }
+        .text-sm { font-size: 13px !important; }
+        body { font-size: 12px !important; }
+        h3 { font-size: 14px !important; }
+        .text-xs { font-size: 10px !important; }
     }
 </style>
 @endpush
