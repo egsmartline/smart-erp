@@ -37,7 +37,10 @@ class SalesInvoiceController extends TenantAwareController
         }
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
-                $q->where('invoice_number', 'like', '%' . $request->search . '%');
+                $q->where('invoice_number', 'like', '%' . $request->search . '%')
+                  ->orWhereHas('customer', function ($q) use ($request) {
+                      $q->where('name', 'like', '%' . $request->search . '%');
+                  });
             });
         }
 
