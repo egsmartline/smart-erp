@@ -67,6 +67,12 @@
                                 </select>
                                 <input type="hidden" name="payments[0][currency_id]" value="1">
                                 <input type="hidden" name="payments[0][exchange_rate]" value="1">
+                                <select name="payments[0][purchase_invoice_id]" class="payment-purchase-inv w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500" style="display:none">
+                                    <option value="">-- فاتورة شراء --</option>
+                                    @foreach($purchaseInvoices as $pInv)
+                                        <option value="{{ $pInv->id }}" data-supplier="{{ $pInv->supplier_id }}">{{ $pInv->invoice_number }} (باقي {{ number_format($pInv->due_amount, 2) }})</option>
+                                    @endforeach
+                                </select>
                             </td>
                             <td class="px-2 py-1.5">
                                 <select name="payments[0][payment_method]" class="payment-method w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500" required>
@@ -146,6 +152,7 @@
                 const treasury = row.querySelector('.payment-treasury');
                 const bank = row.querySelector('.payment-bank');
                 const check = row.querySelector('.payment-check');
+                const purchaseInv = row.querySelector('.payment-purchase-inv');
 
                 if (type === 'receipt') {
                     customer.style.display = '';
@@ -155,6 +162,21 @@
                     customer.style.display = 'none';
                     customer.value = '';
                     supplier.style.display = '';
+                }
+
+                if (type === 'payment' && supplier.value) {
+                    purchaseInv.style.display = '';
+                    let hasVisible = false;
+                    Array.from(purchaseInv.options).forEach(opt => {
+                        if (opt.value === '') return;
+                        const match = opt.dataset.supplier === supplier.value;
+                        opt.style.display = match ? '' : 'none';
+                        if (match && opt.value === purchaseInv.value) hasVisible = true;
+                    });
+                    if (!hasVisible) purchaseInv.value = '';
+                } else {
+                    purchaseInv.style.display = 'none';
+                    purchaseInv.value = '';
                 }
 
                 [treasury, bank, check].forEach(el => { el.style.display = 'none'; el.value = ''; });
@@ -189,6 +211,8 @@
                 newRow.querySelector('.payment-treasury').style.display = '';
                 newRow.querySelector('.payment-bank').style.display = 'none';
                 newRow.querySelector('.payment-check').style.display = 'none';
+                const newPurchaseInv = newRow.querySelector('.payment-purchase-inv');
+                if (newPurchaseInv) { newPurchaseInv.style.display = 'none'; newPurchaseInv.value = ''; }
 
                 const removeBtn = newRow.querySelector('.remove-row');
                 removeBtn.disabled = false;
@@ -199,6 +223,8 @@
 
                 newRow.querySelector('.payment-type').addEventListener('change', function () { toggleFields(newRow); });
                 newRow.querySelector('.payment-method').addEventListener('change', function () { toggleFields(newRow); });
+                const nSupplier = newRow.querySelector('.payment-supplier');
+                if (nSupplier) nSupplier.addEventListener('change', function () { toggleFields(newRow); });
 
                 document.getElementById('paymentsBody').appendChild(newRow);
                 reindexRows();
@@ -209,6 +235,8 @@
             document.querySelectorAll('#paymentsBody .payment-row').forEach(row => {
                 row.querySelector('.payment-type').addEventListener('change', function () { toggleFields(row); });
                 row.querySelector('.payment-method').addEventListener('change', function () { toggleFields(row); });
+                const supSelect = row.querySelector('.payment-supplier');
+                if (supSelect) supSelect.addEventListener('change', function () { toggleFields(row); });
                 toggleFields(row);
             });
 

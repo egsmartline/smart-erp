@@ -108,6 +108,11 @@ class PurchaseInvoice extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function installments(): HasMany
+    {
+        return $this->hasMany(PurchaseInvoiceInstallment::class);
+    }
+
     public function auditLabel(): string
     {
         $supplierName = $this->supplier?->name ?? $this->supplier?->name_ar ?? '#' . $this->supplier_id;

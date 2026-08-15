@@ -8,17 +8,17 @@
         body { font-family: 'Traditional Arabic', 'Arial', sans-serif; font-size: 14px; color: #000; margin: 0; padding: 0; }
         .voucher { max-width: 210mm; margin: 0 auto; padding: 4mm; }
         .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 3mm; }
-        .header .company { font-size: 16px; font-weight: bold; }
-        .header .ref { text-align: left; font-size: 16px; font-weight: bold; }
+        .header .company { font-size: 13px; font-weight: bold; }
+        .header .ref { text-align: left; font-size: 13px; font-weight: bold; }
         .title { text-align: center; font-size: 20px; font-weight: bold; margin: 3mm 0; }
-        .body-text { font-size: 16px; font-weight: bold; line-height: 1.6; margin-bottom: 3mm; }
+        .body-text { font-size: 13px; font-weight: bold; line-height: 1.6; margin-bottom: 3mm; }
         .body-text .field { display: inline; padding: 0 4px; }
         .body-text .field-lg { display: inline; padding: 0 4px; }
-        .method-box { margin: 3mm 0; padding: 3mm; border: 1px solid #000; font-size: 16px; font-weight: bold; }
+        .method-box { margin: 3mm 0; padding: 3mm; border: 1px solid #000; font-size: 13px; font-weight: bold; }
         .signatures { display: flex; justify-content: space-between; margin-top: 6mm; text-align: center; }
         .signature-item { width: 30%; }
         .signature-item .line { border-top: 1px solid #000; margin: 8mm 0 2px 0; }
-        .signature-item .title { font-size: 16px; font-weight: bold; }
+        .signature-item .title { font-size: 13px; font-weight: bold; }
         .signature-item .name { font-size: 11px; margin-top: 1px; }
         .footer { text-align: center; margin-top: 4mm; font-size: 10px; color: #888; border-top: 1px solid #ccc; padding-top: 2mm; }
         .no-print { display: none; }

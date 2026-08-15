@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8">
+    <title>فاتورة مشتريات - {{ $invoice->invoice_number }}</title>
+    <style>
+        @page { size: A4; margin: 0.5cm 0.5cm; }
+        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DejaVu Sans', 'Segoe UI', Arial, sans-serif; direction: rtl; text-align: right; font-size: 13px; color: #1f2937; background: white; padding: 5px; width: 100%; margin: 0 auto; }
+        .marker { background: red; color: white; padding: 4px 8px; font-size: 11px; font-weight: bold; text-align: center; border-radius: 4px; margin-bottom: 8px; }
+        .header { border-bottom: 2px solid #2563eb; padding-bottom: 12px; margin-bottom: 15px; overflow: hidden; }
+        .header-table { width: 100%; border-collapse: collapse; }
+        .header-table td { border: none; padding: 4px; text-align: center; }
+        .company-name { font-size: 18px; font-weight: bold; color: #2563eb; text-align: center; }
+        .company-info { font-size: 12px; color: #6b7280; line-height: 1.6; text-align: center; }
+        .document-info h2 { color: #2563eb; font-size: 16px; margin: 0 0 5px 0; text-align: center; }
+        .document-info p { font-size: 13px; margin: 2px 0; color: #374151; text-align: center; }
+        table.data-table { width: 100%; table-layout: fixed; border-collapse: collapse; margin: 10px 0; }
+        th { background: #2563eb; color: white; padding: 6px; text-align: center; font-size: 12px; }
+        td { padding: 6px; border-bottom: 1px solid #e5e7eb; font-size: 13px; text-align: center; overflow: hidden; }
+        .total-row td { font-weight: bold; background: #f3f4f6; font-size: 13px; white-space: nowrap !important; }
+        .total-row.final td { background: #2563eb; color: white; }
+        .ltr { direction: ltr; unicode-bidi: embed; }
+        .footer { margin-top: 15px; border-top: 1px solid #d1d5db; padding-top: 8px; font-size: 11px; color: #9ca3af; text-align: center; }
+        .font-mono { font-family: 'Courier New', monospace; }
+    </style>
+</head>
+<body onload="window.print()">
+    <div class="marker">✓ V2.0</div>
+    <div class="header">
+        <table class="header-table">
+            <tr>
+                <td style="width: 60%;">
+                    <div>
+                        @if($company && $company->logo)
+                            <img src="{{ asset('storage/' . $company->logo) }}" style="height: 50px;">
+                        @endif
+                    </div>
+                    <div class="company-name">{{ $company->name ?? 'Smart ERP' }}</div>
+                    <div class="company-info">
+                        @if($company->address)<span>العنوان: {{ $company->address }}</span><br>@endif
+                        @if($company->phone)<span>الهاتف: {{ $company->phone }}</span>@endif
+                        @if($company->tax_number)<span class="ltr"> | الرقم الضريبي: {{ $company->tax_number }}</span>@endif
+                    </div>
+                </td>
+                <td style="width: 40%; text-align: center; vertical-align: top;">
+                    <div class="document-info">
+                        <h2>فاتورة مشتريات</h2>
+                        <p>رقم الفاتورة: <strong class="ltr">{{ $invoice->invoice_number }}</strong></p>
+                        <p style="margin-bottom: 20px;">
+                            <span>المورد: <strong>{{ $invoice->supplier->name ?? '' }}</strong></span>
+                            <span style="margin-right: 20px;">التاريخ: <strong class="ltr">{{ $invoice->date }}</strong></span>
+                            @if(isset($invoice->due_date) && $invoice->due_date)
+                                <span style="margin-right: 20px;">المستحق: <strong class="ltr">{{ $invoice->due_date }}</strong></span>
+                            @endif
+                        </p>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th style="width: 5%;">#</th>
+                <th style="width: 30%;">الصنف</th>
+                <th style="width: 13%;">الكمية</th>
+                <th style="width: 18%;">السعر</th>
+                <th style="width: 15%;">الخصم</th>
+                <th style="width: 19%;">الإجمالي</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($invoice->lines as $i => $line)
+            <tr>
+                <td class="ltr">{{ $i + 1 }}</td>
+                <td>{{ $line->item->name ?? '' }}</td>
+                <td class="ltr font-mono">{{ number_format($line->quantity, 2) }}</td>
+                <td class="ltr font-mono">{{ number_format($line->unit_price, 2) }}</td>
+                <td class="ltr font-mono">{{ number_format($line->discount_amount ?? 0, 2) }}</td>
+                <td class="ltr font-mono">{{ number_format($line->total, 2) }}</td>
+            </tr>
+            @endforeach
+        </tbody>
+        <tfoot>
+            <tr class="total-row">
+                <td colspan="5">المجموع الفرعي</td>
+                <td class="ltr font-mono">{{ number_format($invoice->subtotal, 2) }}</td>
+            </tr>
+            @if($invoice->discount_amount > 0)
+            <tr class="total-row">
+                <td colspan="5">الخصم</td>
+                <td class="ltr font-mono">{{ number_format($invoice->discount_amount, 2) }}</td>
+            </tr>
+            @endif
+            @if($invoice->tax_amount > 0)
+            <tr class="total-row">
+                <td colspan="5">ضريبة القيمة المضافة</td>
+                <td class="ltr font-mono">{{ number_format($invoice->tax_amount, 2) }}</td>
+            </tr>
+            @endif
+            <tr class="total-row final">
+                <td colspan="5">الإجمالي</td>
+                <td class="ltr font-mono">{{ number_format($invoice->total, 2) }}</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
+        <tr>
+            <td style="text-align: center; padding: 8px; width: 33%;">
+                <div style="font-size: 11px; color: #666;">الإجمالي</div>
+                <div style="font-size: 13px; font-weight: bold; font-family: 'Courier New', monospace; direction: ltr;">{{ $invoice->total ? number_format($invoice->total, 2) : '0.00' }}</div>
+            </td>
+            <td style="text-align: center; padding: 8px; width: 33%;">
+                <div style="font-size: 11px; color: #666;">المدفوع</div>
+                <div style="font-size: 13px; font-weight: bold; font-family: 'Courier New', monospace; direction: ltr; color: #059669;">{{ $invoice->paid_amount ? number_format($invoice->paid_amount, 2) : '0.00' }}</div>
+            </td>
+            <td style="text-align: center; padding: 8px; width: 34%;">
+                <div style="font-size: 11px; color: #666;">المستحق</div>
+                <div style="font-size: 13px; font-weight: bold; font-family: 'Courier New', monospace; direction: ltr; color: #dc2626;">{{ $invoice->due_amount ? number_format($invoice->due_amount, 2) : '0.00' }}</div>
+            </td>
+        </tr>
+    </table>
+
+    <div class="footer">
+        <p>تم إنشاء هذا المستند بواسطة نظام Smart ERP <span style="color: #22c55e; font-weight: bold;">✓</span></p>
+    </div>
+</body>
+</html>

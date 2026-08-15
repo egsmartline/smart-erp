@@ -20,6 +20,7 @@ class SalesInvoice extends Model
         'cashier_id',
         'invoice_number',
         'date',
+        'due_date',
         'subtotal',
         'discount_percent',
         'discount_amount',
@@ -41,6 +42,7 @@ class SalesInvoice extends Model
     {
         return [
             'date' => 'date',
+            'due_date' => 'date',
             'subtotal' => 'decimal:2',
             'discount_percent' => 'decimal:2',
             'discount_amount' => 'decimal:2',
@@ -101,6 +103,11 @@ class SalesInvoice extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function installments(): HasMany
+    {
+        return $this->hasMany(SalesInvoiceInstallment::class);
     }
 
     public function auditLabel(): string

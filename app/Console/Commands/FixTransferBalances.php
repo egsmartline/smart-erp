@@ -21,11 +21,23 @@ class FixTransferBalances extends Command
             $balance = (float) $treasury->opening_balance;
 
             $incoming = (float) TreasuryTransaction::where('treasury_id', $treasury->id)
-                ->whereIn('type', ['receipt', 'in', 'opening'])
+                ->where(function ($q) {
+                    $q->whereIn('type', ['receipt', 'in', 'opening'])
+                        ->orWhere(function ($q2) {
+                            $q2->where('type', 'transfer')
+                                ->where('description', 'like', '%تحويل وارد%');
+                        });
+                })
                 ->sum('amount');
 
             $outgoing = (float) TreasuryTransaction::where('treasury_id', $treasury->id)
-                ->where('type', 'out')
+                ->where(function ($q) {
+                    $q->where('type', 'out')
+                        ->orWhere(function ($q2) {
+                            $q2->where('type', 'transfer')
+                                ->where('description', 'like', '%تحويل صادر%');
+                        });
+                })
                 ->sum('amount');
 
             $balance += $incoming - $outgoing;

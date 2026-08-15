@@ -91,6 +91,18 @@
                     </select>
                 </div>
 
+                <div id="purchase_invoice_field" style="display:none">
+                    <label for="purchase_invoice_id" class="mb-1 block text-sm font-medium text-gray-700">فاتورة الشراء</label>
+                    <select name="purchase_invoice_id" id="purchase_invoice_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <option value="">اختر فاتورة الشراء (إختياري)</option>
+                        @foreach($purchaseInvoices as $pInv)
+                            <option value="{{ $pInv->id }}" data-supplier="{{ $pInv->supplier_id }}" {{ old('purchase_invoice_id') == $pInv->id ? 'selected' : '' }}>
+                                {{ $pInv->invoice_number }} - {{ number_format($pInv->due_amount, 2) }} (باقي)
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
                 <div id="supplier_field">
                     <label for="supplier_id" class="mb-1 block text-sm font-medium text-gray-700">المورد</label>
                     <select name="supplier_id" id="supplier_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
@@ -166,6 +178,27 @@
             const chequeField = document.getElementById('cheque_number_field');
             const invoiceField = document.getElementById('invoice_field');
             const invoiceSelect = document.getElementById('invoice_id');
+            const purchaseInvoiceField = document.getElementById('purchase_invoice_field');
+            const purchaseInvoiceSelect = document.getElementById('purchase_invoice_id');
+
+            function filterPurchaseInvoices() {
+                const supplierId = document.getElementById('supplier_id').value;
+                const type = typeSelect.value;
+                if (type !== 'payment' || !supplierId) {
+                    purchaseInvoiceField.style.display = 'none';
+                    purchaseInvoiceSelect.value = '';
+                    return;
+                }
+                purchaseInvoiceField.style.display = 'block';
+                let hasVisible = false;
+                Array.from(purchaseInvoiceSelect.options).forEach(opt => {
+                    if (opt.value === '') return;
+                    const match = opt.dataset.supplier === supplierId;
+                    opt.style.display = match ? '' : 'none';
+                    if (match && opt.value === purchaseInvoiceSelect.value) hasVisible = true;
+                });
+                if (!hasVisible) purchaseInvoiceSelect.value = '';
+            }
 
             function filterInvoices() {
                 const customerId = document.getElementById('customer_id').value;
@@ -223,11 +256,13 @@
 
                 chequeField.style.display = showCheque ? 'block' : 'none';
                 filterInvoices();
+                filterPurchaseInvoices();
             }
 
             typeSelect.addEventListener('change', toggleFields);
             methodSelect.addEventListener('change', toggleFields);
             document.getElementById('customer_id').addEventListener('change', filterInvoices);
+            document.getElementById('supplier_id').addEventListener('change', filterPurchaseInvoices);
             toggleFields();
         });
     </script>

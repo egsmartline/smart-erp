@@ -63,7 +63,7 @@ class CustomerController extends TenantAwareController
     public function show(Customer $customer)
     {
         $this->authorizeTenant($customer);
-        $customer->load(['openingBalanceCurrency', 'salesInvoices' => fn($q) => $q->latest(), 'payments' => fn($q) => $q->latest(), 'discountNotes' => fn($q) => $q->latest()]);
+        $customer->load(['openingBalanceCurrency', 'salesInvoices' => fn($q) => $q->where('status', '!=', 'voided')->latest(), 'payments' => fn($q) => $q->latest(), 'discountNotes' => fn($q) => $q->latest()]);
 
         $openingBal = (float) ($customer->opening_balance ?? 0);
         $realBalance = $customer->opening_balance_type === 'credit' ? -$openingBal : $openingBal;
@@ -77,7 +77,7 @@ class CustomerController extends TenantAwareController
 
         $receivableCustomers = $this->tenantQuery(Customer::class)
             ->where('is_active', true)
-            ->with(['openingBalanceCurrency', 'salesInvoices' => fn($q) => $q->select('id', 'tenant_id', 'customer_id', 'total', 'date', 'created_at'),
+            ->with(['openingBalanceCurrency', 'salesInvoices' => fn($q) => $q->where('status', '!=', 'voided')->select('id', 'tenant_id', 'customer_id', 'total', 'date', 'created_at'),
                     'payments' => fn($q) => $q->select('id', 'tenant_id', 'customer_id', 'type', 'amount', 'payment_method', 'date', 'created_at'),
                     'discountNotes' => fn($q) => $q->select('id', 'tenant_id', 'customer_id', 'amount', 'date', 'created_at')])
             ->get()
@@ -154,7 +154,7 @@ class CustomerController extends TenantAwareController
     {
         $customers = $this->tenantQuery(Customer::class)
             ->where('is_active', true)
-            ->with(['openingBalanceCurrency', 'salesInvoices' => fn($q) => $q->select('id', 'tenant_id', 'customer_id', 'total', 'date', 'created_at'),
+            ->with(['openingBalanceCurrency', 'salesInvoices' => fn($q) => $q->where('status', '!=', 'voided')->select('id', 'tenant_id', 'customer_id', 'total', 'date', 'created_at'),
                     'payments' => fn($q) => $q->select('id', 'tenant_id', 'customer_id', 'type', 'amount', 'payment_method', 'date', 'created_at'),
                     'discountNotes' => fn($q) => $q->select('id', 'tenant_id', 'customer_id', 'amount', 'date', 'created_at')])
             ->get()

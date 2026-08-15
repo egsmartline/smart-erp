@@ -3,7 +3,7 @@
         <div class="flex items-center justify-between">
             <h2 class="text-xl font-bold text-gray-800">فاتورة مشتريات - {{ $purchaseInvoice->invoice_number }}</h2>
             <div class="flex items-center gap-2">
-                <x-print-button url="{{ route('pdf.purchase-invoice', $purchaseInvoice) }}" label="تحميل PDF" />
+                <x-print-button url="{{ route('pdf.purchase-invoice', $purchaseInvoice) }}" label="تحميل PDF" hidePrint />
                 <a href="{{ route('purchase-invoices.index') }}" class="inline-flex items-center gap-2 rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 transition">
                     العودة للقائمة
                 </a>
@@ -32,7 +32,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="grid grid-cols-2 gap-4 mb-6 screen-only">
                     <div>
                         <p class="text-xs text-gray-500">المورد</p>
                         <p class="font-medium text-gray-900">{{ $purchaseInvoice->supplier->name ?? '-' }}</p>
@@ -43,6 +43,9 @@
                         <p class="font-medium text-gray-900">{{ $purchaseInvoice->date->format('Y-m-d') }}</p>
                         <p class="text-sm text-gray-600">مستحق: {{ $purchaseInvoice->due_date ? $purchaseInvoice->due_date->format('Y-m-d') : '-' }}</p>
                     </div>
+                </div>
+                <div class="print-only" style="display:none;">
+                    <p style="font-size:16px; margin-bottom: 20px;">المورد: <strong>{{ $purchaseInvoice->supplier->name ?? '-' }}</strong> &nbsp;&nbsp; التاريخ: <strong>{{ $purchaseInvoice->date ? $purchaseInvoice->date->format('Y-m-d') : '-' }}</strong> @if($purchaseInvoice->due_date) &nbsp;&nbsp; مستحق: <strong>{{ $purchaseInvoice->due_date->format('Y-m-d') }}</strong> @endif</p>
                 </div>
 
                 <div class="overflow-x-auto mb-6">
@@ -107,40 +110,59 @@
                     </div>
                 @endif
 
-                <div class="mt-4 border-t border-gray-200 pt-4 text-center">
-                    <p class="text-xs text-gray-600 leading-relaxed">تعتبر هذه البضاعة أمانة لدى المصنع وتحت يده ولا يحق للمصنع التصرف فيها بأي شكل من الأشكال إلا بعد سداد كامل ثمنها للبائع وتظل ملكية البضاعة الخالصة تابعة للشركة ولا تنتقل ملكيتها القانونية أوالفعلية للمصنع إلا بعد سداد القيمة المالية كاملة.</p>
-                </div>
-
-                <div class="mt-6 flex justify-between items-end">
-                    <div class="text-center">
-                        <p class="text-sm font-bold text-gray-700 mb-8">توقيع المستلم</p>
-                        <div class="border-t border-gray-400 w-40"></div>
+                @if($purchaseInvoice->installments->isNotEmpty())
+                    <div class="mb-6">
+                        <div class="mb-3">
+                            <h4 class="text-md font-bold text-gray-800">أقساط فاتورة الشراء</h4>
+                        </div>
+                        <div class="overflow-x-auto rounded-xl border border-gray-200">
+                            <table class="w-full text-right text-sm">
+                                <thead>
+                                    <tr class="border-b border-gray-200 bg-gray-50">
+                                        <th class="px-3 py-2 font-semibold text-gray-700" style="width:30px">#</th>
+                                        <th class="px-3 py-2 font-semibold text-gray-700">المبلغ</th>
+                                        <th class="px-3 py-2 font-semibold text-gray-700">تاريخ الاستحقاق</th>
+                                        <th class="px-3 py-2 font-semibold text-gray-700 text-left">المدفوع</th>
+                                        <th class="px-3 py-2 font-semibold text-gray-700 text-left">المتبقي</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($purchaseInvoice->installments as $index => $installment)
+                                        <tr class="border-b border-gray-100">
+                                            <td class="px-3 py-2">{{ $index + 1 }}</td>
+                                            <td class="px-3 py-2 font-mono font-medium">{{ number_format($installment->amount, 2) }} {{ $purchaseInvoice->currency->symbol ?? '' }}</td>
+                                            <td class="px-3 py-2">{{ $installment->due_date ? $installment->due_date->format('Y-m-d') : '-' }}</td>
+                                            <td class="px-3 py-2 text-left font-mono text-emerald-600">{{ number_format($installment->paid_amount, 2) }}</td>
+                                            <td class="px-3 py-2 text-left font-mono text-red-600">{{ number_format(max($installment->amount - $installment->paid_amount, 0), 2) }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    <div class="text-center">
-                        <p class="text-sm font-bold text-gray-700 mb-8">توقيع المسئول</p>
-                        <div class="border-t border-gray-400 w-40"></div>
-                    </div>
-                </div>
+                @endif
 
-                <div class="grid grid-cols-3 gap-4 border-t border-gray-200 pt-4">
+                <table style="width:100%; border-top:1px solid #e5e7eb; margin-top:16px; padding-top:16px; border-collapse:collapse;">
                     @php $curSym = $purchaseInvoice->currency->symbol ?? ''; @endphp
-                    <div>
-                        <p class="text-xs text-gray-500">الإجمالي</p>
-                        <p class="text-lg font-bold font-mono text-gray-900">{{ number_format($purchaseInvoice->total, 2) }} {{ $curSym }}</p>
-                    </div>
-                    <div>
-                        <p class="text-xs text-gray-500">المدفوع</p>
-                        <p class="text-lg font-bold font-mono text-emerald-600">{{ number_format($purchaseInvoice->paid_amount, 2) }} {{ $curSym }}</p>
-                    </div>
-                    <div>
-                        <p class="text-xs text-gray-500">المستحق</p>
-                        <p class="text-lg font-bold font-mono text-red-600">{{ number_format($purchaseInvoice->due_amount, 2) }} {{ $curSym }}</p>
-                    </div>
-                </div>
+                    <tr>
+                        <td style="text-align:center; width:33%;">
+                            <p style="font-size:12px; color:#6b7280; margin:0;">الإجمالي</p>
+                            <p style="font-size:18px; font-weight:bold; font-family:'Courier New',monospace; color:#1f2937; margin:4px 0 0 0;">{{ number_format($purchaseInvoice->total, 2) }} {{ $curSym }}</p>
+                        </td>
+                        <td style="text-align:center; width:33%;">
+                            <p style="font-size:12px; color:#6b7280; margin:0;">المدفوع</p>
+                            <p style="font-size:18px; font-weight:bold; font-family:'Courier New',monospace; color:#059669; margin:4px 0 0 0;">{{ number_format($purchaseInvoice->paid_amount, 2) }} {{ $curSym }}</p>
+                        </td>
+                        <td style="text-align:center; width:34%;">
+                            <p style="font-size:12px; color:#6b7280; margin:0;">المستحق</p>
+                            <p style="font-size:18px; font-weight:bold; font-family:'Courier New',monospace; color:#dc2626; margin:4px 0 0 0;">{{ number_format($purchaseInvoice->due_amount, 2) }} {{ $curSym }}</p>
+                        </td>
+                    </tr>
+                </table>
             </div>
         </div>
 
-        <div class="space-y-4">
+        <div class="space-y-4 screen-only">
             <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-4">
                 <h4 class="text-sm font-bold text-gray-700 mb-3">إجراءات</h4>
                 <div class="space-y-2">
@@ -175,6 +197,63 @@
             </div>
 
             <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-4">
+                <h4 class="text-sm font-bold text-gray-700 mb-3">تسوية قسط</h4>
+                <form action="{{ route('purchase-invoices.settle-installment', $purchaseInvoice) }}" method="POST" class="space-y-3">
+                    @csrf
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-gray-600">القسط</label>
+                        <select name="installment_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                            <option value="">جميع الأقساط (تلقائي)</option>
+                            @foreach($purchaseInvoice->installments->filter(fn($i) => $i->amount > $i->paid_amount) as $inst)
+                                <option value="{{ $inst->id }}">{{ $inst->due_date?->format('Y-m-d') }} - {{ number_format($inst->amount - $inst->paid_amount, 2) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-gray-600">المبلغ</label>
+                        <input type="number" name="amount" step="0.01" min="0.01" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-gray-600">طريقة الدفع</label>
+                        <select name="payment_method" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                            <option value="cash">نقداً</option>
+                            <option value="bank_transfer">تحويل بنكي</option>
+                            <option value="check">شيك</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-gray-600">الخزينة</label>
+                        <select name="treasury_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                            <option value="">اختر الخزينة</option>
+                            @foreach($treasuries as $treasury)
+                                <option value="{{ $treasury->id }}">{{ $treasury->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-gray-600">الحساب البنكي</label>
+                        <select name="bank_account_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                            <option value="">اختر الحساب البنكي</option>
+                            @foreach($bankAccounts as $bankAccount)
+                                <option value="{{ $bankAccount->id }}">{{ $bankAccount->bank_name }} - {{ $bankAccount->account_name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-gray-600">تاريخ السداد</label>
+                        <input type="date" name="date" value="{{ now()->format('Y-m-d') }}" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-gray-600">بيان</label>
+                        <input type="text" name="notes" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="اختياري">
+                    </div>
+                    <button type="submit" class="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition cursor-pointer" onclick="return confirm('تأكيد تسجيل السداد؟')">
+                        تسجيل سداد قسط
+                    </button>
+                </form>
+            </div>
+
+            <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-4">
                 <h4 class="text-sm font-bold text-gray-700 mb-3">معلومات الدفع</h4>
                 <div class="space-y-2 text-sm">
                     <div class="flex justify-between">
@@ -198,6 +277,8 @@
 <style>
     @media print {
         .no-print { display: none !important; }
+        .screen-only { display: none !important; }
+        .print-only { display: block !important; }
         #printArea { padding: 10px !important; margin: 0 !important; box-shadow: none !important; border: none !important; border-radius: 0 !important; }
         #printArea table { display: table !important; }
         #printArea thead { display: table-header-group !important; }
@@ -206,8 +287,10 @@
         #printArea tr { display: table-row !important; }
         #printArea td, #printArea th { display: table-cell !important; }
         .overflow-x-auto { overflow: visible !important; }
-        table { font-size: 11px !important; }
-        table th, table td { padding: 4px 6px !important; }
-        .font-mono { font-size: 11px !important; }
+        table { font-size: 12px !important; }
+        table th, table td { padding: 5px 6px !important; }
+        table th { font-size: 12px !important; }
+        table td { font-size: 13px !important; }
+        .font-mono { font-size: 13px !important; }
     }
 </style>

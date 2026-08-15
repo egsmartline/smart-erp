@@ -2,8 +2,9 @@
 @section('document-info')
     <h2 style="color: #2563eb; margin: 0;">فاتورة شراء</h2>
     <p>رقم الفاتورة: <strong>{{ $invoice->invoice_number }}</strong></p>
-    <p>
-        <span>التاريخ: <strong>{{ $invoice->date }}</strong></span>
+    <p style="margin-bottom: 20px;">
+        <span>المورد: <strong>{{ $invoice->supplier->name ?? '' }}</strong></span>
+        <span style="margin-right: 20px;">التاريخ: <strong>{{ $invoice->date }}</strong></span>
         @if($invoice->due_date)
             <span style="margin-right: 20px;">المستحق: <strong>{{ $invoice->due_date }}</strong></span>
         @endif
@@ -27,9 +28,6 @@
         }
         $printTotal = $printSubtotal - $printDiscount + $printTax + ($invoice->shipping_amount ?? 0);
     @endphp
-    <table>
-        <tr><td><strong>المورد:</strong> {{ $invoice->supplier->name ?? '' }}</td></tr>
-    </table>
 
     <table class="data-table">
         <colgroup>

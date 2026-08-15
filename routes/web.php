@@ -54,6 +54,7 @@ use App\Http\Controllers\TradeController;
 use App\Http\Controllers\SalesDeliveryNoteController;
 use App\Http\Controllers\DiscountNoteController;
 use App\Http\Controllers\DocumentArchiveController;
+use App\Http\Controllers\DocumentHandoverController;
 use App\Http\Controllers\PurchaseReceiptNoteController;
 use App\Http\Controllers\PdfController;
 use App\Http\Controllers\PrintController;
@@ -117,11 +118,13 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::resource('sales-invoices', SalesInvoiceController::class);
     Route::post('sales-invoices/{salesInvoice}/post', [SalesInvoiceController::class, 'post'])->name('sales-invoices.post');
     Route::post('sales-invoices/{salesInvoice}/void', [SalesInvoiceController::class, 'void'])->name('sales-invoices.void');
+    Route::post('sales-invoices/{salesInvoice}/settle-installment', [SalesInvoiceController::class, 'settleInstallment'])->name('sales-invoices.settle-installment');
 
     // Purchase Invoices
     Route::resource('purchase-invoices', PurchaseInvoiceController::class);
     Route::post('purchase-invoices/{purchaseInvoice}/post', [PurchaseInvoiceController::class, 'post'])->name('purchase-invoices.post');
     Route::post('purchase-invoices/{purchaseInvoice}/void', [PurchaseInvoiceController::class, 'void'])->name('purchase-invoices.void');
+    Route::post('purchase-invoices/{purchaseInvoice}/settle-installment', [PurchaseInvoiceController::class, 'settleInstallment'])->name('purchase-invoices.settle-installment');
 
     // Sales Returns
     Route::resource('sales-returns', SalesReturnController::class);
@@ -138,6 +141,10 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::delete('document-archives/categories/{category}', [DocumentArchiveController::class, 'categoriesDestroy'])->name('document-archives.categories-destroy');
     Route::resource('document-archives', DocumentArchiveController::class);
     Route::get('document-archives/{documentArchive}/download', [DocumentArchiveController::class, 'download'])->name('document-archives.download');
+
+    // Document Handovers (حوافظ المستندات)
+    Route::resource('document-handovers', DocumentHandoverController::class);
+    Route::get('document-handovers/{documentHandover}/print', [DocumentHandoverController::class, 'print'])->name('document-handovers.print');
 
     // Purchase Returns
     Route::resource('purchase-returns', PurchaseReturnController::class);
@@ -315,4 +322,5 @@ Route::middleware(['auth', 'tenant'])->group(function () {
 
     // Print
     Route::get('print/sales-invoice/{invoice}', [PrintController::class, 'salesInvoice'])->name('print.sales-invoice');
+    Route::get('print/purchase-invoice/{invoice}', [PrintController::class, 'purchaseInvoice'])->name('print.purchase-invoice');
 });

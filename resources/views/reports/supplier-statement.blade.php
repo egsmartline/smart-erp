@@ -77,7 +77,7 @@
                                 <tr class="border-b border-gray-100 hover:bg-gray-50">
                                     <td class="px-4 py-2">{{ $tx['date']?->format('Y-m-d') ?? '-' }}</td>
                                     <td class="px-4 py-2"><span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {{ $tx['badge'] }}">{{ $tx['type'] }}</span></td>
-                                    <td class="px-4 py-2 font-mono text-xs">{{ $tx['reference'] }}</td>
+                                    <td class="px-4 py-2 font-mono text-xs">@isset($tx['route'])<a href="{{ route($tx['route'], $tx['id']) }}" class="text-blue-600 hover:text-blue-800 underline">@endisset{{ $tx['reference'] }}@isset($tx['route'])</a>@endisset</td>
                                     <td class="px-4 py-2 text-left font-mono text-red-600">{{ $tx['amount'] > 0 ? number_format($tx['amount'], 2) : '-' }}</td>
                                     <td class="px-4 py-2 text-left font-mono text-emerald-600">{{ $tx['amount'] < 0 ? number_format(abs($tx['amount']), 2) : '-' }}</td>
                                     <td class="px-4 py-2 text-gray-600">{{ $curCode }}</td>

@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\Payment;
 use App\Models\CashTreasury;
 use App\Models\BankAccount;
+use App\Models\TreasuryTransaction;
 use Illuminate\Console\Command;
 
 class RecalculatePaymentBalances extends Command
@@ -31,7 +32,30 @@ class RecalculatePaymentBalances extends Command
                 ->where('status', 'completed')
                 ->sum('amount');
 
-            $balance += $receipts - $payments;
+            $incoming = TreasuryTransaction::where('treasury_id', $treasury->id)
+                ->whereNotIn('reference_type', ['payment', 'payroll'])
+                ->where(function ($q) {
+                    $q->where('type', 'in')
+                        ->orWhere('type', 'opening')
+                        ->orWhere(function ($q2) {
+                            $q2->where('type', 'transfer')
+                                ->where('description', 'like', '%تحويل وارد%');
+                        });
+                })
+                ->sum('amount');
+
+            $outgoing = TreasuryTransaction::where('treasury_id', $treasury->id)
+                ->whereNotIn('reference_type', ['payment', 'payroll'])
+                ->where(function ($q) {
+                    $q->where('type', 'out')
+                        ->orWhere(function ($q2) {
+                            $q2->where('type', 'transfer')
+                                ->where('description', 'like', '%تحويل صادر%');
+                        });
+                })
+                ->sum('amount');
+
+            $balance += $receipts + $incoming - $payments - $outgoing;
             $treasury->update(['current_balance' => $balance]);
 
             $this->info("Treasury {$treasury->name}: {$balance}");

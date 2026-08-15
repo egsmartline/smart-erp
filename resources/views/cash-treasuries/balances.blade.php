@@ -76,13 +76,13 @@
 <tbody>
 @forelse($treasuries as $treasury)
     <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
-        <td class="px-4 py-3 font-medium text-gray-900">{{ $treasury->name }}</td>
-        <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ $treasury->code }}</td>
-        <td class="px-4 py-3 text-gray-600">{{ $treasury->currency->code ?? 'ج.م' }}</td>
-        <td class="px-4 py-3 text-left font-mono text-sm">{{ number_format($treasury->opening_balance ?? 0, 2) }}</td>
+        <td class="px-4 py-3 font-bold text-gray-900">{{ $treasury->name }}</td>
+        <td class="px-4 py-3 font-mono text-xs font-bold text-gray-600">{{ $treasury->code }}</td>
+        <td class="px-4 py-3 font-bold text-gray-600">{{ $treasury->currency->code ?? 'ج.م' }}</td>
+        <td class="px-4 py-3 text-left font-mono text-sm font-bold">{{ number_format($treasury->opening_balance ?? 0, 2) }}</td>
         @if($hasFilter)
-            <td class="px-4 py-3 text-left font-mono text-sm text-emerald-600">{{ number_format($treasury->period_receipts ?? 0, 2) }}</td>
-            <td class="px-4 py-3 text-left font-mono text-sm text-red-600">{{ number_format($treasury->period_payments ?? 0, 2) }}</td>
+            <td class="px-4 py-3 text-left font-mono text-sm font-bold text-emerald-600">{{ number_format($treasury->period_receipts ?? 0, 2) }}</td>
+            <td class="px-4 py-3 text-left font-mono text-sm font-bold text-red-600">{{ number_format($treasury->period_payments ?? 0, 2) }}</td>
             <td class="px-4 py-3 text-left font-mono text-sm font-bold {{ ($treasury->balance_at_date ?? 0) > 0 ? 'text-emerald-600' : 'text-red-600' }}">
                 {{ number_format($treasury->balance_at_date ?? 0, 2) }}
             </td>
@@ -131,14 +131,14 @@
                         <tbody>
                             @forelse($bankAccounts as $account)
                                 <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
-                                    <td class="px-4 py-3 font-medium text-gray-900">{{ $account->bank_name }}</td>
-                                    <td class="px-4 py-3 text-gray-600">{{ $account->account_name }}</td>
-                                    <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ $account->account_number }}</td>
-                                    <td class="px-4 py-3 text-gray-600">{{ $account->currency->code ?? 'ج.م' }}</td>
-                                    <td class="px-4 py-3 text-left font-mono text-sm">{{ number_format($account->opening_balance ?? 0, 2) }}</td>
+                                    <td class="px-4 py-3 font-bold text-gray-900">{{ $account->bank_name }}</td>
+                                    <td class="px-4 py-3 font-bold text-gray-600">{{ $account->account_name }}</td>
+                                    <td class="px-4 py-3 font-mono text-xs font-bold text-gray-600">{{ $account->account_number }}</td>
+                                    <td class="px-4 py-3 font-bold text-gray-600">{{ $account->currency->code ?? 'ج.م' }}</td>
+                                    <td class="px-4 py-3 text-left font-mono text-sm font-bold">{{ number_format($account->opening_balance ?? 0, 2) }}</td>
                                     @if($hasFilter)
-                                        <td class="px-4 py-3 text-left font-mono text-sm text-emerald-600">{{ number_format($account->period_receipts ?? 0, 2) }}</td>
-                                        <td class="px-4 py-3 text-left font-mono text-sm text-red-600">{{ number_format($account->period_payments ?? 0, 2) }}</td>
+                                        <td class="px-4 py-3 text-left font-mono text-sm font-bold text-emerald-600">{{ number_format($account->period_receipts ?? 0, 2) }}</td>
+                                        <td class="px-4 py-3 text-left font-mono text-sm font-bold text-red-600">{{ number_format($account->period_payments ?? 0, 2) }}</td>
                                         <td class="px-4 py-3 text-left font-mono text-sm font-bold {{ ($account->balance_at_date ?? 0) > 0 ? 'text-emerald-600' : 'text-red-600' }}">
                                             {{ number_format($account->balance_at_date ?? 0, 2) }}
                                         </td>

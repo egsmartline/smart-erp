@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\SalesInvoice;
 use App\Models\SalesInvoiceLine;
+use App\Models\SalesInvoiceInstallment;
 use App\Models\Customer;
 use App\Models\Item;
 use App\Models\Warehouse;
@@ -12,6 +13,11 @@ use App\Models\ItemWarehouse;
 use App\Models\StockMovement;
 use App\Models\JournalEntry;
 use App\Models\Tax;
+use App\Models\Payment;
+use App\Models\CashTreasury;
+use App\Models\BankAccount;
+use App\Models\TreasuryTransaction;
+use App\Models\BankTransaction;
 use App\Services\JournalService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -54,7 +60,7 @@ class SalesInvoiceController extends TenantAwareController
     {
         $customers = $this->tenantQuery(Customer::class)->where('is_active', true)->get();
         $warehouses = $this->tenantQuery(Warehouse::class)->where('is_active', true)->get();
-        $items = Item::where('is_active', true)->get();
+        $items = Item::where('is_active', true)->orderBy('sku')->get();
         $currencies = Currency::where('is_active', true)->get();
         $invoiceNumber = $this->generateInvoiceNumber();
         $defaultTaxRate = $this->getDefaultTaxRate();
@@ -84,6 +90,9 @@ class SalesInvoiceController extends TenantAwareController
             'lines.*.discount_percent' => 'nullable|numeric|min:0|max:100',
             'lines.*.tax_rate' => 'nullable|numeric|min:0|max:100',
             'lines.*.warehouse_id' => 'required|exists:warehouses,id',
+            'installments' => 'nullable|array',
+            'installments.*.amount' => 'nullable|numeric|min:0',
+            'installments.*.due_date' => 'nullable|date|after_or_equal:date',
         ]);
 
         DB::beginTransaction();
@@ -124,6 +133,23 @@ class SalesInvoiceController extends TenantAwareController
             $overallDiscount = $validated['discount_amount'] ?? 0;
             $grandTotal = $subtotal - $totalDiscount - $overallDiscount + $totalTax + ($validated['shipping_amount'] ?? 0);
 
+            $installments = [];
+            foreach (($validated['installments'] ?? []) as $inst) {
+                if (!empty($inst['amount']) && !empty($inst['due_date'])) {
+                    $installments[] = [
+                        'amount' => $inst['amount'],
+                        'due_date' => $inst['due_date'],
+                        'paid_amount' => 0,
+                    ];
+                }
+            }
+
+            if (count($installments) > 0) {
+                $due_date = max(array_column($installments, 'due_date'));
+            } else {
+                $due_date = $validated['due_date'];
+            }
+
             $invoice = SalesInvoice::create([
                 'tenant_id' => $this->getTenantId(),
                 'customer_id' => $validated['customer_id'],
@@ -131,7 +157,7 @@ class SalesInvoiceController extends TenantAwareController
                 'cashier_id' => auth()->id(),
                 'invoice_number' => $this->generateInvoiceNumber(),
                 'date' => $validated['date'],
-                'due_date' => $validated['due_date'],
+                'due_date' => $due_date,
                 'subtotal' => $subtotal,
                 'discount_amount' => $totalDiscount + $overallDiscount,
                 'discount_percent' => 0,
@@ -152,6 +178,11 @@ class SalesInvoiceController extends TenantAwareController
                 SalesInvoiceLine::create($data);
             }
 
+            foreach ($installments as $inst) {
+                $inst['sales_invoice_id'] = $invoice->id;
+                SalesInvoiceInstallment::create($inst);
+            }
+
             DB::commit();
 
             return redirect()->route('sales-invoices.show', $invoice)
@@ -164,8 +195,10 @@ class SalesInvoiceController extends TenantAwareController
 
     public function show(SalesInvoice $salesInvoice)
     {
-        $salesInvoice->load(['customer', 'warehouse', 'lines.item', 'cashier', 'returns', 'currency']);
-        return view('sales-invoices.show', compact('salesInvoice'));
+        $salesInvoice->load(['customer', 'warehouse', 'lines.item', 'cashier', 'returns', 'currency', 'installments']);
+        $treasuries = $this->tenantQuery(CashTreasury::class)->where('is_active', true)->orderBy('name')->get();
+        $bankAccounts = $this->tenantQuery(BankAccount::class)->where('is_active', true)->orderBy('account_name')->get();
+        return view('sales-invoices.show', compact('salesInvoice', 'treasuries', 'bankAccounts'));
     }
 
     public function edit(SalesInvoice $salesInvoice)
@@ -174,10 +207,10 @@ class SalesInvoiceController extends TenantAwareController
             return back()->with('error', 'لا يمكن تعديل هذه الفاتورة');
         }
 
-        $salesInvoice->load('lines.item');
+        $salesInvoice->load(['lines.item', 'installments']);
         $customers = $this->tenantQuery(Customer::class)->where('is_active', true)->get();
         $warehouses = $this->tenantQuery(Warehouse::class)->where('is_active', true)->get();
-        $items = Item::where('is_active', true)->get();
+        $items = Item::where('is_active', true)->orderBy('sku')->get();
         $currencies = Currency::where('is_active', true)->get();
 
         $defaultTaxRate = $this->getDefaultTaxRate();
@@ -211,6 +244,9 @@ class SalesInvoiceController extends TenantAwareController
             'lines.*.discount_percent' => 'nullable|numeric|min:0|max:100',
             'lines.*.tax_rate' => 'nullable|numeric|min:0|max:100',
             'lines.*.warehouse_id' => 'required|exists:warehouses,id',
+            'installments' => 'nullable|array',
+            'installments.*.amount' => 'nullable|numeric|min:0',
+            'installments.*.due_date' => 'nullable|date|after_or_equal:date',
         ]);
 
         DB::beginTransaction();
@@ -269,12 +305,29 @@ class SalesInvoiceController extends TenantAwareController
             $overallDiscount = $validated['discount_amount'] ?? 0;
             $grandTotal = $subtotal - $totalDiscount - $overallDiscount + $totalTax + ($validated['shipping_amount'] ?? 0);
 
+            $installments = [];
+            foreach (($validated['installments'] ?? []) as $inst) {
+                if (!empty($inst['amount']) && !empty($inst['due_date'])) {
+                    $installments[] = [
+                        'amount' => $inst['amount'],
+                        'due_date' => $inst['due_date'],
+                        'paid_amount' => 0,
+                    ];
+                }
+            }
+
+            if (count($installments) > 0) {
+                $due_date = max(array_column($installments, 'due_date'));
+            } else {
+                $due_date = $validated['due_date'];
+            }
+
             $salesInvoice->update([
                 'customer_id' => $validated['customer_id'],
                 'warehouse_id' => $validated['warehouse_id'],
                 'currency_id' => $validated['currency_id'] ?? null,
                 'date' => $validated['date'],
-                'due_date' => $validated['due_date'],
+                'due_date' => $due_date,
                 'subtotal' => $subtotal,
                 'discount_amount' => $totalDiscount + $overallDiscount,
                 'tax_amount' => $totalTax,
@@ -289,6 +342,13 @@ class SalesInvoiceController extends TenantAwareController
             foreach ($lineData as $data) {
                 $data['sales_invoice_id'] = $salesInvoice->id;
                 SalesInvoiceLine::create($data);
+            }
+
+            $salesInvoice->installments()->delete();
+
+            foreach ($installments as $inst) {
+                $inst['sales_invoice_id'] = $salesInvoice->id;
+                SalesInvoiceInstallment::create($inst);
             }
 
             if ($salesInvoice->status === 'posted') {
@@ -326,7 +386,12 @@ class SalesInvoiceController extends TenantAwareController
                 }
 
                 $journalService = app(JournalService::class);
-                $lines = $journalService->buildSalesInvoiceLines($salesInvoice->toArray(), $this->getTenantId());
+                $totalCost = 0;
+                foreach ($salesInvoice->lines as $line) {
+                    $costPrice = $line->item?->cost_price ?? 0;
+                    $totalCost += $costPrice * $line->quantity;
+                }
+                $lines = $journalService->buildSalesInvoiceLines($salesInvoice->toArray(), $this->getTenantId(), $totalCost);
                 if (count($lines) >= 2) {
                     $journalService->createEntry([
                         'tenant_id' => $this->getTenantId(),
@@ -355,6 +420,7 @@ class SalesInvoiceController extends TenantAwareController
 
         try {
             $salesInvoice->lines()->delete();
+            $salesInvoice->installments()->delete();
             $salesInvoice->delete();
 
             DB::commit();
@@ -420,7 +486,12 @@ class SalesInvoiceController extends TenantAwareController
             }
 
             $journalService = app(JournalService::class);
-            $lines = $journalService->buildSalesInvoiceLines($salesInvoice->toArray(), $this->getTenantId());
+            $totalCost = 0;
+            foreach ($salesInvoice->lines as $line) {
+                $costPrice = $line->item?->cost_price ?? 0;
+                $totalCost += $costPrice * $line->quantity;
+            }
+            $lines = $journalService->buildSalesInvoiceLines($salesInvoice->toArray(), $this->getTenantId(), $totalCost);
             if (count($lines) >= 2) {
                 $journalService->createEntry([
                     'tenant_id' => $this->getTenantId(),
@@ -544,5 +615,127 @@ class SalesInvoiceController extends TenantAwareController
         }
 
         return 'INV-S-' . $year . '-' . str_pad($newSequence, 4, '0', STR_PAD_LEFT);
+    }
+
+    public function settleInstallment(Request $request, SalesInvoice $salesInvoice)
+    {
+        $validated = $request->validate([
+            'installment_id' => 'nullable|exists:sales_invoice_installments,id',
+            'amount' => 'required|numeric|min:0.01',
+            'payment_method' => 'required|in:cash,bank_transfer,check',
+            'treasury_id' => 'nullable|exists:cash_treasuries,id',
+            'bank_account_id' => 'nullable|exists:bank_accounts,id',
+            'date' => 'required|date',
+            'notes' => 'nullable|string',
+        ]);
+
+        $tenantId = $this->getTenantId();
+        $userId = auth()->id();
+
+        if ($validated['payment_method'] === 'cash' && empty($validated['treasury_id'])) {
+            return back()->with('error', 'الخزينة مطلوبة لطريقة الدفع نقداً');
+        }
+        if ($validated['payment_method'] === 'bank_transfer' && empty($validated['bank_account_id'])) {
+            return back()->with('error', 'الحساب البنكي مطلوب لطريقة الدفع تحويل بنكي');
+        }
+        if ($validated['payment_method'] === 'check' && empty($request->check_number)) {
+            return back()->with('error', 'رقم الشيك مطلوب لطريقة الدفع شيك');
+        }
+
+        $installment = null;
+        if (!empty($validated['installment_id'])) {
+            $installment = SalesInvoiceInstallment::find($validated['installment_id']);
+            if (!$installment || $installment->sales_invoice_id !== $salesInvoice->id) {
+                return back()->with('error', 'القسط غير صالح لهذه الفاتورة');
+            }
+        }
+
+        $currency = $salesInvoice->currency ?? $this->tenantQuery(Currency::class)->where('code', 'default')->first();
+        $currencyId = $currency?->id;
+
+        DB::beginTransaction();
+
+        try {
+            $paymentNumber = $this->generatePaymentNumber();
+
+            $payment = Payment::create([
+                'tenant_id' => $tenantId,
+                'payment_number' => $paymentNumber,
+                'date' => $validated['date'],
+                'type' => 'receipt',
+                'customer_id' => $salesInvoice->customer_id,
+                'invoice_id' => $salesInvoice->id,
+                'treasury_id' => $validated['treasury_id'] ?? null,
+                'bank_account_id' => $validated['bank_account_id'] ?? null,
+                'amount' => $validated['amount'],
+                'payment_method' => $validated['payment_method'],
+                'currency_id' => $currencyId,
+                'exchange_rate' => 1,
+                'amount_in_currency' => $validated['amount'],
+                'reference' => $validated['notes'] ?? $paymentNumber,
+                'check_number' => $request->check_number ?? null,
+                'notes' => $validated['notes'] ?? null,
+                'status' => 'completed',
+                'user_id' => $userId,
+            ]);
+
+            if ($validated['payment_method'] === 'cash' && !empty($validated['treasury_id'])) {
+                $treasury = CashTreasury::findOrFail($validated['treasury_id']);
+                $treasury->increment('current_balance', $validated['amount']);
+                TreasuryTransaction::create([
+                    'tenant_id' => $tenantId,
+                    'treasury_id' => $validated['treasury_id'],
+                    'type' => 'in',
+                    'amount' => $validated['amount'],
+                    'reference_type' => 'payment',
+                    'reference_id' => $payment->id,
+                    'reference_number' => $paymentNumber,
+                    'description' => $validated['notes'] ?? 'تسوية قسط - ' . $salesInvoice->invoice_number,
+                    'user_id' => $userId,
+                ]);
+            } elseif ($validated['payment_method'] === 'bank_transfer' && !empty($validated['bank_account_id'])) {
+                $bank = BankAccount::findOrFail($validated['bank_account_id']);
+                $bank->increment('current_balance', $validated['amount']);
+                BankTransaction::create([
+                    'tenant_id' => $tenantId,
+                    'bank_account_id' => $validated['bank_account_id'],
+                    'type' => 'in',
+                    'amount' => $validated['amount'],
+                    'reference_type' => 'payment',
+                    'reference_id' => $payment->id,
+                    'reference_number' => $paymentNumber,
+                    'description' => $validated['notes'] ?? 'تسوية قسط - ' . $salesInvoice->invoice_number,
+                    'user_id' => $userId,
+                ]);
+            }
+
+            if ($installment) {
+                $instDue = (float) $installment->amount - (float) $installment->paid_amount;
+                $apply = min($validated['amount'], $instDue);
+                $installment->increment('paid_amount', $apply);
+                app(PaymentController::class)->syncInvoicePaidAmount($salesInvoice->id);
+            } else {
+                app(PaymentController::class)->allocatePaymentToSalesInstallments($payment);
+            }
+
+            DB::commit();
+
+            return back()->with('success', 'تم تسجيل التسوية بنجاح');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'حدث خطأ أثناء التسوية: ' . $e->getMessage());
+        }
+    }
+
+    protected function generatePaymentNumber(): string
+    {
+        $year = date('Y');
+        $last = $this->tenantQuery(Payment::class)
+            ->withTrashed()
+            ->where('payment_number', 'like', 'PAY-' . $year . '-%')
+            ->max('payment_number');
+
+        $seq = $last ? (int) substr($last, -4) + 1 : 1;
+        return 'PAY-' . $year . '-' . str_pad($seq, 4, '0', STR_PAD_LEFT);
     }
 }

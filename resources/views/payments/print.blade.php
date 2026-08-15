@@ -28,9 +28,9 @@
                 <thead>
                     <tr class="border-b border-gray-200 bg-gray-50">
                         <th class="px-4 py-3 font-semibold text-gray-700" style="width:20%">رقم</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700" style="width:12%">التاريخ</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700" style="width:8%">النوع</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700" style="width:13%">الشخص</th>
+                        <th class="px-4 py-3 font-semibold text-gray-700" style="width:18%">التاريخ</th>
+                        <th class="px-4 py-3 font-semibold text-gray-700" style="width:5%">النوع</th>
+                        <th class="px-4 py-3 font-semibold text-gray-700" style="width:10%">الشخص</th>
                         <th class="px-4 py-3 font-semibold text-gray-700" style="width:15%">المبلغ</th>
                         <th class="px-4 py-3 font-semibold text-gray-700" style="width:24%">البيان</th>
                         <th class="px-4 py-3 font-semibold text-gray-700" style="width:8%">طريقة الدفع</th>

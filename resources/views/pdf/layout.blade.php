@@ -3,18 +3,18 @@
 <head>
     <meta charset="utf-8">
     <style>
-        .version-marker { position: fixed; top: 0; left: 0; background: red; color: white; padding: 4px 8px; font-size: 14px; z-index: 9999; border-radius: 0 0 4px 0; }
-        body { font-family: 'DejaVu Sans', Arial, sans-serif; direction: rtl; text-align: right; font-size: 17px; }
-        .header { border-bottom: 2px solid #2563eb; padding-bottom: 15px; margin-bottom: 20px; }
-        .company-name { font-size: 24px; font-weight: bold; color: #2563eb; }
-        .company-info { font-size: 15px; color: #666; }
+        body { font-family: 'DejaVu Sans', Arial, sans-serif; direction: rtl; text-align: right; font-size: 13px; }
+        .marker { background: red; color: white; padding: 4px 8px; font-size: 11px; font-weight: bold; text-align: center; border-radius: 4px; margin-bottom: 8px; }
+        .header { border-bottom: 2px solid #2563eb; padding-bottom: 12px; margin-bottom: 15px; }
+        .company-name { font-size: 16px; font-weight: bold; color: #2563eb; }
+        .company-info { font-size: 12px; color: #666; }
         .company-info span { display: inline-block; }
         table.data-table { width: 100%; table-layout: fixed; border-collapse: collapse; margin: 15px 0; }
-        th { background: #2563eb; color: white; padding: 6px; text-align: right; font-size: 17px; }
-        td { padding: 6px; border-bottom: 1px solid #eee; font-size: 17px; text-align: right; overflow: hidden; }
+        th { background: #2563eb; color: white; padding: 6px; text-align: right; font-size: 12px; }
+        td { padding: 6px; border-bottom: 1px solid #eee; font-size: 13px; text-align: right; overflow: hidden; }
         .total-row { font-weight: bold; background: #f3f4f6; }
-        .footer { margin-top: 20px; border-top: 1px solid #ddd; padding-top: 10px; font-size: 15px; color: #666; }
-        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 15px; }
+        .footer { margin-top: 15px; border-top: 1px solid #ddd; padding-top: 8px; font-size: 11px; color: #666; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; }
         .badge-draft { background: #fef3c7; color: #92400e; }
         .badge-posted { background: #d1fae5; color: #065f46; }
         .badge-paid { background: #dbeafe; color: #1e40af; }
@@ -23,7 +23,7 @@
     </style>
 </head>
 <body>
-    <div class="version-marker">✓ V2.0</div>
+    <div class="marker">✓ V2.0</div>
     <div class="header">
         <table style="border: none; margin: 0;">
             <tr style="border: none;">

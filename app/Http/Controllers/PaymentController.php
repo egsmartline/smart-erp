@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use App\Models\SalesInvoice;
+use App\Models\PurchaseInvoice;
 use App\Models\Account;
 use App\Models\CashTreasury;
 use App\Models\Customer;
@@ -12,6 +13,8 @@ use App\Models\BankAccount;
 use App\Models\Currency;
 use App\Models\TreasuryTransaction;
 use App\Models\BankTransaction;
+use App\Models\Payroll;
+use App\Models\DiscountNote;
 use App\Models\JournalEntry;
 use App\Models\Company;
 use App\Services\JournalService;
@@ -22,8 +25,12 @@ class PaymentController extends TenantAwareController
 {
     public function index(Request $request)
     {
+        $accountFilter = $request->input('treasury_id');
+
         $query = $this->tenantQuery(Payment::class)
             ->when($request->type, fn($q, $t) => $q->where('type', $t))
+            ->when($accountFilter && str_starts_with($accountFilter, 't-'), fn($q) => $q->where('treasury_id', (int) substr($accountFilter, 2)))
+            ->when($accountFilter && str_starts_with($accountFilter, 'b-'), fn($q) => $q->where('bank_account_id', (int) substr($accountFilter, 2)))
             ->when($request->date_from, fn($q, $d) => $q->whereDate('date', '>=', $d))
             ->when($request->date_to, fn($q, $d) => $q->whereDate('date', '<=', $d));
 
@@ -41,19 +48,65 @@ class PaymentController extends TenantAwareController
             });
         }
 
+        $totalsQuery = $this->tenantQuery(Payment::class)
+            ->when($accountFilter && str_starts_with($accountFilter, 't-'), fn($q) => $q->where('treasury_id', (int) substr($accountFilter, 2)))
+            ->when($accountFilter && str_starts_with($accountFilter, 'b-'), fn($q) => $q->where('bank_account_id', (int) substr($accountFilter, 2)))
+            ->when($request->date_from, fn($q, $d) => $q->whereDate('date', '>=', $d))
+            ->when($request->date_to, fn($q, $d) => $q->whereDate('date', '<=', $d));
+
         if ($request->print) {
             $payments = $query->orderBy('date')->get();
-            $totalReceipts = (clone $query)->where('type', 'receipt')->sum('amount');
-            $totalPayments = (clone $query)->where('type', 'payment')->sum('amount');
+            $totalReceipts = (clone $totalsQuery)->where('type', 'receipt')->sum('amount');
+            $totalPayments = (clone $totalsQuery)->where('type', 'payment')->sum('amount');
             return view('payments.print', compact('payments', 'totalReceipts', 'totalPayments'));
         }
 
-        $totalReceipts = (clone $query)->where('type', 'receipt')->sum('amount');
+        $totalReceipts = (clone $totalsQuery)->where('type', 'receipt')->sum('amount');
         $totalPayments = (clone $query)->where('type', 'payment')->sum('amount');
 
         $payments = $query->orderBy('date', 'desc')->paginate(20);
 
-        return view('payments.index', compact('payments', 'totalReceipts', 'totalPayments'));
+        $discountQuery = $this->tenantQuery(DiscountNote::class)
+            ->when($request->date_from, fn($q, $d) => $q->whereDate('date', '>=', $d))
+            ->when($request->date_to, fn($q, $d) => $q->whereDate('date', '<=', $d));
+
+        if ($request->filled('search')) {
+            $s = $request->search;
+            $discountQuery->where(function ($q) use ($s) {
+                $q->where('note_number', 'like', "%{$s}%");
+                $q->orWhere('reason', 'like', "%{$s}%");
+                $q->orWhereHas('customer', fn($q) => $q->where('name', 'like', "%{$s}%"));
+            });
+        }
+
+        $discountNotes = $discountQuery->orderBy('date', 'desc')->with('customer')->get();
+
+        $payrollQuery = $this->tenantQuery(Payroll::class)
+            ->whereIn('state', ['confirmed', 'paid'])
+            ->when($request->date_from, fn($q, $d) => $q->whereDate('date_to', '>=', $d))
+            ->when($request->date_to, fn($q, $d) => $q->whereDate('date_to', '<=', $d));
+
+        if ($request->filled('search')) {
+            $s = $request->search;
+            $payrollQuery->where(function ($q) use ($s) {
+                $q->where('payroll_number', 'like', "%{$s}%");
+                $q->orWhere('notes', 'like', "%{$s}%");
+            });
+        }
+
+        $payrolls = $payrollQuery->orderBy('date_to', 'desc')->get();
+
+        $treasuries = $this->tenantQuery(CashTreasury::class)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        $bankAccounts = $this->tenantQuery(BankAccount::class)
+            ->where('is_active', true)
+            ->orderBy('account_name')
+            ->get();
+
+        return view('payments.index', compact('payments', 'totalReceipts', 'totalPayments', 'discountNotes', 'payrolls', 'treasuries', 'bankAccounts'));
     }
 
     public function create()
@@ -70,7 +123,14 @@ class PaymentController extends TenantAwareController
             ->orderBy('date', 'desc')
             ->get(['id', 'invoice_number', 'customer_id', 'total', 'paid_amount', 'due_amount']);
 
-        return view('payments.create', compact('customers', 'suppliers', 'accounts', 'treasuries', 'bankAccounts', 'currencies', 'invoices'));
+        $purchaseInvoices = $this->tenantQuery(PurchaseInvoice::class)
+            ->where('status', 'posted')
+            ->where('payment_status', '!=', 'paid')
+            ->with('supplier')
+            ->orderBy('date', 'desc')
+            ->get();
+
+        return view('payments.create', compact('customers', 'suppliers', 'accounts', 'treasuries', 'bankAccounts', 'currencies', 'invoices', 'purchaseInvoices'));
     }
 
     public function bulkCreate()
@@ -86,7 +146,14 @@ class PaymentController extends TenantAwareController
             ->orderBy('date', 'desc')
             ->get(['id', 'invoice_number', 'customer_id', 'total', 'paid_amount', 'due_amount']);
 
-        return view('payments.bulk-create', compact('customers', 'suppliers', 'treasuries', 'bankAccounts', 'currencies', 'invoices'));
+        $purchaseInvoices = $this->tenantQuery(PurchaseInvoice::class)
+            ->where('status', 'posted')
+            ->where('payment_status', '!=', 'paid')
+            ->with('supplier')
+            ->orderBy('date', 'desc')
+            ->get();
+
+        return view('payments.bulk-create', compact('customers', 'suppliers', 'treasuries', 'bankAccounts', 'currencies', 'invoices', 'purchaseInvoices'));
     }
 
     public function bulkStore(Request $request)
@@ -102,6 +169,7 @@ class PaymentController extends TenantAwareController
             'payments.*.customer_id' => 'nullable|exists:customers,id',
             'payments.*.supplier_id' => 'nullable|exists:suppliers,id',
             'payments.*.invoice_id' => 'nullable|exists:sales_invoices,id',
+            'payments.*.purchase_invoice_id' => 'nullable|exists:purchase_invoices,id',
             'payments.*.treasury_id' => 'nullable|exists:cash_treasuries,id',
             'payments.*.bank_account_id' => 'nullable|exists:bank_accounts,id',
             'payments.*.check_number' => 'nullable|string|max:50',
@@ -135,8 +203,17 @@ class PaymentController extends TenantAwareController
                     $data['status'] = 'completed';
                     $data['reference'] = $data['reference'] ?? $data['payment_number'];
                     $data['invoice_id'] = !empty($data['invoice_id']) ? $data['invoice_id'] : null;
+                    $data['purchase_invoice_id'] = !empty($data['purchase_invoice_id']) ? $data['purchase_invoice_id'] : null;
 
                     $payment = Payment::create($data);
+
+                    if ($data['type'] === 'payment' && !empty($data['purchase_invoice_id'])) {
+                        $this->allocatePaymentToPurchaseInstallments($payment);
+                    }
+
+                    if ($data['type'] === 'receipt' && !empty($data['invoice_id'])) {
+                        $this->allocatePaymentToSalesInstallments($payment);
+                    }
 
                     $direction = $data['type'] === 'receipt' ? 1 : -1;
                     $txType = $data['type'] === 'receipt' ? 'in' : 'out';
@@ -220,6 +297,7 @@ class PaymentController extends TenantAwareController
             'customer_id' => 'nullable|exists:customers,id',
             'supplier_id' => 'nullable|exists:suppliers,id',
             'invoice_id' => 'nullable|exists:sales_invoices,id',
+            'purchase_invoice_id' => 'nullable|exists:purchase_invoices,id',
             'account_id' => 'nullable|exists:chart_of_accounts,id',
             'treasury_id' => 'required_if:payment_method,cash|nullable|exists:cash_treasuries,id',
             'bank_account_id' => 'required_if:payment_method,bank_transfer|nullable|exists:bank_accounts,id',
@@ -234,6 +312,7 @@ class PaymentController extends TenantAwareController
         $validated['user_id'] = auth()->id();
         $validated['status'] = 'completed';
         $validated['invoice_id'] = !empty($validated['invoice_id']) ? $validated['invoice_id'] : null;
+        $validated['purchase_invoice_id'] = !empty($validated['purchase_invoice_id']) ? $validated['purchase_invoice_id'] : null;
 
         $direction = $validated['type'] === 'receipt' ? 1 : -1;
         $txType = $validated['type'] === 'receipt' ? 'in' : 'out';
@@ -241,6 +320,10 @@ class PaymentController extends TenantAwareController
         DB::beginTransaction();
         try {
             $payment = Payment::create($validated);
+
+            if ($validated['type'] === 'payment' && !empty($validated['purchase_invoice_id'])) {
+                $this->allocatePaymentToPurchaseInstallments($payment);
+            }
 
             if ($validated['payment_method'] === 'cash' && !empty($validated['treasury_id'])) {
                 $treasury = CashTreasury::findOrFail($validated['treasury_id']);
@@ -275,7 +358,7 @@ class PaymentController extends TenantAwareController
             if ($validated['account_id']) {
                 $journalService = app(JournalService::class);
                 $lines = $journalService->buildPaymentLines($validated);
-                if (count($lines) === 2) {
+                if (count($lines) >= 2) {
                     $journalService->createEntry([
                         'tenant_id' => $validated['tenant_id'],
                         'date' => $validated['date'],
@@ -296,7 +379,7 @@ class PaymentController extends TenantAwareController
             }
 
             if (!empty($validated['invoice_id']) && $validated['type'] === 'receipt') {
-                $this->syncInvoicePaidAmount($validated['invoice_id']);
+                $this->allocatePaymentToSalesInstallments($payment);
             }
 
             $message = $validated['type'] === 'receipt' ? 'تم تسجيل القبض بنجاح' : 'تم تسجيل الصرف بنجاح';
@@ -321,6 +404,10 @@ class PaymentController extends TenantAwareController
 
         $company = Company::where('tenant_id', $this->getTenantId())->first();
         $amountInWords = $this->numberToArabicWords($payment->amount);
+
+        if (request()->has('no_logo')) {
+            $company = null;
+        }
 
         return view('payments.voucher', compact('payment', 'company', 'amountInWords'));
     }
@@ -386,6 +473,7 @@ class PaymentController extends TenantAwareController
             'customer_id' => 'nullable|exists:customers,id',
             'supplier_id' => 'nullable|exists:suppliers,id',
             'invoice_id' => 'nullable|exists:sales_invoices,id',
+            'purchase_invoice_id' => 'nullable|exists:purchase_invoices,id',
             'account_id' => 'nullable|exists:chart_of_accounts,id',
             'treasury_id' => 'nullable|exists:cash_treasuries,id',
             'bank_account_id' => 'nullable|exists:bank_accounts,id',
@@ -416,11 +504,21 @@ class PaymentController extends TenantAwareController
         $oldInvoiceId = $payment->invoice_id;
         $newInvoiceId = $validated['invoice_id'] ?? null;
 
-        if ($oldInvoiceId && $oldInvoiceId != $newInvoiceId) {
-            $this->syncInvoicePaidAmount($oldInvoiceId);
+        if ($oldInvoiceId) {
+            $this->resetSalesInstallmentsAllocation($oldInvoiceId);
         }
-        if ($newInvoiceId) {
-            $this->syncInvoicePaidAmount($newInvoiceId);
+        if ($newInvoiceId && $newInvoiceId != $oldInvoiceId) {
+            $this->resetSalesInstallmentsAllocation($newInvoiceId);
+        }
+
+        $oldPurchaseInvoiceId = $payment->purchase_invoice_id;
+        $newPurchaseInvoiceId = $validated['purchase_invoice_id'] ?? null;
+
+        if ($oldPurchaseInvoiceId) {
+            $this->resetPurchaseInstallmentsAllocation($oldPurchaseInvoiceId);
+        }
+        if ($newPurchaseInvoiceId) {
+            $this->resetPurchaseInstallmentsAllocation($newPurchaseInvoiceId);
         }
 
         return redirect()->route('payments.index')->with('success', 'تم تحديث الدفعة بنجاح');
@@ -434,6 +532,7 @@ class PaymentController extends TenantAwareController
         $bankAccountId = $payment->bank_account_id;
         $paymentMethod = $payment->payment_method;
         $invoiceId = $payment->invoice_id;
+        $purchaseInvoiceId = $payment->purchase_invoice_id;
 
         TreasuryTransaction::where('reference_type', 'payment')->where('reference_id', $payment->id)->delete();
         BankTransaction::where('reference_type', 'payment')->where('reference_id', $payment->id)->delete();
@@ -454,7 +553,11 @@ class PaymentController extends TenantAwareController
         }
 
         if ($invoiceId) {
-            $this->syncInvoicePaidAmount($invoiceId);
+            $this->resetSalesInstallmentsAllocation($invoiceId);
+        }
+
+        if ($purchaseInvoiceId) {
+            $this->resetPurchaseInstallmentsAllocation($purchaseInvoiceId);
         }
 
         return redirect()->route('payments.index')->with('success', 'تم حذف العملية بنجاح');
@@ -477,7 +580,30 @@ class PaymentController extends TenantAwareController
             ->where('type', 'payment')
             ->sum('amount');
 
-        $treasury->update(['current_balance' => ($treasury->opening_balance ?? 0) + $receipts - $payments]);
+        $incoming = (float) TreasuryTransaction::where('treasury_id', $treasuryId)
+            ->whereNotIn('reference_type', ['payment', 'payroll'])
+            ->where(function ($q) {
+                $q->where('type', 'in')
+                    ->orWhere('type', 'opening')
+                    ->orWhere(function ($q2) {
+                        $q2->where('type', 'transfer')
+                            ->where('description', 'like', '%تحويل وارد%');
+                    });
+            })
+            ->sum('amount');
+
+        $outgoing = (float) TreasuryTransaction::where('treasury_id', $treasuryId)
+            ->whereNotIn('reference_type', ['payment', 'payroll'])
+            ->where(function ($q) {
+                $q->where('type', 'out')
+                    ->orWhere(function ($q2) {
+                        $q2->where('type', 'transfer')
+                            ->where('description', 'like', '%تحويل صادر%');
+                    });
+            })
+            ->sum('amount');
+
+        $treasury->update(['current_balance' => ($treasury->opening_balance ?? 0) + $receipts + $incoming - $payments - $outgoing]);
     }
 
     protected function recalcBankBalance($bankAccountId)
@@ -500,6 +626,131 @@ class PaymentController extends TenantAwareController
         $bank->update(['current_balance' => ($bank->opening_balance ?? 0) + $receipts - $payments]);
     }
 
+    public function allocatePaymentToPurchaseInstallments(Payment $payment)
+    {
+        $invoice = $payment->purchaseInvoice;
+        if (!$invoice) return;
+
+        $installments = $invoice->installments()
+            ->whereColumn('amount', '>', 'paid_amount')
+            ->orderBy('due_date')
+            ->orderBy('id')
+            ->get();
+
+        if ($installments->isEmpty()) return;
+
+        $remaining = (float) $payment->amount;
+
+        foreach ($installments as $inst) {
+            if ($remaining <= 0) break;
+
+            $instDue = (float) $inst->amount - (float) $inst->paid_amount;
+            if ($instDue <= 0) continue;
+
+            $apply = min($remaining, $instDue);
+            $inst->increment('paid_amount', $apply);
+            $remaining -= $apply;
+        }
+
+        $this->syncPurchaseInvoicePaidAmount($invoice->id);
+    }
+
+    protected function resetPurchaseInstallmentsAllocation($invoiceId)
+    {
+        $invoice = PurchaseInvoice::find($invoiceId);
+        if (!$invoice) return;
+
+        $invoice->installments()->update(['paid_amount' => 0]);
+
+        $payments = Payment::whereNull('deleted_at')
+            ->where('tenant_id', $invoice->tenant_id)
+            ->where('type', 'payment')
+            ->where('purchase_invoice_id', $invoiceId)
+            ->orderBy('date')
+            ->orderBy('id')
+            ->get();
+
+        foreach ($payments as $payment) {
+            $this->allocatePaymentToPurchaseInstallments($payment);
+        }
+
+        $this->syncPurchaseInvoicePaidAmount($invoiceId);
+    }
+
+    public function syncPurchaseInvoicePaidAmount($invoiceId)
+    {
+        $invoice = PurchaseInvoice::find($invoiceId);
+        if (!$invoice) return;
+
+        $totalPaid = (float) Payment::whereNull('deleted_at')
+            ->where('tenant_id', $invoice->tenant_id)
+            ->where('type', 'payment')
+            ->where('purchase_invoice_id', $invoiceId)
+            ->sum('amount');
+
+        $paidAmount = min($totalPaid, $invoice->total);
+        $dueAmount = $invoice->total - $paidAmount;
+        $paymentStatus = $paidAmount <= 0 ? 'unpaid' : ($dueAmount <= 0 ? 'paid' : 'partial');
+
+        $invoice->update([
+            'paid_amount' => $paidAmount,
+            'due_amount' => $dueAmount,
+            'payment_status' => $paymentStatus,
+            'status' => $paymentStatus === 'paid' ? 'posted' : 'posted',
+        ]);
+    }
+
+    public function allocatePaymentToSalesInstallments(Payment $payment)
+    {
+        $invoice = $payment->invoice;
+        if (!$invoice) return;
+
+        $installments = $invoice->installments()
+            ->whereColumn('amount', '>', 'paid_amount')
+            ->orderBy('due_date')
+            ->orderBy('id')
+            ->get();
+
+        if ($installments->isEmpty()) return;
+
+        $remaining = (float) $payment->amount;
+
+        foreach ($installments as $inst) {
+            if ($remaining <= 0) break;
+
+            $instDue = (float) $inst->amount - (float) $inst->paid_amount;
+            if ($instDue <= 0) continue;
+
+            $apply = min($remaining, $instDue);
+            $inst->increment('paid_amount', $apply);
+            $remaining -= $apply;
+        }
+
+        $this->syncInvoicePaidAmount($invoice->id);
+    }
+
+    protected function resetSalesInstallmentsAllocation($invoiceId)
+    {
+        $invoice = SalesInvoice::find($invoiceId);
+        if (!$invoice) return;
+
+        $invoice->installments()->update(['paid_amount' => 0]);
+
+        $payments = Payment::whereNull('deleted_at')
+            ->where('tenant_id', $invoice->tenant_id)
+            ->where('type', 'receipt')
+            ->where('invoice_id', $invoiceId)
+            ->orderBy('date')
+            ->orderBy('id')
+            ->get();
+
+        foreach ($payments as $payment) {
+            $this->allocatePaymentToSalesInstallments($payment);
+        }
+
+        $this->syncInvoicePaidAmount($invoiceId);
+    }
+
     protected function syncInvoicePaidAmount($invoiceId)
     {
         $invoice = SalesInvoice::find($invoiceId);
@@ -507,7 +758,7 @@ class PaymentController extends TenantAwareController
 
         $totalPaid = (float) Payment::whereNull('deleted_at')
             ->where('type', 'receipt')
-            ->where('customer_id', $invoice->customer_id)
+            ->where('invoice_id', $invoiceId)
             ->sum('amount');
 
         $paidAmount = min($totalPaid, $invoice->total);

@@ -112,7 +112,7 @@ class JournalService
         return $this->getAccountByCode($tenantId, '2102');
     }
 
-    public function buildSalesInvoiceLines(array $invoiceData, int $tenantId): array
+    public function buildSalesInvoiceLines(array $invoiceData, int $tenantId, ?float $costAmount = null): array
     {
         $lines = [];
         $arAccount = $this->getAccountByCode($tenantId, '1103');
@@ -124,12 +124,21 @@ class JournalService
         }
 
         if ($revenueAccount) {
-            $revenueAmount = $invoiceData['subtotal'] - ($invoiceData['discount_amount'] ?? 0);
+            $revenueAmount = $invoiceData['subtotal'] - ($invoiceData['discount_amount'] ?? 0) + ($invoiceData['shipping_amount'] ?? 0);
             $lines[] = ['account_id' => $revenueAccount->id, 'debit' => 0, 'credit' => $revenueAmount];
         }
 
         if ($taxAccount && ($invoiceData['tax_amount'] ?? 0) > 0) {
             $lines[] = ['account_id' => $taxAccount->id, 'debit' => 0, 'credit' => $invoiceData['tax_amount']];
+        }
+
+        if ($costAmount && $costAmount > 0) {
+            $cogsAccount = $this->getAccountByCode($tenantId, '51');
+            $inventoryAccount = $this->getAccountByCode($tenantId, '1104');
+            if ($cogsAccount && $inventoryAccount) {
+                $lines[] = ['account_id' => $cogsAccount->id, 'debit' => $costAmount, 'credit' => 0];
+                $lines[] = ['account_id' => $inventoryAccount->id, 'debit' => 0, 'credit' => $costAmount];
+            }
         }
 
         return $lines;

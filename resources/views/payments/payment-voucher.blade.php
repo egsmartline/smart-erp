@@ -29,14 +29,14 @@
             margin-bottom: 10px;
         }
         .header h2 { margin: 0; font-size: 22px; font-weight: bold; }
-        .header .info { text-align: left; font-size: 14px; }
+        .header .info { text-align: left; font-size: 13px; }
         .header .info div { margin-bottom: 5px; }
         .header .info span { font-weight: bold; }
-        .field { margin-bottom: 5px; font-size: 16px; }
-        .field-label { font-weight: bold; display: inline-block; width: 100px; }
-        .field-value { display: inline-block; width: calc(100% - 110px); padding: 5px 0; }
+        .field { margin-bottom: 5px; font-size: 13px; display: flex; align-items: center; }
+        .field-label { font-weight: bold; white-space: nowrap; margin-left: 5px; }
+        .field-value { padding: 5px 0; }
         .field-value.highlight { background: #e6f2ff; font-weight: bold; text-align: center; }
-        .footer { display: flex; justify-content: space-between; margin-top: 20px; font-size: 16px; }
+        .footer { display: flex; justify-content: space-between; margin-top: 20px; font-size: 13px; }
         .signature { text-align: center; width: 45%; }
         .signature-line { border-bottom: 1px solid #333; margin-top: 25px; }
         .no-print { text-align: center; margin-bottom: 20px; }

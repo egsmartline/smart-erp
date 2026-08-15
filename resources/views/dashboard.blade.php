@@ -69,7 +69,36 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">استحقاقات هذا الشهر ({{ now()->format('m/Y') }})</h3>
+            <div class="flex items-center justify-between rounded-lg bg-blue-50 border border-blue-200 p-4 mb-4">
+                <span class="text-sm font-medium text-blue-700">إجمالي المستحق غير المحصل</span>
+                <span class="text-xl font-bold text-blue-800">{{ number_format($monthDueTotal, 2) }}</span>
+            </div>
+            <div class="space-y-3">
+                @forelse($monthDues as $due)
+                    <a href="{{ route('sales-invoices.show', $due) }}" class="flex items-center justify-between rounded-lg border border-gray-200 p-3 hover:bg-blue-50 transition">
+                        <div>
+                            <div class="font-mono text-xs text-gray-500">{{ $due->invoice_number }}</div>
+                            <div class="font-medium text-gray-900">{{ $due->customer->name ?? '-' }}</div>
+                            <div class="text-xs text-gray-500">مستحق: {{ $due->due_date?->format('Y/m/d') }}</div>
+                        </div>
+                        <div class="text-left">
+                            <div class="font-bold text-red-600">{{ number_format($due->due_amount, 2) }}</div>
+                            @if($due->payment_status === 'partial')
+                                <span class="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800">جزئي</span>
+                            @else
+                                <span class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">غير مدفوع</span>
+                            @endif
+                        </div>
+                    </a>
+                @empty
+                    <div class="text-center text-gray-500 py-4">لا توجد مستحقات لشهر هذا الشهر</div>
+                @endforelse
+            </div>
+        </div>
+
         <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6">
             <h3 class="text-lg font-bold text-gray-800 mb-4">آخر فواتير البيع</h3>
             <div class="space-y-3">
@@ -93,6 +122,56 @@
                     </a>
                 @empty
                     <div class="text-center text-gray-500 py-4">لا توجد فواتير بعد</div>
+                @endforelse
+            </div>
+        </div>
+
+        <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">استحقاقات الموردين هذا الشهر ({{ now()->format('m/Y') }})</h3>
+            <div class="flex items-center justify-between rounded-lg bg-orange-50 border border-orange-200 p-4 mb-4">
+                <span class="text-sm font-medium text-orange-700">إجمالي الأقساط المستحقة غير المدفوعة</span>
+                <span class="text-xl font-bold text-orange-800">{{ number_format($purchaseMonthDueTotal, 2) }}</span>
+            </div>
+            <div class="space-y-3">
+                @forelse($purchaseMonthDues as $due)
+                    <a href="{{ route('purchase-invoices.show', $due->invoice) }}" class="flex items-center justify-between rounded-lg border border-gray-200 p-3 hover:bg-orange-50 transition">
+                        <div>
+                            <div class="font-mono text-xs text-gray-500">{{ $due->invoice->invoice_number ?? '-' }}</div>
+                            <div class="font-medium text-gray-900">{{ $due->invoice->supplier->name ?? '-' }}</div>
+                            <div class="text-xs text-gray-500">استحقاق: {{ $due->due_date?->format('Y/m/d') }}</div>
+                        </div>
+                        <div class="text-left">
+                            <div class="font-bold text-red-600">{{ number_format($due->amount - $due->paid_amount, 2) }}</div>
+                            <span class="inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800">قسط مستحق</span>
+                        </div>
+                    </a>
+                @empty
+                    <div class="text-center text-gray-500 py-4">لا توجد أقساط مستحقة هذا الشهر</div>
+                @endforelse
+            </div>
+        </div>
+
+        <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">استحقاقات العملاء هذا الشهر ({{ now()->format('m/Y') }})</h3>
+            <div class="flex items-center justify-between rounded-lg bg-blue-50 border border-blue-200 p-4 mb-4">
+                <span class="text-sm font-medium text-blue-700">إجمالي الأقساط المستحقة غير المدفوعة</span>
+                <span class="text-xl font-bold text-blue-800">{{ number_format($customerMonthDueTotal, 2) }}</span>
+            </div>
+            <div class="space-y-3">
+                @forelse($customerMonthDues as $due)
+                    <a href="{{ route('sales-invoices.show', $due->invoice) }}" class="flex items-center justify-between rounded-lg border border-gray-200 p-3 hover:bg-blue-50 transition">
+                        <div>
+                            <div class="font-mono text-xs text-gray-500">{{ $due->invoice->invoice_number ?? '-' }}</div>
+                            <div class="font-medium text-gray-900">{{ $due->invoice->customer->name ?? '-' }}</div>
+                            <div class="text-xs text-gray-500">استحقاق: {{ $due->due_date?->format('Y/m/d') }}</div>
+                        </div>
+                        <div class="text-left">
+                            <div class="font-bold text-red-600">{{ number_format($due->amount - $due->paid_amount, 2) }}</div>
+                            <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">قسط مستحق</span>
+                        </div>
+                    </a>
+                @empty
+                    <div class="text-center text-gray-500 py-4">لا توجد أقساط مستحقة هذا الشهر</div>
                 @endforelse
             </div>
         </div>

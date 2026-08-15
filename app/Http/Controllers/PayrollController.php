@@ -6,6 +6,9 @@ use App\Models\Payroll;
 use App\Models\Payslip;
 use App\Models\Employee;
 use App\Models\Loan;
+use App\Models\Payment;
+use App\Models\CashTreasury;
+use App\Models\TreasuryTransaction;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -119,7 +122,7 @@ class PayrollController extends TenantAwareController
         $validated = $request->validate([
             'notes' => 'nullable|string',
             'payslips' => 'nullable|array',
-            'payslips.*.id' => 'required|exists:payslips,id',
+            'payslips.*.id' => 'required|exists:payslip,id',
             'payslips.*.basic_salary' => 'nullable|numeric|min:0',
             'payslips.*.total_allowances' => 'nullable|numeric|min:0',
             'payslips.*.total_deductions' => 'nullable|numeric|min:0',
@@ -165,7 +168,65 @@ class PayrollController extends TenantAwareController
             ]);
         }
 
+        $this->deductFromTreasury($payroll);
+
         return redirect()->route('payroll.show', $payroll)->with('success', 'تم تحديث كشف الرواتب بنجاح');
+    }
+
+    protected function deductFromTreasury(Payroll $payroll): void
+    {
+        if (Payment::where('tenant_id', $this->getTenantId())->where('reference', $payroll->payroll_number)->exists()) {
+            return;
+        }
+
+        $treasury = CashTreasury::where('tenant_id', $this->getTenantId())
+            ->where('is_active', true)
+            ->first();
+
+        if (!$treasury) {
+            return;
+        }
+
+        $prefix = 'PAY';
+        $year = date('Y');
+        $last = Payment::where('tenant_id', $this->getTenantId())
+            ->withTrashed()
+            ->where('payment_number', 'like', $prefix . '-' . $year . '-%')
+            ->max('payment_number');
+        $seq = $last ? (int) substr($last, -4) + 1 : 1;
+        $paymentNumber = $prefix . '-' . $year . '-' . str_pad($seq, 4, '0', STR_PAD_LEFT);
+
+        Payment::create([
+            'tenant_id' => $this->getTenantId(),
+            'payment_number' => $paymentNumber,
+            'date' => Carbon::today(),
+            'type' => 'payment',
+            'treasury_id' => $treasury->id,
+            'amount' => $payroll->total_net,
+            'payment_method' => 'cash',
+            'currency_id' => 1,
+            'exchange_rate' => 1,
+            'amount_in_currency' => $payroll->total_net,
+            'reference' => $payroll->payroll_number,
+            'notes' => 'مرتبات ' . $payroll->month . '/' . $payroll->year,
+            'status' => 'completed',
+            'user_id' => auth()->id(),
+        ]);
+
+        $treasury->decrement('current_balance', $payroll->total_net);
+
+        TreasuryTransaction::create([
+            'tenant_id' => $this->getTenantId(),
+            'treasury_id' => $treasury->id,
+            'type' => 'out',
+            'amount' => $payroll->total_net,
+            'date' => Carbon::today(),
+            'reference_type' => 'payroll',
+            'reference_id' => $payroll->id,
+            'description' => 'مرتبات ' . $payroll->month . '/' . $payroll->year,
+            'reference_number' => $payroll->payroll_number,
+            'user_id' => auth()->id(),
+        ]);
     }
 
     public function destroy(Payroll $payroll)
@@ -208,9 +269,10 @@ class PayrollController extends TenantAwareController
 
         $payroll->update([
             'state' => 'confirmed',
-            'confirmed_at' => Carbon::now(),
         ]);
 
-        return redirect()->route('payroll.show', $payroll)->with('success', 'تم تأكيد كشف الرواتب بنجاح');
+        $this->deductFromTreasury($payroll);
+
+        return redirect()->route('payroll.show', $payroll)->with('success', 'تم تأكيد كشف الرواتب وخصمها من الخزينة بنجاح');
     }
 }

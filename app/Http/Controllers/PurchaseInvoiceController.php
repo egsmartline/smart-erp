@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\PurchaseInvoice;
 use App\Models\PurchaseInvoiceLine;
+use App\Models\PurchaseInvoiceInstallment;
 use App\Models\Supplier;
 use App\Models\Item;
 use App\Models\Warehouse;
@@ -11,6 +12,11 @@ use App\Models\ItemWarehouse;
 use App\Models\StockMovement;
 use App\Models\JournalEntry;
 use App\Models\Currency;
+use App\Models\Payment;
+use App\Models\CashTreasury;
+use App\Models\BankAccount;
+use App\Models\TreasuryTransaction;
+use App\Models\BankTransaction;
 use App\Services\JournalService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -48,11 +54,12 @@ class PurchaseInvoiceController extends TenantAwareController
     {
         $suppliers = $this->tenantQuery(Supplier::class)->where('is_active', true)->get();
         $warehouses = $this->tenantQuery(Warehouse::class)->where('is_active', true)->get();
-        $items = Item::where('is_active', true)->get();
+        $items = Item::where('is_active', true)->orderBy('sku')->get();
         $currencies = $this->tenantQuery(Currency::class)->where('is_active', true)->get();
         $invoiceNumber = $this->generateInvoiceNumber();
+        $defaultTaxRate = $this->getDefaultTaxRate();
 
-        return view('purchase-invoices.create', compact('suppliers', 'warehouses', 'items', 'currencies', 'invoiceNumber'));
+        return view('purchase-invoices.create', compact('suppliers', 'warehouses', 'items', 'currencies', 'invoiceNumber', 'defaultTaxRate'));
     }
 
     public function store(Request $request)
@@ -77,6 +84,9 @@ class PurchaseInvoiceController extends TenantAwareController
             'lines.*.discount_percent' => 'nullable|numeric|min:0|max:100',
             'lines.*.tax_rate' => 'nullable|numeric|min:0|max:100',
             'lines.*.expiry_date' => 'nullable|date',
+            'installments' => 'nullable|array',
+            'installments.*.amount' => 'nullable|numeric|min:0',
+            'installments.*.due_date' => 'nullable|date|after_or_equal:date',
         ]);
 
         DB::beginTransaction();
@@ -122,6 +132,23 @@ class PurchaseInvoiceController extends TenantAwareController
                 : ($validated['discount_amount'] ?? 0);
             $grandTotal = $subtotal - $totalDiscount - $overallDiscount + $totalTax + ($validated['shipping_amount'] ?? 0);
 
+            $installments = [];
+            foreach (($validated['installments'] ?? []) as $inst) {
+                if (!empty($inst['amount']) && !empty($inst['due_date'])) {
+                    $installments[] = [
+                        'amount' => $inst['amount'],
+                        'due_date' => $inst['due_date'],
+                        'paid_amount' => 0,
+                    ];
+                }
+            }
+
+            if (count($installments) > 0) {
+                $due_date = max(array_column($installments, 'due_date'));
+            } else {
+                $due_date = $validated['due_date'];
+            }
+
             $invoice = PurchaseInvoice::create([
                 'tenant_id' => $this->getTenantId(),
                 'supplier_id' => $validated['supplier_id'],
@@ -130,7 +157,7 @@ class PurchaseInvoiceController extends TenantAwareController
                 'received_by' => auth()->id(),
                 'invoice_number' => $this->generateInvoiceNumber(),
                 'date' => $validated['date'],
-                'due_date' => $validated['due_date'],
+                'due_date' => $due_date,
                 'subtotal' => $subtotal,
                 'discount_amount' => $totalDiscount + $overallDiscount,
                 'discount_percent' => $discType === 'percent' ? ($validated['discount_percent_inv'] ?? 0) : 0,
@@ -150,6 +177,11 @@ class PurchaseInvoiceController extends TenantAwareController
                 PurchaseInvoiceLine::create($data);
             }
 
+            foreach ($installments as $inst) {
+                $inst['purchase_invoice_id'] = $invoice->id;
+                PurchaseInvoiceInstallment::create($inst);
+            }
+
             DB::commit();
 
             return redirect()->route('purchase-invoices.show', $invoice)
@@ -162,8 +194,10 @@ class PurchaseInvoiceController extends TenantAwareController
 
     public function show(PurchaseInvoice $purchaseInvoice)
     {
-        $purchaseInvoice->load(['supplier', 'warehouse', 'lines.item', 'user', 'returns', 'currency']);
-        return view('purchase-invoices.show', compact('purchaseInvoice'));
+        $purchaseInvoice->load(['supplier', 'warehouse', 'lines.item', 'user', 'returns', 'currency', 'installments']);
+        $treasuries = $this->tenantQuery(CashTreasury::class)->where('is_active', true)->orderBy('name')->get();
+        $bankAccounts = $this->tenantQuery(BankAccount::class)->where('is_active', true)->orderBy('account_name')->get();
+        return view('purchase-invoices.show', compact('purchaseInvoice', 'treasuries', 'bankAccounts'));
     }
 
     public function edit(PurchaseInvoice $purchaseInvoice)
@@ -172,13 +206,15 @@ class PurchaseInvoiceController extends TenantAwareController
             return back()->with('error', 'لا يمكن تعديل هذه الفاتورة');
         }
 
-        $purchaseInvoice->load('lines.item');
+        $purchaseInvoice->load(['lines.item', 'installments']);
         $suppliers = $this->tenantQuery(Supplier::class)->where('is_active', true)->get();
         $warehouses = $this->tenantQuery(Warehouse::class)->where('is_active', true)->get();
-        $items = Item::where('is_active', true)->get();
+        $items = Item::where('is_active', true)->orderBy('sku')->get();
         $currencies = $this->tenantQuery(Currency::class)->where('is_active', true)->get();
 
-        return view('purchase-invoices.edit', compact('purchaseInvoice', 'suppliers', 'warehouses', 'items', 'currencies'));
+        $defaultTaxRate = $this->getDefaultTaxRate();
+
+        return view('purchase-invoices.edit', compact('purchaseInvoice', 'suppliers', 'warehouses', 'items', 'currencies', 'defaultTaxRate'));
     }
 
     public function update(Request $request, PurchaseInvoice $purchaseInvoice)
@@ -207,6 +243,9 @@ class PurchaseInvoiceController extends TenantAwareController
             'lines.*.discount_percent' => 'nullable|numeric|min:0|max:100',
             'lines.*.tax_rate' => 'nullable|numeric|min:0|max:100',
             'lines.*.expiry_date' => 'nullable|date',
+            'installments' => 'nullable|array',
+            'installments.*.amount' => 'nullable|numeric|min:0',
+            'installments.*.due_date' => 'nullable|date|after_or_equal:date',
         ]);
 
         DB::beginTransaction();
@@ -252,12 +291,29 @@ class PurchaseInvoiceController extends TenantAwareController
                 : ($validated['discount_amount'] ?? 0);
             $grandTotal = $subtotal - $totalDiscount - $overallDiscount + $totalTax + ($validated['shipping_amount'] ?? 0);
 
+            $installments = [];
+            foreach (($validated['installments'] ?? []) as $inst) {
+                if (!empty($inst['amount']) && !empty($inst['due_date'])) {
+                    $installments[] = [
+                        'amount' => $inst['amount'],
+                        'due_date' => $inst['due_date'],
+                        'paid_amount' => 0,
+                    ];
+                }
+            }
+
+            if (count($installments) > 0) {
+                $due_date = max(array_column($installments, 'due_date'));
+            } else {
+                $due_date = $validated['due_date'];
+            }
+
             $purchaseInvoice->update([
                 'supplier_id' => $validated['supplier_id'],
                 'warehouse_id' => $validated['warehouse_id'],
                 'currency_id' => $validated['currency_id'] ?? null,
                 'date' => $validated['date'],
-                'due_date' => $validated['due_date'],
+                'due_date' => $due_date,
                 'subtotal' => $subtotal,
                 'discount_amount' => $totalDiscount + $overallDiscount,
                 'discount_percent' => $discType === 'percent' ? ($validated['discount_percent_inv'] ?? 0) : 0,
@@ -273,6 +329,13 @@ class PurchaseInvoiceController extends TenantAwareController
             foreach ($lineData as $data) {
                 $data['purchase_invoice_id'] = $purchaseInvoice->id;
                 PurchaseInvoiceLine::create($data);
+            }
+
+            $purchaseInvoice->installments()->delete();
+
+            foreach ($installments as $inst) {
+                $inst['purchase_invoice_id'] = $purchaseInvoice->id;
+                PurchaseInvoiceInstallment::create($inst);
             }
 
             DB::commit();
@@ -295,6 +358,7 @@ class PurchaseInvoiceController extends TenantAwareController
 
         try {
             $purchaseInvoice->lines()->delete();
+            $purchaseInvoice->installments()->delete();
             $purchaseInvoice->delete();
 
             DB::commit();
@@ -434,6 +498,158 @@ class PurchaseInvoiceController extends TenantAwareController
             ->get(['id', 'name', 'name_ar', 'phone', 'mobile', 'balance']);
 
         return response()->json($suppliers);
+    }
+
+    private function getDefaultTaxRate(): float
+    {
+        $tax = \App\Models\Tax::where('is_default', true)->orWhere('is_active', true)->first();
+        return $tax ? (float) $tax->rate : 15;
+    }
+
+    public function settleInstallment(Request $request, PurchaseInvoice $purchaseInvoice)
+    {
+        $validated = $request->validate([
+            'installment_id' => 'nullable|exists:purchase_invoice_installments,id',
+            'amount' => 'required|numeric|min:0.01',
+            'payment_method' => 'required|in:cash,bank_transfer,check',
+            'treasury_id' => 'nullable|exists:cash_treasuries,id',
+            'bank_account_id' => 'nullable|exists:bank_accounts,id',
+            'date' => 'required|date',
+            'notes' => 'nullable|string',
+            'account_id' => 'nullable|exists:chart_of_accounts,id',
+        ]);
+
+        $tenantId = $this->getTenantId();
+        $userId = auth()->id();
+
+        if ($validated['payment_method'] === 'cash' && empty($validated['treasury_id'])) {
+            return back()->with('error', 'الخزينة مطلوبة لطريقة الدفع نقداً');
+        }
+        if ($validated['payment_method'] === 'bank_transfer' && empty($validated['bank_account_id'])) {
+            return back()->with('error', 'الحساب البنكي مطلوب لطريقة الدفع تحويل بنكي');
+        }
+        if ($validated['payment_method'] === 'check' && empty($request->check_number)) {
+            return back()->with('error', 'رقم الشيك مطلوب لطريقة الدفع شيك');
+        }
+
+        $installment = null;
+        if (!empty($validated['installment_id'])) {
+            $installment = PurchaseInvoiceInstallment::find($validated['installment_id']);
+            if (!$installment || $installment->purchase_invoice_id !== $purchaseInvoice->id) {
+                return back()->with('error', 'القسط غير صالح لهذه الفاتورة');
+            }
+        }
+
+        $currency = $purchaseInvoice->currency ?? $this->tenantQuery(Currency::class)->where('code', 'default')->first();
+        $currencyId = $currency?->id;
+
+        DB::beginTransaction();
+
+        try {
+            $paymentNumber = $this->generatePaymentNumber();
+
+            $payment = Payment::create([
+                'tenant_id' => $tenantId,
+                'payment_number' => $paymentNumber,
+                'date' => $validated['date'],
+                'type' => 'payment',
+                'supplier_id' => $purchaseInvoice->supplier_id,
+                'purchase_invoice_id' => $purchaseInvoice->id,
+                'account_id' => $validated['account_id'] ?? null,
+                'treasury_id' => $validated['treasury_id'] ?? null,
+                'bank_account_id' => $validated['bank_account_id'] ?? null,
+                'amount' => $validated['amount'],
+                'payment_method' => $validated['payment_method'],
+                'currency_id' => $currencyId,
+                'exchange_rate' => 1,
+                'amount_in_currency' => $validated['amount'],
+                'reference' => $validated['notes'] ?? $paymentNumber,
+                'check_number' => $request->check_number ?? null,
+                'notes' => $validated['notes'] ?? null,
+                'status' => 'completed',
+                'user_id' => $userId,
+            ]);
+
+            if ($validated['payment_method'] === 'cash' && !empty($validated['treasury_id'])) {
+                $treasury = CashTreasury::findOrFail($validated['treasury_id']);
+                $treasury->decrement('current_balance', $validated['amount']);
+                TreasuryTransaction::create([
+                    'tenant_id' => $tenantId,
+                    'treasury_id' => $validated['treasury_id'],
+                    'type' => 'out',
+                    'amount' => $validated['amount'],
+                    'reference_type' => 'payment',
+                    'reference_id' => $payment->id,
+                    'reference_number' => $paymentNumber,
+                    'description' => $validated['notes'] ?? 'تسوية قسط - ' . $purchaseInvoice->invoice_number,
+                    'user_id' => $userId,
+                ]);
+            } elseif ($validated['payment_method'] === 'bank_transfer' && !empty($validated['bank_account_id'])) {
+                $bank = BankAccount::findOrFail($validated['bank_account_id']);
+                $bank->decrement('current_balance', $validated['amount']);
+                BankTransaction::create([
+                    'tenant_id' => $tenantId,
+                    'bank_account_id' => $validated['bank_account_id'],
+                    'type' => 'out',
+                    'amount' => $validated['amount'],
+                    'reference_type' => 'payment',
+                    'reference_id' => $payment->id,
+                    'reference_number' => $paymentNumber,
+                    'description' => $validated['notes'] ?? 'تسوية قسط - ' . $purchaseInvoice->invoice_number,
+                    'user_id' => $userId,
+                ]);
+            }
+
+            if (!empty($validated['account_id'])) {
+                $journalService = app(JournalService::class);
+                $lines = $journalService->buildPaymentLines([
+                    'type' => 'payment',
+                    'payment_method' => $validated['payment_method'],
+                    'treasury_id' => $validated['treasury_id'] ?? null,
+                    'bank_account_id' => $validated['bank_account_id'] ?? null,
+                    'account_id' => $validated['account_id'],
+                    'amount' => $validated['amount'],
+                ]);
+                if (count($lines) >= 2) {
+                    $journalService->createEntry([
+                        'tenant_id' => $tenantId,
+                        'date' => $validated['date'],
+                        'description' => $validated['notes'] ?? 'تسوية قسط - ' . $purchaseInvoice->invoice_number,
+                        'reference' => $paymentNumber,
+                        'type' => 'payment',
+                        'lines' => $lines,
+                    ]);
+                }
+            }
+
+            if ($installment) {
+                $instDue = (float) $installment->amount - (float) $installment->paid_amount;
+                $apply = min($validated['amount'], $instDue);
+                $installment->increment('paid_amount', $apply);
+                app(PaymentController::class)->syncPurchaseInvoicePaidAmount($purchaseInvoice->id);
+            } else {
+                app(PaymentController::class)->allocatePaymentToPurchaseInstallments($payment);
+            }
+
+            DB::commit();
+
+            return back()->with('success', 'تم تسجيل التسوية بنجاح');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'حدث خطأ أثناء التسوية: ' . $e->getMessage());
+        }
+    }
+
+    protected function generatePaymentNumber(): string
+    {
+        $year = date('Y');
+        $last = $this->tenantQuery(Payment::class)
+            ->withTrashed()
+            ->where('payment_number', 'like', 'PAY-' . $year . '-%')
+            ->max('payment_number');
+
+        $seq = $last ? (int) substr($last, -4) + 1 : 1;
+        return 'PAY-' . $year . '-' . str_pad($seq, 4, '0', STR_PAD_LEFT);
     }
 
     protected function generateInvoiceNumber(): string

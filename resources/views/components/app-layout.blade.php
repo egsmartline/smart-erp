@@ -19,6 +19,13 @@
     toggleDark() {
         this.darkMode = !this.darkMode;
         localStorage.setItem('darkMode', this.darkMode);
+    },
+    handlePrint() {
+        if (window.printOverride) {
+            window.printOverride();
+        } else {
+            this.printModalOpen = true;
+        }
     }
 }" :class="{ 'dark': darkMode }">
 <head>
@@ -114,7 +121,7 @@
 
             .no-print { display: none !important; }
             .print-only { display: block !important; }
-            body { background: white !important; font-size: 11px; color: #1f2937; }
+            body { background: white !important; font-size: 12px; color: #1f2937; }
             .mr-64, .mr-20 { margin-right: 0 !important; }
 
             {{-- Print header --}}
@@ -134,10 +141,10 @@
             .border { border-color: #e5e7eb !important; }
 
             {{-- Tables --}}
-            table { width: 100%; table-layout: fixed; border-collapse: collapse; margin: 2px 0; font-size: 7px; }
+            table { width: 100%; table-layout: fixed; border-collapse: collapse; margin: 2px 0; font-size: 12px; }
             thead { display: table-header-group; }
-            th { background: #D4ECF8 !important; color: #1e3a8a !important; padding: 1px 2px; text-align: center !important; font-weight: 600; font-size: 7px; border: 1px solid #D4ECF8; overflow: hidden; }
-            td { padding: 0px 1px; text-align: center !important; border: none; font-size: 7px; overflow: hidden; }
+            th { background: #D4ECF8 !important; color: #1e3a8a !important; padding: 5px 6px; text-align: center !important; font-weight: 600; font-size: 12px; border: 1px solid #D4ECF8; overflow: hidden; }
+            td { padding: 5px 6px; text-align: center !important; border: none; font-size: 13px; overflow: hidden; }
             tr { background: transparent !important; }
             tr:hover { background: inherit !important; }
 
@@ -386,6 +393,22 @@
                         </ul>
                     </li>
 
+                    {{-- حوافظ المستندات --}}
+                    <li x-data="{ open: {{ request()->routeIs('document-handovers.*') ? 'true' : 'false' }} }">
+                        <button @click="open = !open"
+                            class="menu-item w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl {{ request()->routeIs('document-handovers.*') ? 'active' : 'hover:bg-primary-700' }} transition-all">
+                            <div class="flex items-center gap-3">
+                                <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2zm5-4v-4m-2 2h4"/></svg>
+                                <span x-show="sidebarOpen" class="whitespace-nowrap text-sm font-medium">حوافظ المستندات</span>
+                            </div>
+                            <svg x-show="sidebarOpen" class="h-4 w-4 transition-transform" :class="{ 'rotate-180': open }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <ul x-show="open" x-collapse class="mt-1 mr-6 space-y-1">
+                            <li><a href="{{ route('document-handovers.index') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('document-handovers.index') || request()->routeIs('document-handovers.show') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">جميع الحوافظ</span></a></li>
+                            <li><a href="{{ route('document-handovers.create') }}" class="submenu-item flex items-center gap-2 px-4 py-2 rounded-lg text-sm {{ request()->routeIs('document-handovers.create') ? 'active' : 'hover:bg-primary-700' }}"><span class="h-1.5 w-1.5 rounded-full bg-current flex-shrink-0"></span><span x-show="sidebarOpen">حافظة جديدة</span></a></li>
+                        </ul>
+                    </li>
+
                     {{-- الإعدادات --}}
                     <li x-data="{ open: {{ in_array(true, [request()->routeIs('settings.*'), request()->routeIs('currencies.*'), request()->routeIs('fiscal-years.*'), request()->routeIs('backups.*'), request()->routeIs('audit-log.*'), request()->routeIs('import.*')]) ? 'true' : 'false' }} }">
                         <button @click="open = !open"
@@ -492,7 +515,7 @@
                     </div>
                     <div class="flex items-center gap-3">
                         {{-- Print Button --}}
-                        <button @click="printModalOpen = true" class="no-print inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-primary-50 hover:text-primary-600 hover:border-primary-300 transition shadow-sm" title="طباعة الصفحة">
+                        <button @click="handlePrint()" class="no-print inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-primary-50 hover:text-primary-600 hover:border-primary-300 transition shadow-sm" title="طباعة الصفحة">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                             <span class="hidden sm:inline">طباعة</span>
                         </button>

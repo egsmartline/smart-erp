@@ -153,6 +153,38 @@
             </div>
         </div>
 
+        <div class="mt-6 rounded-xl border border-gray-200 bg-white p-6">
+            <div class="mb-4 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-gray-800">أقساط فاتورة المبيعات</h3>
+                <button type="button" id="btn-add-installment"
+                        class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 transition cursor-pointer">
+                    <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    إضافة قسط
+                </button>
+            </div>
+
+            <div class="overflow-x-auto mb-4 rounded-xl border border-gray-200">
+                <table class="w-full text-right text-sm">
+                    <thead>
+                        <tr class="border-b border-gray-200 bg-gray-50">
+                            <th class="px-3 py-2 font-semibold text-gray-700 w-8">#</th>
+                            <th class="px-3 py-2 font-semibold text-gray-700">المبلغ</th>
+                            <th class="px-3 py-2 font-semibold text-gray-700">تاريخ الاستحقاق</th>
+                            <th class="px-3 py-2 font-semibold text-gray-700 text-center w-10"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="installments-tbody"></tbody>
+                </table>
+            </div>
+
+            <div class="flex justify-end">
+                <div class="rounded-lg bg-indigo-50 border border-indigo-200 px-4 py-2 flex items-center gap-4">
+                    <span class="text-sm font-medium text-indigo-700">إجمالي الأقساط</span>
+                    <span class="text-lg font-bold font-mono text-indigo-700" id="tot-installments">0.00</span>
+                </div>
+            </div>
+        </div>
+
         <div class="mt-6 flex items-center gap-3">
             <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition cursor-pointer">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -188,6 +220,11 @@
         'tax_rate' => $l->tax_rate,
     ])->all()); ?>;
 
+    var existingInstallments = <?php echo json_encode($salesInvoice->installments->map(fn($i) => [
+        'amount' => $i->amount,
+        'due_date' => $i->due_date?->format('Y-m-d') ?? '',
+    ])->all()); ?>;
+
     var tbody = document.getElementById('lines-tbody');
     if (!tbody) return;
 
@@ -218,7 +255,7 @@
             opt.value = item.id;
             opt.dataset.price = item.price;
             opt.dataset.tax = item.tax;
-            opt.textContent = (item.name || '') + ' - ' + (item.sku || '');
+            opt.textContent = (item.sku ? '(' + item.sku + ') ' : '') + (item.name || '');
             if (data.item_id && String(item.id) === String(data.item_id)) opt.selected = true;
             select.appendChild(opt);
         }
@@ -419,5 +456,86 @@
         addLine(existingLines[i]);
     }
     if (existingLines.length === 0) addLine();
+
+    var instIdx = 0;
+    var instTbody = document.getElementById('installments-tbody');
+
+    function addInstallmentRow(amount, dueDate) {
+        var idx = instIdx++;
+        var tr = document.createElement('tr');
+        tr.className = 'border-b border-gray-100';
+        tr.dataset.idx = idx;
+
+        var td1 = document.createElement('td');
+        td1.className = 'px-3 py-2 text-gray-500';
+        td1.textContent = idx + 1;
+
+        var td2 = document.createElement('td');
+        td2.className = 'px-3 py-2';
+        var inpAmt = document.createElement('input');
+        inpAmt.type = 'number';
+        inpAmt.name = 'installments[' + idx + '][amount]';
+        inpAmt.value = amount || '';
+        inpAmt.step = '0.01';
+        inpAmt.min = '0';
+        inpAmt.placeholder = '0.00';
+        inpAmt.className = 'w-40 rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500 inst-amount';
+        td2.appendChild(inpAmt);
+
+        var td3 = document.createElement('td');
+        td3.className = 'px-3 py-2';
+        var inpDate = document.createElement('input');
+        inpDate.type = 'date';
+        inpDate.name = 'installments[' + idx + '][due_date]';
+        inpDate.value = dueDate || '';
+        inpDate.className = 'w-44 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500';
+        td3.appendChild(inpDate);
+
+        var td4 = document.createElement('td');
+        td4.className = 'px-3 py-2 text-center';
+        var delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600 transition cursor-pointer btn-del-installment';
+        delBtn.innerHTML = '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
+        td4.appendChild(delBtn);
+
+        tr.appendChild(td1);
+        tr.appendChild(td2);
+        tr.appendChild(td3);
+        tr.appendChild(td4);
+        instTbody.appendChild(tr);
+    }
+
+    function calcInstallmentsTotal() {
+        var total = 0;
+        var amts = instTbody.querySelectorAll('.inst-amount');
+        for (var i = 0; i < amts.length; i++) {
+            total += parseFloat(amts[i].value) || 0;
+        }
+        document.getElementById('tot-installments').textContent = total.toFixed(2);
+    }
+
+    document.getElementById('btn-add-installment').addEventListener('click', function() {
+        addInstallmentRow();
+        calcInstallmentsTotal();
+    });
+
+    document.getElementById('installments-tbody').addEventListener('input', function(e) {
+        if (e.target.classList.contains('inst-amount')) calcInstallmentsTotal();
+    });
+
+    document.getElementById('installments-tbody').addEventListener('click', function(e) {
+        var btn = e.target.classList.contains('btn-del-installment') ? e.target : e.target.closest('.btn-del-installment');
+        if (!btn) return;
+        var tr = getRow(btn);
+        if (!tr) return;
+        tr.parentNode.removeChild(tr);
+        calcInstallmentsTotal();
+    });
+
+    for (var i = 0; i < existingInstallments.length; i++) {
+        addInstallmentRow(existingInstallments[i].amount, existingInstallments[i].due_date);
+    }
+    calcInstallmentsTotal();
 })();
 </script>

@@ -117,6 +117,7 @@ class ReportController extends TenantAwareController
             $invoices = SalesInvoice::where('tenant_id', $this->getTenantId())
                 ->where('customer_id', $customerId)
                 ->whereBetween('date', [$dateFrom, $dateTo])
+                ->where('status', '!=', 'voided')
                 ->with('customer')
                 ->get();
 
@@ -126,6 +127,8 @@ class ReportController extends TenantAwareController
                     'type' => 'فاتورة بيع',
                     'badge' => 'bg-blue-100 text-blue-800',
                     'reference' => $inv->invoice_number,
+                    'id' => $inv->id,
+                    'route' => 'sales-invoices.show',
                     'amount' => (float) $inv->total,
                     'paid' => (float) $inv->paid_amount,
                     'due' => (float) $inv->due_amount,
@@ -145,6 +148,8 @@ class ReportController extends TenantAwareController
                     'type' => 'سند قبض',
                     'badge' => 'bg-emerald-100 text-emerald-800',
                     'reference' => $pay->payment_number,
+                    'id' => $pay->id,
+                    'route' => 'payments.show',
                     'amount' => -(float) $pay->amount,
                     'paid' => 0,
                     'due' => 0,
@@ -163,6 +168,8 @@ class ReportController extends TenantAwareController
                     'type' => 'إشعار خصم',
                     'badge' => 'bg-orange-100 text-orange-800',
                     'reference' => $dn->note_number,
+                    'id' => $dn->id,
+                    'route' => 'discount-notes.show',
                     'amount' => -(float) $dn->amount,
                     'paid' => 0,
                     'due' => 0,
@@ -199,6 +206,7 @@ class ReportController extends TenantAwareController
             $invoices = PurchaseInvoice::where('tenant_id', $this->getTenantId())
                 ->where('supplier_id', $supplierId)
                 ->whereBetween('date', [$dateFrom, $dateTo])
+                ->where('status', '!=', 'voided')
                 ->with('currency')
                 ->get();
 
@@ -217,6 +225,8 @@ class ReportController extends TenantAwareController
                     'type' => 'فاتورة شراء',
                     'badge' => 'bg-orange-100 text-orange-800',
                     'reference' => $inv->invoice_number,
+                    'id' => $inv->id,
+                    'route' => 'purchase-invoices.show',
                     'amount' => (float) $inv->total,
                     'paid' => (float) $inv->paid_amount,
                     'due' => (float) $inv->due_amount,
@@ -246,6 +256,8 @@ class ReportController extends TenantAwareController
                     'type' => 'سند صرف',
                     'badge' => 'bg-emerald-100 text-emerald-800',
                     'reference' => $pay->payment_number,
+                    'id' => $pay->id,
+                    'route' => 'payments.show',
                     'amount' => -(float) $pay->amount,
                     'paid' => 0,
                     'due' => 0,

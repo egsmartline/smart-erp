@@ -70,13 +70,7 @@
             <div id="items-app">
                 <div class="mb-4 flex items-center justify-between">
                     <h3 class="text-lg font-bold text-gray-800">أصناف الفاتورة</h3>
-                    <div class="flex gap-2">
-                        <button type="button" id="btn-print-barcodes"
-                            class="inline-flex items-center gap-2 rounded-lg bg-gray-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-700 transition cursor-pointer">
-                            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10v-1H7v1zM5 3h14v2H5V3zm0 4h14v2H5V7zm0 4h14v2H5v-2zm0 4h14v4H5v-4z"/></svg>
-                            طباعة باركود
-                        </button>
-                        <button type="button" id="btn-add-line"
+                    <button type="button" id="btn-add-line"
                             class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 transition cursor-pointer">
                         <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                         إضافة صنف
@@ -93,6 +87,7 @@
                                 <th class="px-3 py-2 font-semibold text-gray-700">التكلفة</th>
                                 <th class="px-3 py-2 font-semibold text-gray-700">خصم %</th>
                                 <th class="px-3 py-2 font-semibold text-gray-700">الضريبة %</th>
+                                <th class="px-3 py-2 font-semibold text-gray-700">المخزن</th>
                                 <th class="px-3 py-2 font-semibold text-gray-700 text-left">الإجمالي</th>
                                 <th class="px-3 py-2 font-semibold text-gray-700 text-center w-10"></th>
                             </tr>
@@ -160,6 +155,38 @@
             </div>
         </div>
 
+        <div class="mt-6 rounded-xl border border-gray-200 bg-white p-6">
+            <div class="mb-4 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-gray-800">أقساط فاتورة الشراء</h3>
+                <button type="button" id="btn-add-installment"
+                        class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 transition cursor-pointer">
+                    <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    إضافة قسط
+                </button>
+            </div>
+
+            <div class="overflow-x-auto mb-4 rounded-xl border border-gray-200">
+                <table class="w-full text-right text-sm">
+                    <thead>
+                        <tr class="border-b border-gray-200 bg-gray-50">
+                            <th class="px-3 py-2 font-semibold text-gray-700 w-8">#</th>
+                            <th class="px-3 py-2 font-semibold text-gray-700">المبلغ</th>
+                            <th class="px-3 py-2 font-semibold text-gray-700">تاريخ الاستحقاق</th>
+                            <th class="px-3 py-2 font-semibold text-gray-700 text-center w-10"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="installments-tbody"></tbody>
+                </table>
+            </div>
+
+            <div class="flex justify-end">
+                <div class="rounded-lg bg-indigo-50 border border-indigo-200 px-4 py-2 flex items-center gap-4">
+                    <span class="text-sm font-medium text-indigo-700">إجمالي الأقساط</span>
+                    <span class="text-lg font-bold font-mono text-indigo-700" id="tot-installments">0.00</span>
+                </div>
+            </div>
+        </div>
+
         <div class="mt-6 flex items-center gap-3">
             <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition cursor-pointer">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
@@ -179,8 +206,15 @@
         'sku' => $i->sku,
         'barcode' => $i->barcode,
         'price' => $i->cost_price,
-        'tax' => $i->tax_rate ?? 15,
+        'tax' => $i->tax_rate ?: $defaultTaxRate,
     ])->values()->all()); ?>;
+
+    var warehousesData = <?php echo json_encode($warehouses->map(fn($w) => [
+        'id' => $w->id,
+        'name' => $w->name,
+    ])->values()->all()); ?>;
+
+    var defaultWarehouseId = '<?php echo old('warehouse_id', $warehouses->first()->id ?? ''); ?>';
 
     var tbody = document.getElementById('lines-tbody');
 
@@ -210,7 +244,7 @@
             opt.value = item.id;
             opt.dataset.price = item.price;
             opt.dataset.tax = item.tax;
-            opt.textContent = (item.name || '') + ' - ' + (item.sku || '');
+            opt.textContent = (item.sku ? '(' + item.sku + ') ' : '') + (item.name || '');
             select.appendChild(opt);
         }
         td2.appendChild(select);
@@ -249,22 +283,38 @@
 
         var td6 = document.createElement('td');
         td6.className = 'px-3 py-2';
-        var inpTax = makeInput('tax_rate', '15', { min: '0', max: '100' });
+        var inpTax = makeInput('tax_rate', '<?php echo $defaultTaxRate; ?>', { min: '0', max: '100' });
         inpTax.className = inpTax.className.replace('w-20', 'w-16');
         td6.appendChild(inpTax);
 
         var td7 = document.createElement('td');
-        td7.className = 'px-3 py-3 text-left font-mono text-sm font-medium text-gray-900';
-        td7.id = 'total-' + idx;
-        td7.textContent = '0.00';
+        td7.className = 'px-3 py-2';
+        var whSelect = document.createElement('select');
+        whSelect.name = 'lines[' + idx + '][warehouse_id]';
+        whSelect.required = true;
+        whSelect.className = 'w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500';
+        for (var wi = 0; wi < warehousesData.length; wi++) {
+            var wh = warehousesData[wi];
+            var whOpt = document.createElement('option');
+            whOpt.value = wh.id;
+            whOpt.textContent = wh.name;
+            if (String(wh.id) === defaultWarehouseId) whOpt.selected = true;
+            whSelect.appendChild(whOpt);
+        }
+        td7.appendChild(whSelect);
 
         var td8 = document.createElement('td');
-        td8.className = 'px-3 py-2 text-center';
+        td8.className = 'px-3 py-3 text-left font-mono text-sm font-medium text-gray-900';
+        td8.id = 'total-' + idx;
+        td8.textContent = '0.00';
+
+        var td9 = document.createElement('td');
+        td9.className = 'px-3 py-2 text-center';
         var delBtn = document.createElement('button');
         delBtn.type = 'button';
         delBtn.className = 'rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600 transition cursor-pointer btn-del-line';
         delBtn.innerHTML = '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
-        td8.appendChild(delBtn);
+        td9.appendChild(delBtn);
 
         tr.appendChild(td1);
         tr.appendChild(td2);
@@ -274,6 +324,7 @@
         tr.appendChild(td6);
         tr.appendChild(td7);
         tr.appendChild(td8);
+        tr.appendChild(td9);
         tbody.appendChild(tr);
     }
 
@@ -338,22 +389,6 @@
 
     document.getElementById('btn-add-line').addEventListener('click', addLine);
 
-    document.getElementById('btn-print-barcodes').addEventListener('click', function() {
-        var rows = tbody.querySelectorAll('tr');
-        var params = [];
-        for (var i = 0; i < rows.length; i++) {
-            var tr = rows[i];
-            var sel = tr.querySelector('select');
-            if (!sel || !sel.value) continue;
-            var itemId = parseInt(sel.value);
-            var qty = parseFloat(tr.querySelector('[name$="[quantity]"]').value) || 1;
-            if (qty < 1) qty = 1;
-            params.push(itemId + ':' + Math.round(qty));
-        }
-        if (params.length === 0) { alert('يرجى إضافة أصناف أولاً'); return; }
-        window.open('{{ route("barcodes.print") }}?d=' + params.join(','), '_blank');
-    });
-
     document.getElementById('items-app').addEventListener('change', function(e) {
         var target = e.target;
         if (target.tagName === 'SELECT' && target.name.indexOf('[item_id]') > -1) {
@@ -363,7 +398,7 @@
             var opt = target.options[target.selectedIndex];
             if (opt && opt.value) {
                 var price = parseFloat(opt.dataset.price) || 0;
-                var tax = parseFloat(opt.dataset.tax) || 15;
+                var tax = parseFloat(opt.dataset.tax) || <?php echo $defaultTaxRate; ?>;
                 tr.querySelector('[name$="[unit_cost]"]').value = price;
                 tr.querySelector('[name$="[tax_rate]"]').value = tax;
                 tr.querySelector('[name$="[quantity]"]').value = '1';
@@ -404,5 +439,81 @@
     });
 
     addLine();
+
+    var instIdx = 0;
+    var instTbody = document.getElementById('installments-tbody');
+
+    function addInstallmentRow(amount, dueDate) {
+        var idx = instIdx++;
+        var tr = document.createElement('tr');
+        tr.className = 'border-b border-gray-100';
+        tr.dataset.idx = idx;
+
+        var td1 = document.createElement('td');
+        td1.className = 'px-3 py-2 text-gray-500';
+        td1.textContent = idx + 1;
+
+        var td2 = document.createElement('td');
+        td2.className = 'px-3 py-2';
+        var inpAmt = document.createElement('input');
+        inpAmt.type = 'number';
+        inpAmt.name = 'installments[' + idx + '][amount]';
+        inpAmt.value = amount || '';
+        inpAmt.step = '0.01';
+        inpAmt.min = '0';
+        inpAmt.placeholder = '0.00';
+        inpAmt.className = 'w-40 rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500 inst-amount';
+        td2.appendChild(inpAmt);
+
+        var td3 = document.createElement('td');
+        td3.className = 'px-3 py-2';
+        var inpDate = document.createElement('input');
+        inpDate.type = 'date';
+        inpDate.name = 'installments[' + idx + '][due_date]';
+        inpDate.value = dueDate || '';
+        inpDate.className = 'w-44 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500';
+        td3.appendChild(inpDate);
+
+        var td4 = document.createElement('td');
+        td4.className = 'px-3 py-2 text-center';
+        var delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600 transition cursor-pointer btn-del-installment';
+        delBtn.innerHTML = '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
+        td4.appendChild(delBtn);
+
+        tr.appendChild(td1);
+        tr.appendChild(td2);
+        tr.appendChild(td3);
+        tr.appendChild(td4);
+        instTbody.appendChild(tr);
+    }
+
+    function calcInstallmentsTotal() {
+        var total = 0;
+        var amts = instTbody.querySelectorAll('.inst-amount');
+        for (var i = 0; i < amts.length; i++) {
+            total += parseFloat(amts[i].value) || 0;
+        }
+        document.getElementById('tot-installments').textContent = total.toFixed(2);
+    }
+
+    document.getElementById('btn-add-installment').addEventListener('click', function() {
+        addInstallmentRow();
+        calcInstallmentsTotal();
+    });
+
+    document.getElementById('installments-tbody').addEventListener('input', function(e) {
+        if (e.target.classList.contains('inst-amount')) calcInstallmentsTotal();
+    });
+
+    document.getElementById('installments-tbody').addEventListener('click', function(e) {
+        var btn = e.target.classList.contains('btn-del-installment') ? e.target : e.target.closest('.btn-del-installment');
+        if (!btn) return;
+        var tr = getRow(btn);
+        if (!tr) return;
+        tr.parentNode.removeChild(tr);
+        calcInstallmentsTotal();
+    });
 })();
 </script>

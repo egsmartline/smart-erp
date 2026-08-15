@@ -39,6 +39,22 @@
                     <input type="date" name="date_to" id="date_to" value="{{ request('date_to') }}" class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
                 <div>
+                    <label for="treasury_id" class="mb-1 block text-sm font-medium text-gray-700">الخزينة / الحساب</label>
+                    <select name="treasury_id" id="treasury_id" class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <option value="">الكل</option>
+                        <optgroup label="الخزائن">
+                            @foreach($treasuries as $treasury)
+                                <option value="t-{{ $treasury->id }}" {{ request('treasury_id') === 't-' . $treasury->id ? 'selected' : '' }}>{{ $treasury->name }} ({{ $treasury->code }})</option>
+                            @endforeach
+                        </optgroup>
+                        <optgroup label="الحسابات البنكية">
+                            @foreach($bankAccounts as $bankAccount)
+                                <option value="b-{{ $bankAccount->id }}" {{ request('treasury_id') === 'b-' . $bankAccount->id ? 'selected' : '' }}>{{ $bankAccount->account_name }} ({{ $bankAccount->bank_name }})</option>
+                            @endforeach
+                        </optgroup>
+                    </select>
+                </div>
+                <div>
                     <label for="search" class="mb-1 block text-sm font-medium text-gray-700">بحث</label>
                     <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="بحث بالاسم أو الرقم..." class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
@@ -70,6 +86,7 @@
                         <th class="px-4 py-3 font-semibold text-gray-700">التاريخ</th>
                         <th class="px-4 py-3 font-semibold text-gray-700">النوع</th>
                         <th class="px-4 py-3 font-semibold text-gray-700">الشخص</th>
+                        <th class="px-4 py-3 font-semibold text-gray-700">الخزينة</th>
                         <th class="px-4 py-3 font-semibold text-gray-700">المبلغ</th>
                         <th class="px-4 py-3 font-semibold text-gray-700">البيان</th>
                         <th class="px-4 py-3 font-semibold text-gray-700">طريقة الدفع</th>
@@ -88,6 +105,7 @@
                                 </span>
                             </td>
                             <td class="px-4 py-3 font-medium text-gray-900">{{ $payment->customer->name ?? $payment->supplier->name ?? '-' }}</td>
+                            <td class="px-4 py-3 text-gray-600">{{ $payment->treasury->name ?? $payment->bankAccount->account_name ?? '-' }}</td>
                             <td class="px-4 py-3 text-left font-mono text-sm font-bold text-gray-900">{{ number_format($payment->amount, 2) }}</td>
                             <td class="px-4 py-3 text-gray-600 max-w-xs truncate">{{ $payment->notes ?? '-' }}</td>
                             <td class="px-4 py-3 text-gray-600">
@@ -127,8 +145,70 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="9" class="px-4 py-8 text-center text-gray-500">لا توجد مدفوعات</td></tr>
+                        @if($discountNotes->isEmpty() && $payrolls->isEmpty())
+                            <tr><td colspan="9" class="px-4 py-8 text-center text-gray-500">لا توجد مدفوعات</td></tr>
+                        @endif
                     @endforelse
+                    @foreach($discountNotes as $dn)
+                        <tr class="border-b border-gray-100 hover:bg-yellow-50 transition">
+                            <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ $dn->note_number }}</td>
+                            <td class="px-4 py-3 text-gray-600">{{ $dn->date->format('Y-m-d') }}</td>
+                            <td class="px-4 py-3">
+                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-purple-100 text-purple-800">إشعار خصم</span>
+                            </td>
+                            <td class="px-4 py-3 font-medium text-gray-900">{{ $dn->customer->name ?? '-' }}</td>
+                            <td class="px-4 py-3 text-left font-mono text-sm font-bold text-red-600">{{ number_format($dn->amount, 2) }}</td>
+                            <td class="px-4 py-3 text-gray-600 max-w-xs truncate">{{ $dn->reason ?? $dn->notes ?? '-' }}</td>
+                            <td class="px-4 py-3 text-gray-600">—</td>
+                            <td class="px-4 py-3">
+                                @if($dn->status === 'posted')
+                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-800">مرحل</span>
+                                @elseif($dn->status === 'draft')
+                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800">مسودة</span>
+                                @else
+                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-600">{{ $dn->status }}</span>
+                                @endif
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <div class="inline-flex items-center gap-1">
+                                    <a href="{{ route('discount-notes.show', $dn) }}" class="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 transition" title="عرض">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                        عرض
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                    @foreach($payrolls as $pr)
+                        <tr class="border-b border-gray-100 hover:bg-orange-50 transition">
+                            <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ $pr->payroll_number }}</td>
+                            <td class="px-4 py-3 text-gray-600">{{ $pr->date_to?->format('Y-m-d') ?? $pr->created_at->format('Y-m-d') }}</td>
+                            <td class="px-4 py-3">
+                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-orange-100 text-orange-800">مرتبات</span>
+                            </td>
+                            <td class="px-4 py-3 font-medium text-gray-900">الموظفين</td>
+                            <td class="px-4 py-3 text-left font-mono text-sm font-bold text-red-600">{{ number_format($pr->total_net, 2) }}</td>
+                            <td class="px-4 py-3 text-gray-600 max-w-xs truncate">{{ $pr->notes ?? 'مرتبات ' . $pr->month . '/' . $pr->year }}</td>
+                            <td class="px-4 py-3 text-gray-600">—</td>
+                            <td class="px-4 py-3">
+                                @if($pr->state === 'paid')
+                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-800">مدفوع</span>
+                                @elseif($pr->state === 'confirmed')
+                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-800">مؤكد</span>
+                                @else
+                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-600">{{ $pr->state }}</span>
+                                @endif
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <div class="inline-flex items-center gap-1">
+                                    <a href="{{ route('payroll.show', $pr) }}" class="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 transition" title="عرض">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                        عرض
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
                 </tbody>
             </table>
         </div>

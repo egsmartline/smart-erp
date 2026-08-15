@@ -37,6 +37,7 @@
                 <div class="text-sm text-gray-500 mt-1">إجمالي المخزون</div>
             </div>
             <div class="space-y-2 text-sm">
+                <div class="flex justify-between"><span class="text-gray-500">الرصيد الافتتاحي:</span><span class="font-medium">{{ number_format($item->opening_stock ?? 0, 2) }}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">الحد الأدنى:</span><span class="font-medium">{{ $item->minimum_stock ?? 0 }}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">الحد الأقصى:</span><span class="font-medium">{{ $item->maximum_stock ?? 0 }}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">إعادة الطلب:</span><span class="font-medium">{{ $item->reorder_level ?? 0 }}</span></div>

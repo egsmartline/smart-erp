@@ -3,7 +3,7 @@
         <div class="flex items-center justify-between">
             <h2 class="text-xl font-bold text-gray-800">فاتورة مبيعات - {{ $salesInvoice->invoice_number }}</h2>
             <div class="flex items-center gap-2">
-                <x-print-button url="{{ route('pdf.sales-invoice', $salesInvoice) }}" label="تحميل PDF" />
+                <x-print-button url="{{ route('pdf.sales-invoice', $salesInvoice) }}" label="تحميل PDF" hidePrint />
                 <a href="{{ route('sales-invoices.index') }}" class="inline-flex items-center gap-2 rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 transition">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                     العودة للقائمة
@@ -33,7 +33,7 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="grid grid-cols-2 gap-4 mb-6 screen-only">
                     <div>
                         <p class="text-xs text-gray-500">العميل</p>
                         <p class="font-medium text-gray-900">{{ $salesInvoice->customer->name ?? '-' }}</p>
@@ -44,6 +44,9 @@
                         <p class="font-medium text-gray-900">{{ $salesInvoice->date ? $salesInvoice->date->format('Y-m-d') : '-' }}</p>
                         <p class="text-sm text-gray-600">مستحق: {{ $salesInvoice->due_date ? $salesInvoice->due_date->format('Y-m-d') : '-' }}</p>
                     </div>
+                </div>
+                <div class="print-only" style="display:none;">
+                    <p style="font-size:16px; margin-bottom: 20px;">العميل: <strong>{{ $salesInvoice->customer->name ?? '-' }}</strong> &nbsp;&nbsp; التاريخ: <strong>{{ $salesInvoice->date ? $salesInvoice->date->format('Y-m-d') : '-' }}</strong> @if($salesInvoice->due_date) &nbsp;&nbsp; مستحق: <strong>{{ $salesInvoice->due_date->format('Y-m-d') }}</strong> @endif</p>
                 </div>
 
                 <div class="overflow-x-auto mb-6">
@@ -105,6 +108,38 @@
                     <div class="mb-4">
                         <p class="text-xs text-gray-500">ملاحظات</p>
                         <p class="text-sm text-gray-700">{{ $salesInvoice->notes }}</p>
+                    </div>
+                @endif
+
+                @if($salesInvoice->installments->isNotEmpty())
+                    <div class="mb-6">
+                        <div class="mb-3">
+                            <h4 class="text-md font-bold text-gray-800">أقساط فاتورة المبيعات</h4>
+                        </div>
+                        <div class="overflow-x-auto rounded-xl border border-gray-200">
+                            <table class="w-full text-right text-sm">
+                                <thead>
+                                    <tr class="border-b border-gray-200 bg-gray-50">
+                                        <th class="px-3 py-2 font-semibold text-gray-700" style="width:30px">#</th>
+                                        <th class="px-3 py-2 font-semibold text-gray-700">المبلغ</th>
+                                        <th class="px-3 py-2 font-semibold text-gray-700">تاريخ الاستحقاق</th>
+                                        <th class="px-3 py-2 font-semibold text-gray-700 text-left">المدفوع</th>
+                                        <th class="px-3 py-2 font-semibold text-gray-700 text-left">المتبقي</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($salesInvoice->installments as $index => $installment)
+                                        <tr class="border-b border-gray-100">
+                                            <td class="px-3 py-2">{{ $index + 1 }}</td>
+                                            <td class="px-3 py-2 font-mono font-medium">{{ number_format($installment->amount, 2) }} {{ $salesInvoice->currency->symbol ?? '' }}</td>
+                                            <td class="px-3 py-2">{{ $installment->due_date ? $installment->due_date->format('Y-m-d') : '-' }}</td>
+                                            <td class="px-3 py-2 text-left font-mono text-emerald-600">{{ number_format($installment->paid_amount, 2) }}</td>
+                                            <td class="px-3 py-2 text-left font-mono text-red-600">{{ number_format(max($installment->amount - $installment->paid_amount, 0), 2) }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 @endif
 
@@ -183,6 +218,65 @@
                     </div>
                 </div>
             </div>
+
+            @if($salesInvoice->installments->isNotEmpty() && $salesInvoice->status !== 'voided')
+            <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-4">
+                <h4 class="text-sm font-bold text-gray-700 mb-3">تسوية قسط</h4>
+                <form action="{{ route('sales-invoices.settle-installment', $salesInvoice) }}" method="POST" class="space-y-3">
+                    @csrf
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-gray-600">القسط</label>
+                        <select name="installment_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                            <option value="">جميع الأقساط (تلقائي)</option>
+                            @foreach($salesInvoice->installments->filter(fn($i) => $i->amount > $i->paid_amount) as $inst)
+                                <option value="{{ $inst->id }}">{{ $inst->due_date?->format('Y-m-d') }} - {{ number_format($inst->amount - $inst->paid_amount, 2) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-gray-600">المبلغ</label>
+                        <input type="number" name="amount" step="0.01" min="0.01" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-left font-mono focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-gray-600">طريقة الدفع</label>
+                        <select name="payment_method" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                            <option value="cash">نقداً</option>
+                            <option value="bank_transfer">تحويل بنكي</option>
+                            <option value="check">شيك</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-gray-600">الخزينة</label>
+                        <select name="treasury_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                            <option value="">اختر الخزينة</option>
+                            @foreach($treasuries as $treasury)
+                                <option value="{{ $treasury->id }}">{{ $treasury->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-gray-600">الحساب البنكي</label>
+                        <select name="bank_account_id" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                            <option value="">اختر الحساب البنكي</option>
+                            @foreach($bankAccounts as $bankAccount)
+                                <option value="{{ $bankAccount->id }}">{{ $bankAccount->bank_name }} - {{ $bankAccount->account_name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-gray-600">تاريخ السداد</label>
+                        <input type="date" name="date" value="{{ now()->format('Y-m-d') }}" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-gray-600">بيان</label>
+                        <input type="text" name="notes" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="اختياري">
+                    </div>
+                    <button type="submit" class="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition cursor-pointer" onclick="return confirm('تأكيد تسجيل السداد؟')">
+                        تسجيل سداد قسط
+                    </button>
+                </form>
+            </div>
+            @endif
         </div>
     </div>
 </x-app-layout>
@@ -190,10 +284,15 @@
 <style>
     @media print {
         .no-print { display: none !important; }
+        .screen-only { display: none !important; }
+        .print-only { display: block !important; }
         #printArea { box-shadow: none !important; border: none !important; border-radius: 0 !important; padding: 10px !important; }
         .overflow-x-auto { overflow: visible !important; }
-        table { font-size: 11px !important; }
-        table th, table td { padding: 4px 6px !important; }
-        .font-mono { font-size: 11px !important; }
+        table { font-size: 12px !important; }
+        table th, table td { padding: 5px 6px !important; }
+        table th { font-size: 12px !important; }
+        table td { font-size: 13px !important; }
+        .font-mono { font-size: 13px !important; }
+        .text-xs { font-size: 10px !important; }
     }
 </style>

@@ -20,6 +20,7 @@ class Payment extends Model
         'customer_id',
         'supplier_id',
         'invoice_id',
+        'purchase_invoice_id',
         'account_id',
         'treasury_id',
         'bank_account_id',
@@ -70,6 +71,11 @@ class Payment extends Model
     public function invoice(): BelongsTo
     {
         return $this->belongsTo(SalesInvoice::class, 'invoice_id');
+    }
+
+    public function purchaseInvoice(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseInvoice::class, 'purchase_invoice_id');
     }
 
     public function account(): BelongsTo

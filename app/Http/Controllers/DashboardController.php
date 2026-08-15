@@ -6,6 +6,8 @@ use App\Models\Account;
 use App\Models\JournalEntry;
 use App\Models\SalesInvoice;
 use App\Models\PurchaseInvoice;
+use App\Models\PurchaseInvoiceInstallment;
+use App\Models\SalesInvoiceInstallment;
 use App\Models\Customer;
 use App\Models\Supplier;
 use App\Models\Item;
@@ -62,18 +64,14 @@ class DashboardController extends TenantAwareController
 
         $receivableCustomers = Customer::where('tenant_id', $tenantId)
             ->where('is_active', true)
-            ->with(['salesInvoices' => fn($q) => $q->select('id', 'tenant_id', 'customer_id', 'total'),
-                    'payments' => fn($q) => $q->select('id', 'tenant_id', 'customer_id', 'type', 'amount')])
+            ->with(['salesInvoices' => fn($q) => $q->where('status', 'posted')
+                    ->where('due_amount', '>', 0)
+                    ->select('id', 'tenant_id', 'customer_id', 'due_amount')])
             ->get()
             ->map(function ($c) {
                 $openingBal = (float) ($c->opening_balance ?? 0);
                 $balance = $c->opening_balance_type === 'credit' ? -$openingBal : $openingBal;
-                foreach ($c->salesInvoices as $inv) { $balance += (float) $inv->total; }
-                foreach ($c->payments as $pay) {
-                    $amount = (float) $pay->amount;
-                    if ($pay->type === 'receipt') $amount = -$amount;
-                    $balance += $amount;
-                }
+                foreach ($c->salesInvoices as $inv) { $balance += (float) $inv->due_amount; }
                 $c->real_balance = $balance;
                 return $c;
             })
@@ -85,10 +83,52 @@ class DashboardController extends TenantAwareController
         $balanceChartLabels = $receivableCustomers->pluck('name')->toArray();
         $balanceChartData = $receivableCustomers->pluck('real_balance')->toArray();
 
+        $monthDues = SalesInvoice::where('tenant_id', $tenantId)
+            ->where('status', 'posted')
+            ->where('due_amount', '>', 0)
+            ->whereYear('due_date', Carbon::now()->year)
+            ->whereMonth('due_date', Carbon::now()->month)
+            ->with('customer')
+            ->orderBy('due_date')
+            ->get();
+
+        $monthDueTotal = $monthDues->sum(function ($inv) {
+            return (float) $inv->due_amount;
+        });
+
+        $purchaseMonthDues = PurchaseInvoiceInstallment::query()
+            ->whereColumn('amount', '>', 'paid_amount')
+            ->whereYear('due_date', Carbon::now()->year)
+            ->whereMonth('due_date', Carbon::now()->month)
+            ->whereHas('invoice', fn($q) => $q->where('tenant_id', $tenantId)->where('status', 'posted'))
+            ->with(['invoice' => fn($q) => $q->with('supplier')])
+            ->orderBy('due_date')
+            ->get();
+
+        $purchaseMonthDueTotal = $purchaseMonthDues->sum(function ($inst) {
+            return (float) $inst->amount - (float) $inst->paid_amount;
+        });
+
+        $customerMonthDues = SalesInvoiceInstallment::query()
+            ->whereColumn('amount', '>', 'paid_amount')
+            ->whereYear('due_date', Carbon::now()->year)
+            ->whereMonth('due_date', Carbon::now()->month)
+            ->whereHas('invoice', fn($q) => $q->where('tenant_id', $tenantId)->where('status', 'posted'))
+            ->with(['invoice' => fn($q) => $q->with('customer')])
+            ->orderBy('due_date')
+            ->get();
+
+        $customerMonthDueTotal = $customerMonthDues->sum(function ($inst) {
+            return (float) $inst->amount - (float) $inst->paid_amount;
+        });
+
         return view('dashboard', compact(
             'stats', 'recentSales', 'recentPurchases',
             'accountsCount', 'salesChartLabels', 'salesChartData',
-            'balanceChartLabels', 'balanceChartData'
+            'balanceChartLabels', 'balanceChartData',
+            'monthDues', 'monthDueTotal',
+            'purchaseMonthDues', 'purchaseMonthDueTotal',
+            'customerMonthDues', 'customerMonthDueTotal'
         ));
     }
 

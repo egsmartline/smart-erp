@@ -7,6 +7,8 @@ use App\Models\Employee;
 use App\Models\CashTreasury;
 use App\Models\Currency;
 use App\Models\Account;
+use App\Models\Payment;
+use App\Models\TreasuryTransaction;
 use App\Models\JournalEntry;
 use App\Services\JournalService;
 use Illuminate\Http\Request;
@@ -72,6 +74,37 @@ class CustodyController extends TenantAwareController
 
             if ($custody->treasury_id) {
                 $custody->treasury()->decrement('current_balance', $custody->amount);
+
+                $payment = Payment::create([
+                    'tenant_id' => $custody->tenant_id,
+                    'payment_number' => $this->generatePaymentNumber('payment'),
+                    'date' => $custody->date->format('Y-m-d'),
+                    'type' => 'payment',
+                    'account_id' => $custody->account_id,
+                    'treasury_id' => $custody->treasury_id,
+                    'amount' => $custody->amount,
+                    'payment_method' => 'cash',
+                    'currency_id' => $custody->currency_id ?? 1,
+                    'exchange_rate' => 1,
+                    'amount_in_currency' => $custody->amount,
+                    'reference' => $custody->custody_number,
+                    'notes' => 'عهدة - ' . $custody->custody_number,
+                    'status' => 'completed',
+                    'user_id' => auth()->id(),
+                ]);
+
+                TreasuryTransaction::create([
+                    'tenant_id' => $custody->tenant_id,
+                    'treasury_id' => $custody->treasury_id,
+                    'type' => 'out',
+                    'amount' => $custody->amount,
+                    'date' => $custody->date->format('Y-m-d'),
+                    'reference_type' => 'payment',
+                    'reference_id' => $payment->id,
+                    'reference_number' => $payment->payment_number,
+                    'description' => 'عهدة - ' . $custody->custody_number,
+                    'user_id' => auth()->id(),
+                ]);
             }
 
             if ($custody->account_id) {
@@ -158,6 +191,38 @@ class CustodyController extends TenantAwareController
                     $this->authorizeTenant($treasury);
                     $difference = $validated['returned_amount'] - $oldReturned;
                     $treasury->increment('current_balance', $difference);
+
+                    if ($difference != 0) {
+                        $payment = Payment::create([
+                            'tenant_id' => $custody->tenant_id,
+                            'payment_number' => $this->generatePaymentNumber($difference > 0 ? 'receipt' : 'payment'),
+                            'date' => $validated['settlement_date'],
+                            'type' => $difference > 0 ? 'receipt' : 'payment',
+                            'treasury_id' => $treasuryId,
+                            'amount' => abs($difference),
+                            'payment_method' => 'cash',
+                            'currency_id' => $validated['currency_id'] ?? $custody->currency_id ?? 1,
+                            'exchange_rate' => 1,
+                            'amount_in_currency' => abs($difference),
+                            'reference' => $custody->custody_number,
+                            'notes' => 'تسوية عهدة - ' . $custody->custody_number,
+                            'status' => 'completed',
+                            'user_id' => auth()->id(),
+                        ]);
+
+                        TreasuryTransaction::create([
+                            'tenant_id' => $custody->tenant_id,
+                            'treasury_id' => $treasuryId,
+                            'type' => $difference > 0 ? 'in' : 'out',
+                            'amount' => abs($difference),
+                            'date' => $validated['settlement_date'],
+                            'reference_type' => 'payment',
+                            'reference_id' => $payment->id,
+                            'reference_number' => $payment->payment_number,
+                            'description' => 'تسوية عهدة - ' . $custody->custody_number,
+                            'user_id' => auth()->id(),
+                        ]);
+                    }
                 }
             }
 
@@ -234,6 +299,17 @@ class CustodyController extends TenantAwareController
 
             $custody->update($validated);
 
+            $oldPayments = $this->tenantQuery(Payment::class)
+                ->where('reference', $custody->custody_number)
+                ->get();
+
+            foreach ($oldPayments as $p) {
+                TreasuryTransaction::where('reference_type', 'payment')
+                    ->where('reference_id', $p->id)
+                    ->delete();
+                $p->delete();
+            }
+
             if ($oldTreasuryId) {
                 $oldTreasury = CashTreasury::find($oldTreasuryId);
                 if ($oldTreasury) {
@@ -248,6 +324,37 @@ class CustodyController extends TenantAwareController
                     $this->authorizeTenant($newTreasury);
                     $netNew = $validated['amount'] - $validated['returned_amount'];
                     $newTreasury->decrement('current_balance', $netNew);
+
+                    $payment = Payment::create([
+                        'tenant_id' => $custody->tenant_id,
+                        'payment_number' => $this->generatePaymentNumber('payment'),
+                        'date' => $validated['date'],
+                        'type' => 'payment',
+                        'account_id' => $custody->account_id,
+                        'treasury_id' => $newTreasuryId,
+                        'amount' => $validated['returned_amount'] > 0 ? $validated['amount'] - $validated['returned_amount'] : $validated['amount'],
+                        'payment_method' => 'cash',
+                        'currency_id' => $custody->currency_id ?? 1,
+                        'exchange_rate' => 1,
+                        'amount_in_currency' => $validated['returned_amount'] > 0 ? $validated['amount'] - $validated['returned_amount'] : $validated['amount'],
+                        'reference' => $custody->custody_number,
+                        'notes' => 'عهدة - ' . $custody->custody_number,
+                        'status' => 'completed',
+                        'user_id' => auth()->id(),
+                    ]);
+
+                    TreasuryTransaction::create([
+                        'tenant_id' => $custody->tenant_id,
+                        'treasury_id' => $newTreasuryId,
+                        'type' => 'out',
+                        'amount' => $netNew,
+                        'date' => $validated['date'],
+                        'reference_type' => 'payment',
+                        'reference_id' => $payment->id,
+                        'reference_number' => $payment->payment_number,
+                        'description' => 'عهدة - ' . $custody->custody_number,
+                        'user_id' => auth()->id(),
+                    ]);
                 }
             }
         });
@@ -263,6 +370,17 @@ class CustodyController extends TenantAwareController
             if ($custody->treasury_id) {
                 $remaining = $custody->amount - $custody->returned_amount;
                 $custody->treasury()->increment('current_balance', $remaining);
+            }
+
+            $relatedPayments = $this->tenantQuery(Payment::class)
+                ->where('reference', $custody->custody_number)
+                ->get();
+
+            foreach ($relatedPayments as $p) {
+                TreasuryTransaction::where('reference_type', 'payment')
+                    ->where('reference_id', $p->id)
+                    ->delete();
+                $p->delete();
             }
 
             if ($custody->account_id) {
@@ -292,6 +410,24 @@ class CustodyController extends TenantAwareController
         }
 
         return $prefix . str_pad($seq, 4, '0', STR_PAD_LEFT);
+    }
+
+    protected function generatePaymentNumber(string $type): string
+    {
+        $prefix = $type === 'receipt' ? 'RCP' : 'PAY';
+        $year = date('Y');
+        $last = $this->tenantQuery(Payment::class)
+            ->withTrashed()
+            ->where('payment_number', 'like', $prefix . '-' . $year . '-%')
+            ->max('payment_number');
+
+        if ($last) {
+            $seq = (int) substr($last, -4) + 1;
+        } else {
+            $seq = 1;
+        }
+
+        return $prefix . '-' . $year . '-' . str_pad($seq, 4, '0', STR_PAD_LEFT);
     }
 
     protected function authorizeTenant($model): void

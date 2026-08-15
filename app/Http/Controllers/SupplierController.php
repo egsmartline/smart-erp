@@ -61,7 +61,7 @@ class SupplierController extends TenantAwareController
     public function show(Supplier $supplier)
     {
         $this->authorizeTenant($supplier);
-        $supplier->load(['openingBalanceCurrency', 'purchaseInvoices' => fn($q) => $q->with('currency')->latest(), 'payments' => fn($q) => $q->with('currency')->latest()]);
+        $supplier->load(['openingBalanceCurrency', 'purchaseInvoices' => fn($q) => $q->with('currency')->where('status', '!=', 'voided')->latest(), 'payments' => fn($q) => $q->with('currency')->latest()]);
 
         $openingBal = (float) ($supplier->opening_balance ?? 0);
         $openingBalSign = $supplier->opening_balance_type === 'credit' ? -$openingBal : $openingBal;
