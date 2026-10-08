@@ -54,3 +54,4 @@ database-backup*
 
 /check_*.php
 /test_*.php
+/acc/
