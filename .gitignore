@@ -51,3 +51,6 @@ prompet.docx
 error_log
 .htaccess.txt
 database-backup*
+
+/check_*.php
+/test_*.php
