@@ -41,7 +41,7 @@
                     @forelse($adjustments as $adj)
                         <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
                             <td class="px-4 py-3 font-medium text-gray-900"><a href="{{ route('inventory-adjustments.show', $adj) }}" class="hover:text-blue-600">{{ $adj->reference }}</a></td>
-                            <td class="px-4 py-3 text-gray-600">{{ $adj->adjustment_date->format('Y/m/d') }}</td>
+                            <td class="px-4 py-3 text-gray-600">{{ $adj->date->format('Y/m/d') }}</td>
                             <td class="px-4 py-3 text-gray-600">{{ $adj->warehouse->name ?? '-' }}</td>
                             <td class="px-4 py-3 text-center">
                                 @if($adj->state == 'draft')

@@ -30,8 +30,8 @@
                     </select>
                 </div>
                 <div>
-                    <label for="adjustment_date" class="mb-1 block text-sm font-medium text-gray-700">التاريخ <span class="text-red-500">*</span></label>
-                    <input type="date" name="adjustment_date" id="adjustment_date" value="{{ old('adjustment_date', date('Y-m-d')) }}" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    <label for="date" class="mb-1 block text-sm font-medium text-gray-700">التاريخ <span class="text-red-500">*</span></label>
+                    <input type="date" name="date" id="date" value="{{ old('date', date('Y-m-d')) }}" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
                 <div class="md:col-span-2">
                     <label for="notes" class="mb-1 block text-sm font-medium text-gray-700">ملاحظات</label>

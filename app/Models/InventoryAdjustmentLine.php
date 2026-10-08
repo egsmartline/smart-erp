@@ -12,11 +12,12 @@ class InventoryAdjustmentLine extends Model
 
     protected $fillable = [
         'tenant_id',
-        'adjustment_id',
+        'inventory_adjustment_id',
         'item_id',
         'theoretical_qty',
         'actual_qty',
         'difference',
+        'unit_cost',
         'reason',
     ];
 
@@ -26,12 +27,13 @@ class InventoryAdjustmentLine extends Model
             'theoretical_qty' => 'decimal:2',
             'actual_qty' => 'decimal:2',
             'difference' => 'decimal:2',
+            'unit_cost' => 'decimal:2',
         ];
     }
 
     public function adjustment(): BelongsTo
     {
-        return $this->belongsTo(InventoryAdjustment::class, 'adjustment_id');
+        return $this->belongsTo(InventoryAdjustment::class, 'inventory_adjustment_id');
     }
 
     public function item(): BelongsTo

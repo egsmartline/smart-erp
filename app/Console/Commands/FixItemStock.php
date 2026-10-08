@@ -6,42 +6,69 @@ use Illuminate\Console\Command;
 use App\Models\Item;
 use App\Models\ItemWarehouse;
 use App\Models\StockMovement;
-use Illuminate\Support\Facades\DB;
 
 class FixItemStock extends Command
 {
-    protected $signature = 'items:fix-stock';
-    protected $description = 'Reset item stock to correct values';
+    protected $signature = 'items:fix-stock {--dry-run : Show what would change without writing}';
+    protected $description = 'Reset item stock to values derived from the stock movement ledger';
+
+    private const IN_TYPES = ['purchase', 'return_in', 'transfer_in', 'adjustment_in', 'opening'];
+    private const OUT_TYPES = ['sale', 'return_out', 'transfer_out', 'adjustment_out'];
 
     public function handle()
     {
-        $this->info('Fix item stock...');
+        $dryRun = (bool) $this->option('dry-run');
+        $this->info($dryRun ? 'Fix item stock (dry run)...' : 'Fix item stock...');
 
-        $fixed = 0;
-        Item::chunk(100, function ($items) use (&$fixed) {
+        $changed = 0;
+        Item::chunk(100, function ($items) use (&$changed, $dryRun) {
             foreach ($items as $item) {
-                $iw = ItemWarehouse::where('item_id', $item->id)->first();
-                if (!$iw) continue;
+                $warehouses = ItemWarehouse::where('item_id', $item->id)
+                    ->where('tenant_id', $item->tenant_id)
+                    ->orderBy('id')
+                    ->get();
 
-                $totalIn = (float) StockMovement::where('item_id', $item->id)
-                    ->where('warehouse_id', $iw->warehouse_id)
-                    ->whereIn('type', ['in', 'purchase', 'return_in'])->sum('quantity');
+                if ($warehouses->isEmpty()) {
+                    continue;
+                }
 
-                $totalOut = (float) StockMovement::where('item_id', $item->id)
-                    ->where('warehouse_id', $iw->warehouse_id)
-                    ->whereIn('type', ['out', 'sale', 'return_out'])->sum('quantity');
+                $firstId = $warehouses->first()->id;
+                $opening = (float) $item->opening_stock;
 
-                $correct = (float) $item->opening_stock + $totalIn - $totalOut;
-                if ($correct < 0) $correct = 0;
+                foreach ($warehouses as $iw) {
+                    $totalIn = (float) StockMovement::where('tenant_id', $iw->tenant_id)
+                        ->where('item_id', $item->id)
+                        ->where('warehouse_id', $iw->warehouse_id)
+                        ->whereNull('deleted_at')
+                        ->whereIn('type', self::IN_TYPES)
+                        ->sum('quantity');
 
-                if ((float) $iw->quantity !== $correct) {
-                    $iw->update(['quantity' => $correct]);
-                    $this->line("  {$item->name}: {$iw->quantity} -> {$correct}");
-                    $fixed++;
+                    $totalOut = (float) StockMovement::where('tenant_id', $iw->tenant_id)
+                        ->where('item_id', $item->id)
+                        ->where('warehouse_id', $iw->warehouse_id)
+                        ->whereNull('deleted_at')
+                        ->whereIn('type', self::OUT_TYPES)
+                        ->sum('quantity');
+
+                    $correct = $totalIn - $totalOut;
+                    if ($iw->id === $firstId) {
+                        $correct += $opening;
+                    }
+                    if ($correct < 0) {
+                        $correct = 0;
+                    }
+
+                    if ((float) $iw->quantity !== $correct) {
+                        $this->line("  {$item->name} (wh {$iw->warehouse_id}): {$iw->quantity} -> {$correct}");
+                        if (!$dryRun) {
+                            $iw->update(['quantity' => $correct]);
+                        }
+                        $changed++;
+                    }
                 }
             }
         });
 
-        $this->info("Done! {$fixed} items fixed.");
+        $this->info(($dryRun ? '[dry-run] ' : '') . "Done! {$changed} warehouse row(s) " . ($dryRun ? 'would change.' : 'changed.'));
     }
 }

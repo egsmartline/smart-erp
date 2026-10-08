@@ -172,11 +172,13 @@ class ItemController extends TenantAwareController
         $typeLabels = [
             'purchase'        => 'توريد / مشتريات',
             'sale'            => 'بيع',
-            'purchase_return' => 'مرتجع مشتريات',
-            'sales_return'    => 'مرتجع بيع',
-            'adjustment_add'  => 'تسوية إضافة',
-            'adjustment_sub'  => 'تسوية خصم',
-            'transfer'        => 'تحويل',
+            'return_in'       => 'إدخال - مرتجع',
+            'return_out'      => 'إخراج - مرتجع',
+            'transfer_in'     => 'تحويل وارد',
+            'transfer_out'    => 'تحويل صادر',
+            'adjustment_in'   => 'تسوية إضافة',
+            'adjustment_out'  => 'تسوية خصم',
+            'opening'         => 'رصيد افتتاحي',
         ];
 
         $referenceMap = [
@@ -200,13 +202,7 @@ class ItemController extends TenantAwareController
         foreach ($all as $m) {
             $m->in_qty = 0;
             $m->out_qty = 0;
-            if ($m->type === 'transfer') {
-                if ($m->quantity >= 0) {
-                    $m->in_qty = $m->quantity;
-                } else {
-                    $m->out_qty = -$m->quantity;
-                }
-            } elseif (in_array($m->type, ['sale', 'adjustment_sub'], true)) {
+            if (in_array($m->type, ['sale', 'return_out', 'transfer_out', 'adjustment_out'], true)) {
                 $m->out_qty = $m->quantity;
             } else {
                 $m->in_qty = $m->quantity;
@@ -273,11 +269,13 @@ class ItemController extends TenantAwareController
         $typeLabels = [
             'purchase'        => 'توريد / مشتريات',
             'sale'            => 'بيع',
-            'purchase_return' => 'مرتجع مشتريات',
-            'sales_return'    => 'مرتجع بيع',
-            'adjustment_add'  => 'تسوية إضافة',
-            'adjustment_sub'  => 'تسوية خصم',
-            'transfer'        => 'تحويل',
+            'return_in'       => 'إدخال - مرتجع',
+            'return_out'      => 'إخراج - مرتجع',
+            'transfer_in'     => 'تحويل وارد',
+            'transfer_out'    => 'تحويل صادر',
+            'adjustment_in'   => 'تسوية إضافة',
+            'adjustment_out'  => 'تسوية خصم',
+            'opening'         => 'رصيد افتتاحي',
         ];
 
         $referenceMap = [
@@ -301,13 +299,7 @@ class ItemController extends TenantAwareController
         foreach ($all as $m) {
             $m->in_qty = 0;
             $m->out_qty = 0;
-            if ($m->type === 'transfer') {
-                if ($m->quantity >= 0) {
-                    $m->in_qty = $m->quantity;
-                } else {
-                    $m->out_qty = -$m->quantity;
-                }
-            } elseif (in_array($m->type, ['sale', 'adjustment_sub'], true)) {
+            if (in_array($m->type, ['sale', 'return_out', 'transfer_out', 'adjustment_out'], true)) {
                 $m->out_qty = $m->quantity;
             } else {
                 $m->in_qty = $m->quantity;

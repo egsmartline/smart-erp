@@ -16,16 +16,16 @@ class InventoryAdjustment extends Model
         'tenant_id',
         'warehouse_id',
         'reference',
-        'adjustment_date',
+        'date',
         'state',
         'notes',
-        'created_by',
+        'user_id',
     ];
 
     protected function casts(): array
     {
         return [
-            'adjustment_date' => 'date',
+            'date' => 'date',
         ];
     }
 
@@ -41,11 +41,11 @@ class InventoryAdjustment extends Model
 
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function lines(): HasMany
     {
-        return $this->hasMany(InventoryAdjustmentLine::class, 'adjustment_id');
+        return $this->hasMany(InventoryAdjustmentLine::class, 'inventory_adjustment_id');
     }
 }

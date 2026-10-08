@@ -257,16 +257,22 @@ class SalesInvoiceController extends TenantAwareController
         try {
             if ($salesInvoice->status === 'posted') {
                 foreach ($salesInvoice->lines as $line) {
-                    $itemWarehouse = ItemWarehouse::where('item_id', $line->item_id)
-                        ->where('warehouse_id', $line->warehouse_id)
-                        ->first();
-                    if ($itemWarehouse) {
-                        $itemWarehouse->increment('quantity', $line->quantity);
+                    if ($this->invoiceMovedStock($salesInvoice, $line)) {
+                        $itemWarehouse = ItemWarehouse::where('tenant_id', $this->getTenantId())
+                            ->where('item_id', $line->item_id)
+                            ->where('warehouse_id', $line->warehouse_id)
+                            ->first();
+
+                        if ($itemWarehouse) {
+                            $itemWarehouse->increment('quantity', $line->quantity);
+                        }
                     }
 
-                    StockMovement::where('reference_type', SalesInvoice::class)
+                    StockMovement::where('tenant_id', $this->getTenantId())
+                        ->where('reference_type', SalesInvoice::class)
                         ->where('reference_id', $salesInvoice->id)
                         ->where('item_id', $line->item_id)
+                        ->where('warehouse_id', $line->warehouse_id)
                         ->delete();
                 }
 
@@ -358,6 +364,10 @@ class SalesInvoiceController extends TenantAwareController
                 $salesInvoice->fresh()->load('lines.item');
 
                 foreach ($salesInvoice->lines as $line) {
+                    if ($this->alreadyDeliveredQty($line->item_id, $line->warehouse_id) > 0) {
+                        continue;
+                    }
+
                     $itemWarehouse = ItemWarehouse::where('item_id', $line->item_id)
                         ->where('warehouse_id', $line->warehouse_id)
                         ->first();
@@ -374,9 +384,11 @@ class SalesInvoiceController extends TenantAwareController
                         ->where('warehouse_id', $line->warehouse_id)
                         ->first();
 
-                    if ($itemWarehouse) {
-                        $itemWarehouse->decrement('quantity', $line->quantity);
+                    if ($this->alreadyDeliveredQty($line->item_id, $line->warehouse_id) > 0 || !$itemWarehouse) {
+                        continue;
                     }
+
+                    $itemWarehouse->decrement('quantity', $line->quantity);
 
                     StockMovement::create([
                         'tenant_id' => $this->getTenantId(),
@@ -462,14 +474,13 @@ class SalesInvoiceController extends TenantAwareController
                     ->where('warehouse_id', $line->warehouse_id)
                     ->first();
 
-                $alreadyDelivered = StockMovement::where('item_id', $line->item_id)
-                    ->where('reference_type', 'App\\Models\\SalesDeliveryNote')
-                    ->whereNull('deleted_at')
-                    ->sum('quantity');
+                $alreadyDelivered = $this->alreadyDeliveredQty($line->item_id, $line->warehouse_id);
 
-                if ($alreadyDelivered <= 0 && $itemWarehouse) {
-                    $itemWarehouse->decrement('quantity', $line->quantity);
+                if ($alreadyDelivered > 0 || !$itemWarehouse) {
+                    continue;
                 }
+
+                $itemWarehouse->decrement('quantity', $line->quantity);
 
                 StockMovement::create([
                     'tenant_id' => $this->getTenantId(),
@@ -523,7 +534,12 @@ class SalesInvoiceController extends TenantAwareController
 
         try {
             foreach ($salesInvoice->lines as $line) {
-                $itemWarehouse = ItemWarehouse::where('item_id', $line->item_id)
+                if (!$this->invoiceMovedStock($salesInvoice, $line)) {
+                    continue;
+                }
+
+                $itemWarehouse = ItemWarehouse::where('tenant_id', $this->getTenantId())
+                    ->where('item_id', $line->item_id)
                     ->where('warehouse_id', $line->warehouse_id)
                     ->first();
 
@@ -591,6 +607,28 @@ class SalesInvoiceController extends TenantAwareController
             ->get(['id', 'name', 'name_ar', 'sku', 'barcode', 'selling_price', 'cost_price', 'tax_rate']);
 
         return response()->json($items);
+    }
+
+    private function alreadyDeliveredQty(int $itemId, int $warehouseId): float
+    {
+        return (float) StockMovement::where('tenant_id', $this->getTenantId())
+            ->where('item_id', $itemId)
+            ->where('warehouse_id', $warehouseId)
+            ->where('reference_type', 'App\\Models\\SalesDeliveryNote')
+            ->whereNull('deleted_at')
+            ->sum('quantity');
+    }
+
+    private function invoiceMovedStock(SalesInvoice $salesInvoice, SalesInvoiceLine $line): bool
+    {
+        return StockMovement::where('tenant_id', $this->getTenantId())
+            ->where('reference_type', SalesInvoice::class)
+            ->where('reference_id', $salesInvoice->id)
+            ->where('item_id', $line->item_id)
+            ->where('warehouse_id', $line->warehouse_id)
+            ->where('type', 'sale')
+            ->whereNull('deleted_at')
+            ->exists();
     }
 
     private function getDefaultTaxRate(): float
