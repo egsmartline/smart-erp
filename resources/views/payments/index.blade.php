@@ -145,8 +145,8 @@
                             </td>
                         </tr>
                     @empty
-                        @if($discountNotes->isEmpty() && $payrolls->isEmpty())
-                            <tr><td colspan="9" class="px-4 py-8 text-center text-gray-500">لا توجد مدفوعات</td></tr>
+                        @if($discountNotes->isEmpty() && $payrolls->isEmpty() && $transfers->isEmpty())
+                            <tr><td colspan="10" class="px-4 py-8 text-center text-gray-500">لا توجد مدفوعات</td></tr>
                         @endif
                     @endforelse
                     @foreach($discountNotes as $dn)
@@ -204,6 +204,52 @@
                                     <a href="{{ route('payroll.show', $pr) }}" class="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 transition" title="عرض">
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                         عرض
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                    @foreach($transfers as $t)
+                        <tr class="border-b border-gray-100 hover:bg-indigo-50 transition">
+                            @php
+                                $isSource = $t->description && str_starts_with($t->description, 'تحويل صادر');
+                                if ($t instanceof \App\Models\TreasuryTransaction) {
+                                    $selfName = $t->treasury_id ? ($t->treasury->name ?? '-') : (optional(\App\Models\Account::find($t->target_treasury_id))->name ?? 'حساب مالي');
+                                    $treasuryName = $t->treasury_id ? ($t->treasury->name ?? '-') : (optional(\App\Models\CashTreasury::find($t->reference_id))->name ?? '-');
+                                } else {
+                                    $selfName = $t->bankAccount->account_name ?? '-';
+                                    $treasuryName = $t->reference_type === 'treasury' ? (optional(\App\Models\CashTreasury::find($t->reference_id))->name ?? '-') : '-';
+                                }
+                                if ($t->reference_type === 'treasury') {
+                                    $refName = optional(\App\Models\CashTreasury::find($t->reference_id))->name ?? '-';
+                                } elseif ($t->reference_type === 'bank') {
+                                    $refName = optional(\App\Models\BankAccount::find($t->reference_id))->account_name ?? '-';
+                                } elseif ($t->reference_type === 'account') {
+                                    $refName = optional(\App\Models\Account::find($t->reference_id))->name ?? 'حساب مالي';
+                                } else {
+                                    $refName = $t->targetTreasury->name ?? $t->targetBankAccount->account_name ?? '-';
+                                }
+                                $sourceName = $isSource ? $selfName : $refName;
+                                $targetName = $isSource ? $refName : $selfName;
+                            @endphp
+                            <td class="px-4 py-3 font-mono text-xs text-gray-600">{{ $t->reference_number }}</td>
+                            <td class="px-4 py-3 text-gray-600">{{ $t->date ?? $t->created_at->format('Y-m-d') }}</td>
+                            <td class="px-4 py-3">
+                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-800">تحويل</span>
+                            </td>
+                            <td class="px-4 py-3 font-medium text-gray-900">من {{ $sourceName }} إلى {{ $targetName }}</td>
+                            <td class="px-4 py-3 text-gray-600">{{ $treasuryName }}</td>
+                            <td class="px-4 py-3 text-left font-mono text-sm font-bold text-indigo-600">{{ number_format($t->amount, 2) }}</td>
+                            <td class="px-4 py-3 text-gray-600 max-w-xs truncate">{{ $t->description ?? '-' }}</td>
+                            <td class="px-4 py-3 text-gray-600">تحويل داخلي</td>
+                            <td class="px-4 py-3">
+                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-800">مرحل</span>
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <div class="inline-flex items-center gap-1">
+                                    <a href="{{ route('transfers.edit', $t->id) }}" class="inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium text-amber-600 hover:bg-amber-50 transition" title="تعديل">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                        تعديل
                                     </a>
                                 </div>
                             </td>

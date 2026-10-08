@@ -4,7 +4,6 @@
     <meta charset="utf-8">
     <style>
         body { font-family: 'DejaVu Sans', Arial, sans-serif; direction: rtl; text-align: right; font-size: 13px; }
-        .marker { background: red; color: white; padding: 4px 8px; font-size: 11px; font-weight: bold; text-align: center; border-radius: 4px; margin-bottom: 8px; }
         .header { border-bottom: 2px solid #2563eb; padding-bottom: 12px; margin-bottom: 15px; }
         .company-name { font-size: 16px; font-weight: bold; color: #2563eb; }
         .company-info { font-size: 12px; color: #666; }
@@ -23,7 +22,6 @@
     </style>
 </head>
 <body>
-    <div class="marker">✓ V2.0</div>
     <div class="header">
         <table style="border: none; margin: 0;">
             <tr style="border: none;">

@@ -39,3 +39,15 @@ test_session.xml
 cookies.txt
 dashboard.html
 login_page.html
+
+*.sql
+*.sql.gz
+*.sql.zip
+.env.backup.local
+.env.local
+.env.bak
+prompet.docx
+*.bak.*
+error_log
+.htaccess.txt
+database-backup*

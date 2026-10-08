@@ -33,6 +33,11 @@ class FiscalYear extends Model
         ];
     }
 
+    public function getIsCurrentAttribute(): bool
+    {
+        return (bool) $this->is_active;
+    }
+
     public function scopeForTenant($query, ?int $tenantId = null)
     {
         return $query->where('tenant_id', $tenantId ?? tenant('id'));

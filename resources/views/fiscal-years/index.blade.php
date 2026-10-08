@@ -18,6 +18,7 @@
                         <th class="px-4 py-3 font-semibold">تاريخ البداية</th>
                         <th class="px-4 py-3 font-semibold">تاريخ النهاية</th>
                         <th class="px-4 py-3 font-semibold text-center">الحالية</th>
+                        <th class="px-4 py-3 font-semibold text-center">الحالة</th>
                         <th class="px-4 py-3 font-semibold text-center">إجراءات</th>
                     </tr>
                 </thead>
@@ -35,7 +36,32 @@
                                 @endif
                             </td>
                             <td class="px-4 py-3 text-center">
+                                @if($year->is_closed)
+                                    <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">مقفولة</span>
+                                    @if($year->closed_at)
+                                    <div class="text-xs text-gray-400 mt-1">{{ $year->closed_at->format('Y/m/d H:i') }}</div>
+                                    @endif
+                                @else
+                                    <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">مفتوحة</span>
+                                @endif
+                            </td>
+                            <td class="px-4 py-3 text-center">
                                 <div class="inline-flex items-center gap-1">
+                                    @if($year->is_closed)
+                                    <form action="{{ route('fiscal-years.reopen', $year) }}" method="POST" class="inline" onsubmit="return confirm('إعادة فتح السنة المالية؟ سيتم السماح بالتعديلات عليها.')">
+                                        @csrf
+                                        <button type="submit" class="rounded p-1 text-green-600 hover:bg-green-50 transition cursor-pointer" title="إعادة فتح">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11v-5a2 2 0 114 0v5h1a2 2 0 011 2v7a2 2 0 01-2 2H7a2 2 0 01-2-2v-7a2 2 0 011-2h1z"/></svg>
+                                        </button>
+                                    </form>
+                                    @else
+                                    <form action="{{ route('fiscal-years.close', $year) }}" method="POST" class="inline" onsubmit="return confirm('إقفال السنة المالية {{ $year->name }}؟ لا يمكن التراجع إلا بإعادة الفتح.')">
+                                        @csrf
+                                        <button type="submit" class="rounded p-1 text-gray-500 hover:bg-red-50 hover:text-red-600 transition cursor-pointer" title="إقفال">
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                        </button>
+                                    </form>
+                                    @endif
                                     <a href="{{ route('fiscal-years.edit', $year) }}" class="rounded p-1 text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition" title="تعديل">
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                     </a>
@@ -50,7 +76,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">لا توجد سنوات مالية</td></tr>
+                        <tr><td colspan="6" class="px-4 py-8 text-center text-gray-500">لا توجد سنوات مالية</td></tr>
                     @endforelse
                 </tbody>
             </table>

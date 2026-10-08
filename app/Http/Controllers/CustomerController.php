@@ -4,10 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\Currency;
+use App\Traits\ComputesReceivableBalances;
 use Illuminate\Http\Request;
 
 class CustomerController extends TenantAwareController
 {
+    use ComputesReceivableBalances;
+
     public function index(Request $request)
     {
         $customers = $this->tenantQuery(Customer::class)
@@ -63,44 +66,47 @@ class CustomerController extends TenantAwareController
     public function show(Customer $customer)
     {
         $this->authorizeTenant($customer);
-        $customer->load(['openingBalanceCurrency', 'salesInvoices' => fn($q) => $q->where('status', '!=', 'voided')->latest(), 'payments' => fn($q) => $q->latest(), 'discountNotes' => fn($q) => $q->latest()]);
+        $customer->load(['openingBalanceCurrency',
+            'salesInvoices' => fn($q) => $q->where('status', '!=', 'voided')->latest(),
+            'payments' => fn($q) => $q->latest(),
+            'discountNotes' => fn($q) => $q->latest()]);
 
-        $openingBal = (float) ($customer->opening_balance ?? 0);
-        $realBalance = $customer->opening_balance_type === 'credit' ? -$openingBal : $openingBal;
-        foreach ($customer->salesInvoices as $inv) { $realBalance += (float) $inv->total; }
-        foreach ($customer->payments as $pay) {
-            $amount = (float) $pay->amount;
-            if ($pay->type === 'receipt') $amount = -$amount;
-            $realBalance += $amount;
-        }
-        foreach ($customer->discountNotes as $dn) { $realBalance -= (float) $dn->amount; }
+        $tenantId = $this->getTenantId();
+        $currencyCodes = $this->currencyCodeMap($tenantId);
+        $baseCurrencyCode = $this->baseCurrencyCode($tenantId);
+
+        /* رصيد العميل الحالي لكل عملة على حدة. */
+        $currencyBalances = $this->receivableByCurrency($customer, $currencyCodes, $baseCurrencyCode);
+        $realBalance = $currencyBalances[$baseCurrencyCode] ?? 0.0;
+        $baseCurrencyId = collect($currencyCodes)->search($baseCurrencyCode, true);
+        $baseCurrencyId = $baseCurrencyId === false ? null : $baseCurrencyId;
 
         $receivableCustomers = $this->tenantQuery(Customer::class)
             ->where('is_active', true)
-            ->with(['openingBalanceCurrency', 'salesInvoices' => fn($q) => $q->where('status', '!=', 'voided')->select('id', 'tenant_id', 'customer_id', 'total', 'date', 'created_at'),
-                    'payments' => fn($q) => $q->select('id', 'tenant_id', 'customer_id', 'type', 'amount', 'payment_method', 'date', 'created_at'),
+            ->with(['openingBalanceCurrency',
+                    'salesInvoices' => fn($q) => $q->where('status', '!=', 'voided')->select('id', 'tenant_id', 'customer_id', 'total', 'currency_id', 'status', 'date', 'created_at'),
+                    'payments' => fn($q) => $q->select('id', 'tenant_id', 'customer_id', 'type', 'amount', 'currency_id', 'payment_method', 'date', 'created_at'),
                     'discountNotes' => fn($q) => $q->select('id', 'tenant_id', 'customer_id', 'amount', 'date', 'created_at')])
             ->get()
-            ->map(function ($c) {
-                $openingBal = (float) ($c->opening_balance ?? 0);
-                $balance = $c->opening_balance_type === 'credit' ? -$openingBal : $openingBal;
-                foreach ($c->salesInvoices as $inv) { $balance += (float) $inv->total; }
-                foreach ($c->payments as $pay) {
-                    $amount = (float) $pay->amount;
-                    if ($pay->type === 'receipt') $amount = -$amount;
-                    $balance += $amount;
-                }
-                foreach ($c->discountNotes as $dn) { $balance -= (float) $dn->amount; }
-                $c->real_balance = $balance;
+            ->map(function ($c) use ($currencyCodes, $baseCurrencyCode) {
+                $byCurrency = $this->receivableByCurrency($c, $currencyCodes, $baseCurrencyCode);
+                $c->currency_balances = $byCurrency;
+                $c->real_balance = $byCurrency[$baseCurrencyCode] ?? 0.0;
+                $c->positive_balance = collect($byCurrency)->filter(fn($v) => $v > 0)->sum();
                 return $c;
             })
-            ->filter(fn($c) => $c->real_balance > 0)
-            ->sortByDesc('real_balance')
+            ->filter(fn($c) => $c->positive_balance > 0.009)
+            ->sortByDesc('positive_balance')
             ->values();
 
-        $totalReceivable = $receivableCustomers->sum('real_balance');
+        $receivableTotals = $this->totalByCurrency($receivableCustomers);
+        $totalReceivable = $receivableTotals[$baseCurrencyCode] ?? 0.0;
 
-        return view('customers.show', compact('customer', 'receivableCustomers', 'totalReceivable', 'realBalance'));
+        return view('customers.show', compact(
+            'customer', 'receivableCustomers', 'totalReceivable', 'realBalance',
+            'currencyBalances', 'receivableTotals', 'baseCurrencyCode',
+            'currencyCodes', 'baseCurrencyId'
+        ));
     }
 
     public function edit(Customer $customer)

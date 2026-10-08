@@ -6,6 +6,16 @@
         </div>
     </x-slot>
 
+    @if($fiscalYear->is_closed)
+        <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            <strong class="font-semibold">هذه السنة المالية مقفولة.</strong>
+            @if($fiscalYear->closed_at)
+                تم الإقفال في {{ $fiscalYear->closed_at->format('Y/m/d H:i') }}.
+            @endif
+            للتعديل عليها استخدم زر إعادة الفتح من قائمة السنوات المالية.
+        </div>
+    @endif
+
     <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>

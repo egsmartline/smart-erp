@@ -1,10 +1,14 @@
 @extends('layouts.auth')
 
 @section('content')
-<div class="flex min-h-screen" x-data="{ sidebarOpen: true }">
+<div class="flex min-h-screen" x-data="{ sidebarOpen: true, mobileMenu: false }">
     {{-- Sidebar --}}
-    <aside class="sidebar-green fixed right-0 top-0 h-full text-white flex flex-col z-50"
-        :class="sidebarOpen ? 'w-64' : 'w-16'" style="transition: width 0.3s">
+    <aside class="sidebar-green fixed right-0 top-0 h-full w-64 text-white flex flex-col z-50"
+        :class="[
+            sidebarOpen ? 'lg:w-64' : 'lg:w-16',
+            mobileMenu ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'
+        ]"
+        style="transition: width 0.3s, transform 0.3s">
         {{-- User Info --}}
         <div class="flex-shrink-0 p-4 border-b border-emerald-500">
             <div class="flex items-center gap-3">
@@ -19,7 +23,7 @@
         </div>
 
         {{-- Navigation --}}
-        <div class="flex-1 overflow-y-auto py-3 px-2">
+        <div class="flex-1 overflow-y-auto py-3 px-2" @click="mobileMenu = false">
             <ul class="space-y-1">
                 {{-- الشركات --}}
                 <li x-data="{ open: false }">
@@ -64,9 +68,9 @@
 
         {{-- Sidebar Toggle --}}
         <div class="flex-shrink-0 px-3 pb-3 border-t border-emerald-500 pt-3">
-            <button @click="sidebarOpen = !sidebarOpen"
+            <button @click="window.innerWidth >= 1024 ? (sidebarOpen = !sidebarOpen) : (mobileMenu = false)"
                 class="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl hover:bg-emerald-500 transition-all text-emerald-100 hover:text-white">
-                <svg class="h-5 w-5 transition-transform" :class="sidebarOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
                 </svg>
                 <span x-show="sidebarOpen" class="text-sm">طي القائمة</span>
@@ -74,13 +78,25 @@
         </div>
     </aside>
 
+    {{-- Mobile Overlay --}}
+    <div x-show="mobileMenu" @click="mobileMenu = false"
+        x-transition:opacity.duration.150ms
+        class="fixed inset-0 bg-black/40 z-30 lg:hidden"></div>
+
     {{-- Main Content --}}
-    <div :class="sidebarOpen ? 'mr-64' : 'mr-16'" class="flex-1 min-h-screen bg-gradient-to-br from-emerald-50 via-white to-emerald-100 transition-all duration-300">
+    <div :class="sidebarOpen ? 'lg:mr-64' : 'lg:mr-16'" class="flex-1 mr-0 min-h-screen bg-gradient-to-br from-emerald-50 via-white to-emerald-100 transition-all duration-300">
         {{-- Top Bar --}}
-        <div class="sticky top-0 z-40 flex items-center justify-between bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 py-4">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-800">اختر الشركة</h1>
-                <p class="text-sm text-gray-500">اختر الشركة التي تريد العمل بها</p>
+        <div class="sticky top-0 z-40 flex items-center justify-between bg-white/80 backdrop-blur-md border-b border-gray-200 px-4 sm:px-6 py-4">
+            <div class="flex items-center gap-3">
+                <button @click="mobileMenu = !mobileMenu" class="lg:hidden p-2 rounded-lg hover:bg-gray-100">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">اختر الشركة</h1>
+                    <p class="text-sm text-gray-500">اختر الشركة التي تريد العمل بها</p>
+                </div>
             </div>
             <div class="flex items-center gap-3">
                 <a href="{{ route('companies.manage') }}" class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-100 transition">

@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'لوحة التحكم' }}</title>
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="/icons/icon-180.png">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -61,8 +68,11 @@
 <body class="font-cairo bg-gray-100" x-data="{ sidebarOpen: true, mobileMenu: false }">
     <div class="flex min-h-screen">
         <!-- Sidebar -->
-        <aside :class="sidebarOpen ? 'w-64' : 'w-20'"
-            class="fixed right-0 top-0 h-full bg-primary-800 text-white sidebar-transition z-40 flex flex-col">
+        <aside :class="[
+            sidebarOpen ? 'lg:w-64' : 'lg:w-20',
+            mobileMenu ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'
+        ]"
+            class="fixed right-0 top-0 h-full w-64 bg-primary-800 text-white sidebar-transition z-40 flex flex-col">
 
             <!-- Logo -->
             <div class="p-4 border-b border-primary-700 flex justify-center">
@@ -75,7 +85,7 @@
             </div>
 
             <!-- Navigation -->
-            <nav class="flex-1 overflow-y-auto sidebar-scroll py-4">
+            <nav class="flex-1 overflow-y-auto sidebar-scroll py-4" @click="mobileMenu = false">
                 <ul class="space-y-1 px-3">
 
                     <!-- Dashboard -->
@@ -416,9 +426,9 @@
 
             <!-- Sidebar Toggle -->
             <div class="p-3 border-t border-primary-700">
-                <button @click="sidebarOpen = !sidebarOpen"
+                <button @click="window.innerWidth >= 1024 ? (sidebarOpen = !sidebarOpen) : (mobileMenu = false)"
                     class="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl hover:bg-primary-700 transition-all">
-                    <svg class="w-5 h-5 transition-transform" :class="sidebarOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
                     </svg>
                     <span x-show="sidebarOpen" class="text-sm">طي القائمة</span>
@@ -426,8 +436,13 @@
             </div>
         </aside>
 
+        <!-- Mobile Overlay -->
+        <div x-show="mobileMenu" @click="mobileMenu = false"
+            x-transition:opacity.duration.150ms
+            class="fixed inset-0 bg-black/40 z-30 lg:hidden"></div>
+
         <!-- Main Content -->
-        <div :class="sidebarOpen ? 'mr-64' : 'mr-20'" class="flex-1 sidebar-transition">
+        <div :class="sidebarOpen ? 'lg:mr-64' : 'lg:mr-20'" class="flex-1 mr-0 sidebar-transition">
 
             <!-- Top Bar -->
             <header class="bg-white shadow-sm sticky top-0 z-30">
@@ -529,5 +544,15 @@
     </div>
 
     @stack('scripts')
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js').catch(function(err) {
+                    console.warn('Service Worker registration failed:', err);
+                });
+            });
+        }
+    </script>
 </body>
 </html>

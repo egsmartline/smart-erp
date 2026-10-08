@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SetupController;
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\AllowanceController;
 use App\Http\Controllers\JournalEntryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\SupplierController;
@@ -100,6 +101,8 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::get('customers-balance-report', [CustomerController::class, 'balanceReport'])->name('customers.balance-report');
     Route::resource('suppliers', SupplierController::class);
     Route::resource('items', ItemController::class);
+    Route::get('items/{item}/card', [ItemController::class, 'card'])->name('items.card');
+    Route::get('items/{item}/print-card', [ItemController::class, 'printCard'])->name('items.print-card');
     Route::resource('item-categories', ItemCategoryController::class);
     Route::resource('item-units', ItemUnitController::class);
     Route::resource('warehouses', WarehouseController::class);
@@ -183,6 +186,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::get('/reports/income-statement', [ReportController::class, 'incomeStatement'])->name('reports.income-statement');
     Route::get('/reports/balance-sheet', [ReportController::class, 'balanceSheet'])->name('reports.balance-sheet');
     Route::get('/reports/customer-statement', [ReportController::class, 'customerStatement'])->name('reports.customer-statement');
+    Route::get('/reports/customer-statement/export', [ReportController::class, 'customerStatementExport'])->name('reports.customer-statement.export');
     Route::get('/reports/supplier-statement', [ReportController::class, 'supplierStatement'])->name('reports.supplier-statement');
     Route::get('/reports/vat', [ReportController::class, 'vatReport'])->name('reports.vat');
     Route::get('/reports/sales', [ReportController::class, 'salesReport'])->name('reports.sales');
@@ -218,6 +222,8 @@ Route::middleware(['auth', 'tenant'])->group(function () {
 
     Route::resource('currencies', CurrencyController::class);
     Route::resource('fiscal-years', FiscalYearController::class);
+    Route::post('fiscal-years/{fiscalYear}/close', [FiscalYearController::class, 'close'])->name('fiscal-years.close');
+    Route::post('fiscal-years/{fiscalYear}/reopen', [FiscalYearController::class, 'reopen'])->name('fiscal-years.reopen');
     Route::resource('journals', JournalController::class);
     Route::resource('payment-terms', PaymentTermController::class);
 
@@ -278,6 +284,7 @@ Route::middleware(['auth', 'tenant'])->group(function () {
 
     // HR - Loans
     Route::resource('loans', LoanController::class)->only(['index', 'create', 'store', 'show', 'destroy']);
+    Route::resource('allowances', AllowanceController::class)->only(['index', 'create', 'store', 'destroy']);
 
     // HR - Custodies
     Route::get('custodies/{custody}/settle', [\App\Http\Controllers\CustodyController::class, 'settle'])->name('custodies.settle');

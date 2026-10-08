@@ -106,7 +106,43 @@ class PaymentController extends TenantAwareController
             ->orderBy('account_name')
             ->get();
 
-        return view('payments.index', compact('payments', 'totalReceipts', 'totalPayments', 'discountNotes', 'payrolls', 'treasuries', 'bankAccounts'));
+        /* Transfers between treasuries, bank accounts and financial accounts,
+           shown together with payments/receipts on the same page. */
+        $transfers = collect();
+
+        /* Internal transfers only: those touching a treasury (cash), since they
+           affect the treasury balance. A TreasuryTransaction touches the treasury
+           when treasury_id is set; a BankTransaction does when its counterpart
+           (reference_type) is a treasury. */
+        $this->tenantQuery(TreasuryTransaction::class)
+            ->where('type', 'transfer')
+            ->whereNotNull('treasury_id')
+            ->when($request->date_from, fn($q, $d) => $q->whereDate('date', '>=', $d))
+            ->when($request->date_to, fn($q, $d) => $q->whereDate('date', '<=', $d))
+            ->with(['treasury', 'targetTreasury', 'user'])
+            ->orderBy('created_at', 'desc')
+            ->chunk(200, function ($items) use (&$transfers) {
+                $transfers = $transfers->concat($items);
+            });
+
+        $this->tenantQuery(BankTransaction::class)
+            ->where('type', 'transfer')
+            ->where('reference_type', 'treasury')
+            ->when($request->date_from, fn($q, $d) => $q->whereDate('date', '>=', $d))
+            ->when($request->date_to, fn($q, $d) => $q->whereDate('date', '<=', $d))
+            ->with(['bankAccount', 'targetBankAccount', 'user'])
+            ->orderBy('created_at', 'desc')
+            ->chunk(200, function ($items) use (&$transfers) {
+                $transfers = $transfers->concat($items);
+            });
+
+        $transfers = $transfers->sortByDesc('created_at')
+            ->groupBy('reference_number')
+            ->map(fn($group) => $group->first())
+            ->sortByDesc('created_at')
+            ->values();
+
+        return view('payments.index', compact('payments', 'totalReceipts', 'totalPayments', 'discountNotes', 'payrolls', 'treasuries', 'bankAccounts', 'transfers'));
     }
 
     public function create()
@@ -258,9 +294,6 @@ class PaymentController extends TenantAwareController
 
             DB::commit();
 
-            $affectedTreasuries->unique()->each(fn($id) => $this->recalcTreasuryBalance($id));
-            $affectedBanks->unique()->each(fn($id) => $this->recalcBankBalance($id));
-
             $affectedInvoices = collect();
             foreach ($request->payments as $data) {
                 if (!empty($data['invoice_id']) && ($data['type'] ?? '') === 'receipt') {
@@ -372,12 +405,6 @@ class PaymentController extends TenantAwareController
 
             DB::commit();
 
-            if ($validated['payment_method'] === 'cash' && $validated['treasury_id']) {
-                $this->recalcTreasuryBalance($validated['treasury_id']);
-            } elseif ($validated['payment_method'] === 'bank_transfer' && $validated['bank_account_id']) {
-                $this->recalcBankBalance($validated['bank_account_id']);
-            }
-
             if (!empty($validated['invoice_id']) && $validated['type'] === 'receipt') {
                 $this->allocatePaymentToSalesInstallments($payment);
             }
@@ -487,19 +514,29 @@ class PaymentController extends TenantAwareController
         $oldTreasuryId = $payment->treasury_id;
         $oldBankId = $payment->bank_account_id;
         $oldMethod = $payment->payment_method;
+        $oldType = $payment->type;
+        $oldAmount = (float) $payment->amount;
 
         $payment->update($validated);
 
-        $affectedTreasuries = collect();
-        $affectedBanks = collect();
+        /* الرصيد بيتحدث بالفرق فقط (increment/decrement) عشان التعديلات
+           اليدوية على رصيد الخزينة أو البنك ما تتمسحش بإعادة الحساب. */
+        $oldSign = $oldType === 'receipt' ? 1 : -1;
+        $newSign = $validated['type'] === 'receipt' ? 1 : -1;
 
-        if ($oldMethod === 'cash' && $oldTreasuryId) $affectedTreasuries->push($oldTreasuryId);
-        if ($payment->payment_method === 'cash' && $payment->treasury_id) $affectedTreasuries->push($payment->treasury_id);
-        if ($oldMethod === 'bank_transfer' && $oldBankId) $affectedBanks->push($oldBankId);
-        if ($payment->payment_method === 'bank_transfer' && $payment->bank_account_id) $affectedBanks->push($payment->bank_account_id);
+        if ($oldMethod === 'cash' && $oldTreasuryId) {
+            CashTreasury::where('id', $oldTreasuryId)->increment('current_balance', -1 * $oldSign * $oldAmount);
+        }
+        if ($oldMethod === 'bank_transfer' && $oldBankId) {
+            BankAccount::where('id', $oldBankId)->increment('current_balance', -1 * $oldSign * $oldAmount);
+        }
 
-        $affectedTreasuries->unique()->each(fn($id) => $this->recalcTreasuryBalance($id));
-        $affectedBanks->unique()->each(fn($id) => $this->recalcBankBalance($id));
+        if ($validated['payment_method'] === 'cash' && !empty($validated['treasury_id'])) {
+            CashTreasury::where('id', $validated['treasury_id'])->increment('current_balance', $newSign * (float) $validated['amount']);
+        }
+        if ($validated['payment_method'] === 'bank_transfer' && !empty($validated['bank_account_id'])) {
+            BankAccount::where('id', $validated['bank_account_id'])->increment('current_balance', $newSign * (float) $validated['amount']);
+        }
 
         $oldInvoiceId = $payment->invoice_id;
         $newInvoiceId = $validated['invoice_id'] ?? null;
@@ -537,12 +574,16 @@ class PaymentController extends TenantAwareController
         TreasuryTransaction::where('reference_type', 'payment')->where('reference_id', $payment->id)->delete();
         BankTransaction::where('reference_type', 'payment')->where('reference_id', $payment->id)->delete();
 
+        /* عكس أثر العملية على الرصيد بدل إعادة الحساب من الصفر. */
+        $sign = $payment->type === 'receipt' ? 1 : -1;
+        $amount = (float) $payment->amount;
+
         $payment->delete();
 
         if ($paymentMethod === 'cash' && $treasuryId) {
-            $this->recalcTreasuryBalance($treasuryId);
+            CashTreasury::where('id', $treasuryId)->increment('current_balance', -1 * $sign * $amount);
         } elseif ($paymentMethod === 'bank_transfer' && $bankAccountId) {
-            $this->recalcBankBalance($bankAccountId);
+            BankAccount::where('id', $bankAccountId)->increment('current_balance', -1 * $sign * $amount);
         }
 
         if ($payment->account_id) {
@@ -581,7 +622,7 @@ class PaymentController extends TenantAwareController
             ->sum('amount');
 
         $incoming = (float) TreasuryTransaction::where('treasury_id', $treasuryId)
-            ->whereNotIn('reference_type', ['payment', 'payroll'])
+            ->where(function ($q) { $q->whereNotIn('reference_type', ['payment', 'payroll'])->orWhereNull('reference_type'); })
             ->where(function ($q) {
                 $q->where('type', 'in')
                     ->orWhere('type', 'opening')
@@ -593,7 +634,7 @@ class PaymentController extends TenantAwareController
             ->sum('amount');
 
         $outgoing = (float) TreasuryTransaction::where('treasury_id', $treasuryId)
-            ->whereNotIn('reference_type', ['payment', 'payroll'])
+            ->where(function ($q) { $q->whereNotIn('reference_type', ['payment', 'payroll'])->orWhereNull('reference_type'); })
             ->where(function ($q) {
                 $q->where('type', 'out')
                     ->orWhere(function ($q2) {

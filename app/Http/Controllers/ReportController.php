@@ -12,7 +12,9 @@ use App\Models\Supplier;
 use App\Models\Item;
 use App\Models\Payment;
 use App\Models\DiscountNote;
+use App\Models\Currency;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ReportController extends TenantAwareController
 {
@@ -105,84 +107,169 @@ class ReportController extends TenantAwareController
 
         $customers = $this->tenantQuery(Customer::class)->where('is_active', true)->orderBy('name')->get();
 
-        $customer = null;
-        $transactions = collect();
-        $openingBalance = 0;
+        [$customer, $currencyGroups] = $this->buildCustomerStatementData($customerId, $dateFrom, $dateTo);
 
-        if ($customerId) {
-            $customer = $this->tenantQuery(Customer::class)->find($customerId);
-            $openingBal = (float) ($customer->opening_balance ?? 0);
-            $openingBalance = $customer->opening_balance_type === 'credit' ? -$openingBal : $openingBal;
+        return view('reports.customer-statement', compact('customers', 'customer', 'currencyGroups', 'customerId', 'dateFrom', 'dateTo'));
+    }
 
-            $invoices = SalesInvoice::where('tenant_id', $this->getTenantId())
-                ->where('customer_id', $customerId)
-                ->whereBetween('date', [$dateFrom, $dateTo])
-                ->where('status', '!=', 'voided')
-                ->with('customer')
-                ->get();
+    public function customerStatementExport(Request $request)
+    {
+        $customerId = $request->customer_id;
+        $dateFrom = $request->date_from ?? now()->startOfYear()->toDateString();
+        $dateTo = $request->date_to ?? now()->toDateString();
 
-            foreach ($invoices as $inv) {
-                $transactions->push([
-                    'date' => $inv->date,
-                    'type' => 'فاتورة بيع',
-                    'badge' => 'bg-blue-100 text-blue-800',
-                    'reference' => $inv->invoice_number,
-                    'id' => $inv->id,
-                    'route' => 'sales-invoices.show',
-                    'amount' => (float) $inv->total,
-                    'paid' => (float) $inv->paid_amount,
-                    'due' => (float) $inv->due_amount,
-                    'payment_status' => $inv->payment_status,
-                ]);
-            }
-
-            $payments = Payment::where('tenant_id', $this->getTenantId())
-                ->where('customer_id', $customerId)
-                ->whereBetween('date', [$dateFrom, $dateTo])
-                ->where('type', 'receipt')
-                ->get();
-
-            foreach ($payments as $pay) {
-                $transactions->push([
-                    'date' => $pay->date,
-                    'type' => 'سند قبض',
-                    'badge' => 'bg-emerald-100 text-emerald-800',
-                    'reference' => $pay->payment_number,
-                    'id' => $pay->id,
-                    'route' => 'payments.show',
-                    'amount' => -(float) $pay->amount,
-                    'paid' => 0,
-                    'due' => 0,
-                    'payment_status' => null,
-                ]);
-            }
-
-            $discountNotes = DiscountNote::where('tenant_id', $this->getTenantId())
-                ->where('customer_id', $customerId)
-                ->whereBetween('date', [$dateFrom, $dateTo])
-                ->get();
-
-            foreach ($discountNotes as $dn) {
-                $transactions->push([
-                    'date' => $dn->date,
-                    'type' => 'إشعار خصم',
-                    'badge' => 'bg-orange-100 text-orange-800',
-                    'reference' => $dn->note_number,
-                    'id' => $dn->id,
-                    'route' => 'discount-notes.show',
-                    'amount' => -(float) $dn->amount,
-                    'paid' => 0,
-                    'due' => 0,
-                    'payment_status' => null,
-                ]);
-            }
-
-            $transactions = $transactions->sortBy(function ($t) {
-                return ($t['date'] ? $t['date']->format('Y-m-d') : '0000-00-00');
-            })->values();
+        if (!$customerId) {
+            return redirect()->route('reports.customer-statement')->with('error', 'اختر العميل أولاً لتصدير كشف الحساب');
         }
 
-        return view('reports.customer-statement', compact('customers', 'customer', 'transactions', 'openingBalance', 'customerId', 'dateFrom', 'dateTo'));
+        [$customer, $currencyGroups] = $this->buildCustomerStatementData($customerId, $dateFrom, $dateTo);
+
+        if (!$customer) {
+            return redirect()->route('reports.customer-statement')->with('error', 'العميل غير موجود');
+        }
+
+        $filename = 'كشف حساب ' . $customer->name . ' من ' . $dateFrom . ' إلى ' . $dateTo . '.xlsx';
+
+        return Excel::download(
+            new \App\Exports\CustomerStatementExport($customer, $currencyGroups, $dateFrom, $dateTo),
+            $filename
+        );
+    }
+
+    private function buildCustomerStatementData($customerId, $dateFrom, $dateTo)
+    {
+        $customer = null;
+        $currencyGroups = [];
+
+        if (!$customerId) {
+            return [$customer, $currencyGroups];
+        }
+
+        $customer = $this->tenantQuery(Customer::class)->with('openingBalanceCurrency')->find($customerId);
+        if (!$customer) {
+            return [null, $currencyGroups];
+        }
+
+        /* عملة الحساب الأساسية للمنشأة (لإشعارات الخصم اللي مالهاش عملة). */
+        $baseCurrency = Currency::where('tenant_id', $this->getTenantId())
+            ->where('is_active', true)
+            ->orderByDesc('is_default')
+            ->orderBy('id')
+            ->first();
+        $baseCode = $baseCurrency?->code ?? 'EGP';
+
+        $ensureGroup = function (array &$groups, string $code, $currency) {
+            if (!isset($groups[$code])) {
+                $groups[$code] = [
+                    'currency' => $currency,
+                    'openingBalance' => 0.0,
+                    'transactions' => collect(),
+                ];
+            }
+        };
+
+        $openingBal = (float) ($customer->opening_balance ?? 0);
+        $openingSigned = $customer->opening_balance_type === 'credit' ? -$openingBal : $openingBal;
+        $openingCode = $customer->openingBalanceCurrency?->code ?? $baseCode;
+
+        $ensureGroup($currencyGroups, $openingCode, $customer->openingBalanceCurrency ?: $baseCurrency);
+        $currencyGroups[$openingCode]['openingBalance'] += $openingSigned;
+
+        $invoices = SalesInvoice::where('tenant_id', $this->getTenantId())
+            ->where('customer_id', $customerId)
+            ->whereBetween('date', [$dateFrom, $dateTo])
+            ->where('status', '!=', 'voided')
+            ->with(['customer', 'currency', 'lines.item'])
+            ->get();
+
+        foreach ($invoices as $inv) {
+            $curCode = $inv->currency?->code ?? $baseCode;
+            $ensureGroup($currencyGroups, $curCode, $inv->currency ?: $baseCurrency);
+
+            $itemsSummary = $inv->lines->map(function ($line) {
+                $name = $line->item?->name ?? $line->description ?? 'صنف';
+                return $name . ' × ' . ((float) $line->quantity);
+            })->implode('، ');
+
+            $currencyGroups[$curCode]['transactions']->push([
+                'date' => $inv->date,
+                'type' => 'فاتورة بيع',
+                'badge' => 'bg-blue-100 text-blue-800',
+                'reference' => $inv->invoice_number,
+                'id' => $inv->id,
+                'route' => 'sales-invoices.show',
+                'amount' => (float) $inv->total,
+                'paid' => (float) $inv->paid_amount,
+                'due' => (float) $inv->due_amount,
+                'payment_status' => $inv->payment_status,
+                'summary' => $itemsSummary !== '' ? $itemsSummary : '-',
+            ]);
+        }
+
+        $payments = Payment::where('tenant_id', $this->getTenantId())
+            ->where('customer_id', $customerId)
+            ->whereBetween('date', [$dateFrom, $dateTo])
+            ->where('type', 'receipt')
+            ->with('currency')
+            ->get();
+
+        foreach ($payments as $pay) {
+            $curCode = $pay->currency?->code ?? $baseCode;
+            $ensureGroup($currencyGroups, $curCode, $pay->currency ?: $baseCurrency);
+
+            $currencyGroups[$curCode]['transactions']->push([
+                'date' => $pay->date,
+                'type' => 'سند قبض',
+                'badge' => 'bg-emerald-100 text-emerald-800',
+                'reference' => $pay->payment_number,
+                'id' => $pay->id,
+                'route' => 'payments.show',
+                'amount' => -(float) $pay->amount,
+                'paid' => 0,
+                'due' => 0,
+                'payment_status' => null,
+                'summary' => $pay->notes ?? '-',
+            ]);
+        }
+
+        $discountNotes = DiscountNote::where('tenant_id', $this->getTenantId())
+            ->where('customer_id', $customerId)
+            ->whereBetween('date', [$dateFrom, $dateTo])
+            ->get();
+
+        foreach ($discountNotes as $dn) {
+            $ensureGroup($currencyGroups, $baseCode, $baseCurrency);
+
+            $currencyGroups[$baseCode]['transactions']->push([
+                'date' => $dn->date,
+                'type' => 'إشعار خصم',
+                'badge' => 'bg-orange-100 text-orange-800',
+                'reference' => $dn->note_number,
+                'id' => $dn->id,
+                'route' => 'discount-notes.show',
+                'amount' => -(float) $dn->amount,
+                'paid' => 0,
+                'due' => 0,
+                'payment_status' => null,
+                'summary' => $dn->reason ?? $dn->notes ?? '-',
+            ]);
+        }
+
+        foreach ($currencyGroups as $code => &$group) {
+            $group['transactions'] = $group['transactions']->sortBy(function ($t) {
+                return ($t['date'] ? $t['date']->format('Y-m-d') : '0000-00-00');
+            })->values();
+
+            $total = $group['openingBalance'] + $group['transactions']->sum('amount');
+            $group['total'] = $total;
+            $group['totalDebit'] = $total > 0 ? $total : 0;
+            $group['totalCredit'] = $total < 0 ? abs($total) : 0;
+        }
+        unset($group);
+
+        $currencyGroups = array_filter($currencyGroups, fn($g) => $g['openingBalance'] != 0 || $g['transactions']->isNotEmpty());
+
+        return [$customer, $currencyGroups];
     }
 
     public function supplierStatement(Request $request)

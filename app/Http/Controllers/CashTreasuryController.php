@@ -54,9 +54,12 @@ class CashTreasuryController extends TenantAwareController
         return redirect()->route('cash-treasuries.index')->with('success', 'تم إنشاء الخزينة بنجاح');
     }
 
-    public function show(CashTreasury $cashTreasury)
+    public function show(CashTreasury $cashTreasury, Request $request)
     {
         $this->authorizeTenant($cashTreasury);
+
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
 
         $bankAccounts = $this->tenantQuery(BankAccount::class)
             ->with('currency')
@@ -66,7 +69,19 @@ class CashTreasuryController extends TenantAwareController
 
         $txnData = collect();
 
-        foreach (TreasuryTransaction::where('treasury_id', $cashTreasury->id)->where(function ($q) { $q->where('reference_type', '!=', 'payment')->orWhereNull('reference_type'); })->with('user')->orderBy('created_at', 'desc')->cursor() as $t) {
+        $txnQuery = TreasuryTransaction::where('treasury_id', $cashTreasury->id)
+            ->where(function ($q) { $q->whereNotIn('reference_type', ['payment', 'payroll'])->orWhereNull('reference_type'); })
+            ->with('user')
+            ->orderBy('created_at', 'desc');
+
+        if ($dateFrom) {
+            $txnQuery->where('date', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $txnQuery->where('date', '<=', $dateTo);
+        }
+
+        foreach ($txnQuery->cursor() as $t) {
             $txnData->push((object) [
                 'date' => $t->created_at->format('Y-m-d'),
                 'type' => $t->type,
@@ -77,7 +92,18 @@ class CashTreasuryController extends TenantAwareController
             ]);
         }
 
-        foreach (Payment::where('treasury_id', $cashTreasury->id)->with(['customer', 'supplier', 'user'])->orderBy('date', 'desc')->cursor() as $p) {
+        $payQuery = Payment::where('treasury_id', $cashTreasury->id)
+            ->with(['customer', 'supplier', 'user'])
+            ->orderBy('date', 'desc');
+
+        if ($dateFrom) {
+            $payQuery->where('date', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $payQuery->where('date', '<=', $dateTo);
+        }
+
+        foreach ($payQuery->cursor() as $p) {
             $txnData->push((object) [
                 'date' => $p->date instanceof \Carbon\Carbon ? $p->date->format('Y-m-d') : $p->date,
                 'type' => $p->type,
@@ -90,10 +116,23 @@ class CashTreasuryController extends TenantAwareController
 
         $transactions = $txnData->sortByDesc('date')->values();
 
+        $displayBalance = $cashTreasury->current_balance;
+        $startBalance = null;
+        if ($dateFrom || $dateTo) {
+            $endTo = $dateTo ?? date('Y-m-d');
+            $displayBalance = $this->calcBalanceAtDate('cash_treasuries', $cashTreasury->id, $cashTreasury->opening_balance ?? 0, null, $endTo);
+            $prevDate = date('Y-m-d', strtotime(($dateFrom ?? $endTo) . ' -1 day'));
+            $startBalance = $this->calcBalanceAtDate('cash_treasuries', $cashTreasury->id, $cashTreasury->opening_balance ?? 0, null, $prevDate);
+        }
+
         return view('cash-treasuries.show', [
             'treasury' => $cashTreasury,
             'transactions' => $transactions,
             'bankAccounts' => $bankAccounts,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+            'displayBalance' => $displayBalance,
+            'startBalance' => $startBalance,
         ]);
     }
 

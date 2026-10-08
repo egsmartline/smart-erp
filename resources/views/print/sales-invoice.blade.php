@@ -7,7 +7,6 @@
         @page { size: A4; margin: 0.5cm 0.5cm; }
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'DejaVu Sans', 'Segoe UI', Arial, sans-serif; direction: rtl; text-align: right; font-size: 13px; color: #1f2937; background: white; padding: 5px; width: 100%; margin: 0 auto; }
-        .marker { background: red; color: white; padding: 4px 8px; font-size: 11px; font-weight: bold; text-align: center; border-radius: 4px; margin-bottom: 8px; }
         .header { border-bottom: 2px solid #2563eb; padding-bottom: 12px; margin-bottom: 15px; overflow: hidden; }
         .header-table { width: 100%; border-collapse: collapse; }
         .header-table td { border: none; padding: 4px; text-align: center; }
@@ -26,7 +25,6 @@
     </style>
 </head>
 <body onload="window.print()">
-    <div class="marker">✓ V2.0</div>
     <div class="header">
         <table class="header-table">
             <tr>

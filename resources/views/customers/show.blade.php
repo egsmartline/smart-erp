@@ -32,11 +32,19 @@
         <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6">
             <h3 class="text-lg font-bold text-gray-800 mb-4">الرصيد</h3>
                 <div class="text-center py-6">
-                    <div class="text-3xl font-bold {{ $realBalance > 0 ? 'text-red-600' : ($realBalance < 0 ? 'text-emerald-600' : 'text-gray-600') }}">
-                        {{ number_format($realBalance, 2) }}
-                    </div>
-                    <div class="text-sm text-gray-500 mt-1">{{ $customer->openingBalanceCurrency?->code ?? 'ج.م' }}</div>
-                    <div class="text-sm text-gray-500 mt-1">الرصيد الحالي</div>
+                    @php $shownBalances = $currencyBalances ?? []; @endphp
+                    @forelse($shownBalances as $curCode => $amount)
+                        <div class="mb-2">
+                            <div class="text-3xl font-bold {{ $amount > 0 ? 'text-red-600' : ($amount < 0 ? 'text-emerald-600' : 'text-gray-600') }}">
+                                {{ number_format($amount, 2) }}
+                            </div>
+                            <div class="text-sm text-gray-500 mt-1">{{ $curCode }} — {{ $amount >= 0 ? 'مدين' : 'دائن' }}</div>
+                        </div>
+                    @empty
+                        <div class="text-3xl font-bold text-gray-600">0.00</div>
+                        <div class="text-sm text-gray-500 mt-1">ج.م</div>
+                    @endforelse
+                    <div class="text-sm text-gray-500 mt-2">الرصيد الحالي</div>
                 </div>
             <div class="space-y-2 text-sm">
                 <div class="flex justify-between"><span class="text-gray-500">التصنيف:</span>
@@ -93,11 +101,13 @@
                     <tbody>
                         @php
                             $openingBal = (float) ($customer->opening_balance ?? 0);
-                            $runningBalance = $customer->opening_balance_type === 'credit' ? -$openingBal : $openingBal;
+                            $openingAmount = $customer->opening_balance_type === 'credit' ? -$openingBal : $openingBal;
+                            $openingCurId = (int) ($customer->opening_balance_currency_id ?: $baseCurrencyId);
                             $transactions = collect();
 
                             foreach ($customer->salesInvoices as $inv) {
                                 $transactions->push([
+                                    'currency_id' => (int) ($inv->currency_id ?: $baseCurrencyId),
                                     'date' => $inv->date,
                                     'type' => 'invoice',
                                     'type_label' => 'فاتورة بيع',
@@ -112,6 +122,7 @@
                                 $amount = (float) $pay->amount;
                                 if ($pay->type === 'receipt') $amount = -$amount;
                                 $transactions->push([
+                                    'currency_id' => (int) ($pay->currency_id ?: $baseCurrencyId),
                                     'date' => $pay->date,
                                     'type' => 'payment',
                                     'type_label' => $pay->payment_method === 'bank_transfer' ? 'تحويل بنكي' : ($pay->payment_method === 'check' ? 'شيك' : 'نقداً'),
@@ -124,6 +135,7 @@
 
                             foreach ($customer->discountNotes as $dn) {
                                 $transactions->push([
+                                    'currency_id' => $baseCurrencyId,
                                     'date' => $dn->date,
                                     'type' => 'discount',
                                     'type_label' => 'إشعار خصم',
@@ -135,32 +147,70 @@
                             }
 
                             $transactions = $transactions->sortBy('sort');
+
+                            $txGroups = $transactions->groupBy('currency_id');
+                            if ($openingAmount != 0 && !$txGroups->has($openingCurId)) {
+                                $txGroups->put($openingCurId, collect());
+                            }
+                            if ($txGroups->isEmpty()) {
+                                $txGroups->put($baseCurrencyId, collect());
+                            }
+                            $txGroups = $txGroups->sortBy(fn($v, $k) => $k == $baseCurrencyId ? 0 : 1)->sortBy(fn($v, $k) => (int) $k);
                         @endphp
 
-                        @if($runningBalance != 0)
-                            <tr class="border-b border-gray-100 bg-gray-50 font-semibold">
-                                <td class="px-4 py-3">—</td>
-                                <td class="px-4 py-3"><span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-200 text-gray-700">رصيد افتتاحي</span></td>
-                                <td class="px-4 py-3 font-mono text-xs">—</td>
-                                <td class="px-4 py-3 text-left font-mono">{{ number_format($runningBalance, 2) }}</td>
-                                <td class="px-4 py-3 text-center text-xs font-medium text-gray-600">{{ $customer->openingBalanceCurrency?->code ?? 'ج.م' }}</td>
-                                <td class="px-4 py-3 text-left font-mono">{{ number_format($runningBalance, 2) }}</td>
+                        @php $anyRow = false; @endphp
+                        @foreach($txGroups as $curId => $groupTxs)
+                            @php
+                                $curCode = $currencyCodes[$curId] ?? '—';
+                                $groupTxs = $groupTxs->sortBy('sort');
+                                $runningBalance = ($curId == $openingCurId) ? $openingAmount : 0.0;
+                                $groupNet = 0.0;
+                            @endphp
+                            <tr class="bg-slate-800 text-white">
+                                <td colspan="6" class="px-4 py-2 text-sm font-bold">
+                                    كشف حساب <span class="rounded bg-white/20 px-2 py-0.5">{{ $curCode }}</span>
+                                    <span class="mr-2 text-xs font-normal text-slate-300">({{ $groupTxs->count() }} حركة)</span>
+                                </td>
                             </tr>
-                        @endif
 
-                        @forelse($transactions as $tx)
-                            @php $runningBalance += $tx['amount']; @endphp
-                            <tr class="border-b border-gray-100 hover:bg-gray-50">
-                                <td class="px-4 py-3">{{ $tx['date']?->format('Y-m-d') ?? '-' }}</td>
-                                <td class="px-4 py-3"><span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $tx['badge_class'] }}">{{ $tx['type_label'] }}</span></td>
-                                <td class="px-4 py-3 font-mono text-xs">{{ $tx['reference'] }}</td>
-                                <td class="px-4 py-3 text-left font-mono {{ $tx['amount'] >= 0 ? 'text-red-600' : 'text-emerald-600' }}">{{ number_format(abs($tx['amount']), 2) }}</td>
-                                <td class="px-4 py-3 text-center text-xs font-medium text-gray-600">{{ $customer->openingBalanceCurrency?->code ?? 'ج.م' }}</td>
-                                <td class="px-4 py-3 text-left font-mono">{{ number_format($runningBalance, 2) }}</td>
+                            @if($curId == $openingCurId && $openingAmount != 0)
+                                @php $anyRow = true; @endphp
+                                <tr class="border-b border-gray-100 bg-gray-50 font-semibold">
+                                    <td class="px-4 py-3">—</td>
+                                    <td class="px-4 py-3"><span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-200 text-gray-700">رصيد افتتاحي</span></td>
+                                    <td class="px-4 py-3 font-mono text-xs">—</td>
+                                    <td class="px-4 py-3 text-left font-mono">{{ number_format(abs($openingAmount), 2) }}</td>
+                                    <td class="px-4 py-3 text-center text-xs font-medium text-gray-600">{{ $curCode }}</td>
+                                    <td class="px-4 py-3 text-left font-mono">{{ number_format($runningBalance, 2) }}</td>
+                                </tr>
+                            @endif
+
+                            @if($groupTxs->isEmpty() && !($curId == $openingCurId && $openingAmount != 0))
+                                <tr><td colspan="6" class="px-4 py-5 text-center text-gray-500">لا توجد معاملات بعملة {{ $curCode }}</td></tr>
+                            @endif
+
+                            @foreach($groupTxs as $tx)
+                                @php $runningBalance += $tx['amount']; $groupNet += $tx['amount']; $anyRow = true; @endphp
+                                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                    <td class="px-4 py-3">{{ $tx['date']?->format('Y-m-d') ?? '-' }}</td>
+                                    <td class="px-4 py-3"><span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $tx['badge_class'] }}">{{ $tx['type_label'] }}</span></td>
+                                    <td class="px-4 py-3 font-mono text-xs">{{ $tx['reference'] }}</td>
+                                    <td class="px-4 py-3 text-left font-mono {{ $tx['amount'] >= 0 ? 'text-red-600' : 'text-emerald-600' }}">{{ number_format(abs($tx['amount']), 2) }}</td>
+                                    <td class="px-4 py-3 text-center text-xs font-medium text-gray-600">{{ $curCode }}</td>
+                                    <td class="px-4 py-3 text-left font-mono">{{ number_format($runningBalance, 2) }}</td>
+                                </tr>
+                            @endforeach
+
+                            <tr class="border-t-2 border-gray-300 bg-gray-100 font-bold text-gray-800">
+                                <td class="px-4 py-3" colspan="3">إجمالي رصيد {{ $curCode }}</td>
+                                <td class="px-4 py-3 text-left font-mono">{{ number_format($groupNet + (($curId == $openingCurId) ? $openingAmount : 0), 2) }}</td>
+                                <td class="px-4 py-3 text-center text-xs">{{ $curCode }}</td>
+                                <td class="px-4 py-3 text-left font-mono text-base">{{ number_format($runningBalance, 2) }}</td>
                             </tr>
-                        @empty
+                        @endforeach
+                        @if(!$anyRow)
                             <tr><td colspan="6" class="px-4 py-6 text-center text-gray-500">لا توجد معاملات</td></tr>
-                        @endforelse
+                        @endif
                     </tbody>
                 </table>
             </div>
@@ -171,7 +221,12 @@
             <div class="mb-4 flex items-center gap-4">
                 <div class="rounded-lg bg-red-50 border border-red-200 px-5 py-3">
                     <span class="text-sm text-red-700">إجمالي المستحق: </span>
-                    <span class="text-lg font-bold text-red-800">{{ number_format($totalReceivable, 2) }} ج.م</span>
+                    @forelse($receivableTotals ?? [] as $curCode => $amount)
+                        <span class="text-lg font-bold text-red-800">{{ number_format($amount, 2) }} {{ $curCode }}</span>
+                        {{ !$loop->last ? ' ·' : '' }}
+                    @empty
+                        <span class="text-lg font-bold text-red-800">0.00 ج.م</span>
+                    @endforelse
                 </div>
                 <div class="rounded-lg bg-blue-50 border border-blue-200 px-5 py-3">
                     <span class="text-sm text-blue-700">عدد العملاء: </span>
@@ -211,8 +266,18 @@
                                 </td>
                                 <td class="px-4 py-3 text-center font-mono text-sm">{{ $c->salesInvoices->count() }}</td>
                                 <td class="px-4 py-3 text-center font-mono text-sm">{{ $c->payments->count() }}</td>
-                                <td class="px-4 py-3 text-left font-mono text-sm font-bold text-red-600">{{ number_format($c->real_balance, 2) }}</td>
-                                <td class="px-4 py-3 text-center text-xs font-medium text-gray-600">{{ $c->openingBalanceCurrency?->code ?? 'ج.م' }}</td>
+                                <td class="px-4 py-3 text-left font-mono text-sm font-bold text-red-600">
+                                    @php $rowBalances = collect($c->currency_balances)->filter(fn($v) => $v > 0.009); @endphp
+                                    @foreach($rowBalances as $curCode => $amount)
+                                        <div class="whitespace-nowrap">{{ number_format($amount, 2) }} <span class="text-xs font-semibold">{{ $curCode }}</span></div>
+                                    @endforeach
+                                    @if($rowBalances->isEmpty())
+                                        <span class="text-gray-400">-</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3 text-center text-xs font-medium text-gray-600">
+                                    {{ $rowBalances->keys()->implode('، ') ?: ($c->openingBalanceCurrency?->code ?? 'ج.م') }}
+                                </td>
                             </tr>
                         @empty
                             <tr>

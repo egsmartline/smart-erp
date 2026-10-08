@@ -34,6 +34,10 @@
                     <input type="date" name="end_date" id="end_date" value="{{ old('end_date', $fiscalYear->end_date?->format('Y-m-d')) }}" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
             </div>
+            <div class="flex items-center gap-3">
+                <input type="checkbox" name="is_active" id="is_active" value="1" {{ old('is_active', $fiscalYear->is_active) ? 'checked' : '' }} class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                <label for="is_active" class="text-sm font-medium text-gray-700">تعيين كسنة مالية نشطة (السنة الحالية)</label>
+            </div>
             <div class="flex items-center gap-3 border-t border-gray-200 pt-6">
                 <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>

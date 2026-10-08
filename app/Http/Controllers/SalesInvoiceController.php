@@ -361,10 +361,15 @@ class SalesInvoiceController extends TenantAwareController
 
                     $available = $itemWarehouse ? $itemWarehouse->quantity : 0;
                     if ($available < $line->quantity) {
-                        DB::rollBack();
                         $itemName = $line->item->name ?? '#' . $line->item_id;
                         return back()->withInput()->with('error', "الرصيد غير كافٍ للصنف {$itemName} (المتوفر: {$available}، المطلوب: {$line->quantity})");
                     }
+                }
+
+                foreach ($salesInvoice->lines as $line) {
+                    $itemWarehouse = ItemWarehouse::where('item_id', $line->item_id)
+                        ->where('warehouse_id', $line->warehouse_id)
+                        ->first();
 
                     if ($itemWarehouse) {
                         $itemWarehouse->decrement('quantity', $line->quantity);
@@ -384,7 +389,6 @@ class SalesInvoiceController extends TenantAwareController
                         'user_id' => auth()->id(),
                     ]);
                 }
-
                 $journalService = app(JournalService::class);
                 $totalCost = 0;
                 foreach ($salesInvoice->lines as $line) {
@@ -441,18 +445,6 @@ class SalesInvoiceController extends TenantAwareController
 
         $salesInvoice->load('lines');
 
-        foreach ($salesInvoice->lines as $line) {
-            $itemWarehouse = ItemWarehouse::where('item_id', $line->item_id)
-                ->where('warehouse_id', $line->warehouse_id)
-                ->first();
-
-            $available = $itemWarehouse ? $itemWarehouse->quantity : 0;
-            if ($available < $line->quantity) {
-                $itemName = $line->item->name ?? '#' . $line->item_id;
-                return back()->with('error', "الرصيد غير كافٍ للصنف {$itemName} (المتوفر: {$available}، المطلوب: {$line->quantity})");
-            }
-        }
-
         DB::beginTransaction();
 
         try {
@@ -466,7 +458,12 @@ class SalesInvoiceController extends TenantAwareController
                     ->where('warehouse_id', $line->warehouse_id)
                     ->first();
 
-                if ($itemWarehouse) {
+                $alreadyDelivered = StockMovement::where('item_id', $line->item_id)
+                    ->where('reference_type', 'App\\Models\\SalesDeliveryNote')
+                    ->whereNull('deleted_at')
+                    ->sum('quantity');
+
+                if ($alreadyDelivered <= 0 && $itemWarehouse) {
                     $itemWarehouse->decrement('quantity', $line->quantity);
                 }
 

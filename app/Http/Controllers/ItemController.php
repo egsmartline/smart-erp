@@ -153,6 +153,195 @@ class ItemController extends TenantAwareController
         return view('items.show', compact('item'));
     }
 
+    public function card(Request $request, Item $item)
+    {
+        $item->load('category', 'unit', 'warehouses.warehouse');
+
+        $all = $item->stockMovements()
+            ->when($request->filled('from'), fn ($q) => $q->whereDate('created_at', '>=', $request->from))
+            ->when($request->filled('to'), fn ($q) => $q->whereDate('created_at', '<=', $request->to))
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->get();
+
+        $typeLabels = [
+            'purchase'        => 'توريد / مشتريات',
+            'sale'            => 'بيع',
+            'purchase_return' => 'مرتجع مشتريات',
+            'sales_return'    => 'مرتجع بيع',
+            'adjustment_add'  => 'تسوية إضافة',
+            'adjustment_sub'  => 'تسوية خصم',
+            'transfer'        => 'تحويل',
+        ];
+
+        $referenceMap = [
+            'App\Models\PurchaseInvoice'     => ['route' => 'purchase-invoices.show', 'label' => 'فاتورة مشتريات', 'number' => 'invoice_number'],
+            'App\Models\PurchaseOrder'       => ['route' => 'purchase-orders.show', 'label' => 'أمر شراء', 'number' => 'order_number'],
+            'App\Models\PurchaseReceiptNote' => ['route' => 'purchase-receipt-notes.show', 'label' => 'إذن استلام', 'number' => 'receipt_number'],
+            'App\Models\PurchaseReturn'      => ['route' => 'purchase-returns.show', 'label' => 'مرتجع مشتريات', 'number' => 'return_number'],
+            'App\Models\SalesInvoice'        => ['route' => 'sales-invoices.show', 'label' => 'فاتورة مبيعات', 'number' => 'invoice_number'],
+            'App\Models\SalesReturn'         => ['route' => 'sales-returns.show', 'label' => 'مرتجع بيع', 'number' => 'return_number'],
+            'App\Models\Quotation'           => ['route' => 'quotations.show', 'label' => 'عرض سعر', 'number' => 'quote_number'],
+            'App\Models\SalesDeliveryNote'   => ['route' => 'sales-delivery-notes.show', 'label' => 'إذن تسليم', 'number' => 'delivery_number'],
+            'App\Models\InventoryAdjustment' => ['route' => 'inventory-adjustments.show', 'label' => 'تسوية مخزنية', 'number' => null],
+            'App\Models\StockTransfer'       => ['route' => 'stock-transfers.show', 'label' => 'تحويل مخزني', 'number' => null],
+            'App\Models\Purchases\ReceiptNote'     => ['route' => 'purchase-receipt-notes.show', 'label' => 'إذن استلام', 'number' => 'receipt_number', 'class' => \App\Models\PurchaseReceiptNote::class],
+            'App\Models\Sales\SalesInvoice'        => ['route' => 'sales-invoices.show', 'label' => 'فاتورة مبيعات', 'number' => 'invoice_number', 'class' => \App\Models\SalesInvoice::class],
+            'App\Models\Purchases\PurchaseInvoice' => ['route' => 'purchase-invoices.show', 'label' => 'فاتورة مشتريات', 'number' => 'invoice_number', 'class' => \App\Models\PurchaseInvoice::class],
+            'App\Models\Sales\SalesReturn'         => ['route' => 'sales-returns.show', 'label' => 'مرتجع بيع', 'number' => 'return_number', 'class' => \App\Models\SalesReturn::class],
+            'App\Models\Purchases\PurchaseReturn'  => ['route' => 'purchase-returns.show', 'label' => 'مرتجع مشتريات', 'number' => 'return_number', 'class' => \App\Models\PurchaseReturn::class],
+        ];
+
+        foreach ($all as $m) {
+            $m->in_qty = 0;
+            $m->out_qty = 0;
+            if ($m->type === 'transfer') {
+                if ($m->quantity >= 0) {
+                    $m->in_qty = $m->quantity;
+                } else {
+                    $m->out_qty = -$m->quantity;
+                }
+            } elseif (in_array($m->type, ['sale', 'adjustment_sub'], true)) {
+                $m->out_qty = $m->quantity;
+            } else {
+                $m->in_qty = $m->quantity;
+            }
+
+            $m->doc_number = null;
+            $m->doc_url = null;
+            $m->doc_label = null;
+            if ($m->reference_type && $m->reference_id) {
+                $cfg = $referenceMap[$m->reference_type] ?? null;
+                if ($cfg) {
+                    $m->doc_label = $cfg['label'];
+                    $modelClass = $cfg['class'] ?? $m->reference_type;
+                    if (class_exists($modelClass)) {
+                        $ref = $modelClass::find($m->reference_id);
+                        if ($ref) {
+                            $m->doc_number = $cfg['number'] ? ($ref->{$cfg['number']} ?? null) : ('#' . $ref->id);
+                            try {
+                                $m->doc_url = route($cfg['route'], $ref->id);
+                            } catch (\Throwable $e) {
+                                $m->doc_url = null;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        $opening = $all->isNotEmpty()
+            ? (float) $all->first()->balance_before
+            : (float) ($item->opening_stock ?? 0);
+
+        $dir = $request->input('dir', 'all');
+        $display = $all;
+        if ($dir === 'in') {
+            $display = $all->filter(fn ($m) => $m->in_qty > 0)->values();
+        } elseif ($dir === 'out') {
+            $display = $all->filter(fn ($m) => $m->out_qty > 0)->values();
+        }
+
+        $totals = ['in' => 0, 'out' => 0];
+        foreach ($display as $m) {
+            $totals['in'] += $m->in_qty;
+            $totals['out'] += $m->out_qty;
+        }
+
+        $currentBalance = (float) $item->warehouses->sum('quantity');
+
+        return view('items.card', compact('item', 'display', 'all', 'typeLabels', 'totals', 'opening', 'currentBalance'))
+            ->with('from', $request->input('from'))
+            ->with('to', $request->input('to'))
+            ->with('dir', $dir);
+    }
+
+    public function printCard(Request $request, Item $item)
+    {
+        $item->load('category', 'unit', 'warehouses.warehouse');
+
+        $all = $item->stockMovements()
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->get();
+
+        $typeLabels = [
+            'purchase'        => 'توريد / مشتريات',
+            'sale'            => 'بيع',
+            'purchase_return' => 'مرتجع مشتريات',
+            'sales_return'    => 'مرتجع بيع',
+            'adjustment_add'  => 'تسوية إضافة',
+            'adjustment_sub'  => 'تسوية خصم',
+            'transfer'        => 'تحويل',
+        ];
+
+        $referenceMap = [
+            'App\Models\PurchaseInvoice'     => ['label' => 'فاتورة مشتريات', 'number' => 'invoice_number'],
+            'App\Models\PurchaseOrder'       => ['label' => 'أمر شراء', 'number' => 'order_number'],
+            'App\Models\PurchaseReceiptNote' => ['label' => 'إذن استلام', 'number' => 'receipt_number'],
+            'App\Models\PurchaseReturn'      => ['label' => 'مرتجع مشتريات', 'number' => 'return_number'],
+            'App\Models\SalesInvoice'        => ['label' => 'فاتورة مبيعات', 'number' => 'invoice_number'],
+            'App\Models\SalesReturn'         => ['label' => 'مرتجع بيع', 'number' => 'return_number'],
+            'App\Models\Quotation'           => ['label' => 'عرض سعر', 'number' => 'quote_number'],
+            'App\Models\SalesDeliveryNote'   => ['label' => 'إذن تسليم', 'number' => 'delivery_number'],
+            'App\Models\InventoryAdjustment' => ['label' => 'تسوية مخزنية', 'number' => null],
+            'App\Models\StockTransfer'       => ['label' => 'تحويل مخزني', 'number' => null],
+            'App\Models\Purchases\ReceiptNote'     => ['label' => 'إذن استلام', 'number' => 'receipt_number', 'class' => \App\Models\PurchaseReceiptNote::class],
+            'App\Models\Sales\SalesInvoice'        => ['label' => 'فاتورة مبيعات', 'number' => 'invoice_number', 'class' => \App\Models\SalesInvoice::class],
+            'App\Models\Purchases\PurchaseInvoice' => ['label' => 'فاتورة مشتريات', 'number' => 'invoice_number', 'class' => \App\Models\PurchaseInvoice::class],
+            'App\Models\Sales\SalesReturn'         => ['label' => 'مرتجع بيع', 'number' => 'return_number', 'class' => \App\Models\SalesReturn::class],
+            'App\Models\Purchases\PurchaseReturn'  => ['label' => 'مرتجع مشتريات', 'number' => 'return_number', 'class' => \App\Models\PurchaseReturn::class],
+        ];
+
+        foreach ($all as $m) {
+            $m->in_qty = 0;
+            $m->out_qty = 0;
+            if ($m->type === 'transfer') {
+                if ($m->quantity >= 0) {
+                    $m->in_qty = $m->quantity;
+                } else {
+                    $m->out_qty = -$m->quantity;
+                }
+            } elseif (in_array($m->type, ['sale', 'adjustment_sub'], true)) {
+                $m->out_qty = $m->quantity;
+            } else {
+                $m->in_qty = $m->quantity;
+            }
+
+            $m->doc_number = null;
+            $m->doc_label = null;
+            if ($m->reference_type && $m->reference_id) {
+                $cfg = $referenceMap[$m->reference_type] ?? null;
+                if ($cfg) {
+                    $m->doc_label = $cfg['label'];
+                    $modelClass = $cfg['class'] ?? $m->reference_type;
+                    if (class_exists($modelClass)) {
+                        $ref = $modelClass::find($m->reference_id);
+                        if ($ref) {
+                            $m->doc_number = $cfg['number'] ? ($ref->{$cfg['number']} ?? null) : ('#' . $ref->id);
+                        }
+                    }
+                }
+            }
+        }
+
+        $opening = $all->isNotEmpty()
+            ? (float) $all->first()->balance_before
+            : (float) ($item->opening_stock ?? 0);
+
+        $totals = ['in' => 0, 'out' => 0];
+        foreach ($all as $m) {
+            $totals['in'] += $m->in_qty;
+            $totals['out'] += $m->out_qty;
+        }
+
+        $currentBalance = (float) $item->warehouses->sum('quantity');
+
+        $company = \App\Models\Company::where('tenant_id', $this->getTenantId())->first();
+
+        return view('items.print-card', compact('item', 'all', 'typeLabels', 'totals', 'opening', 'currentBalance', 'company'));
+    }
+
     public function edit(Item $item)
     {
         $categories = $this->tenantQuery(ItemCategory::class)->get();

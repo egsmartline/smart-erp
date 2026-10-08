@@ -20,34 +20,45 @@
 
     <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6 mb-6 print-treasury-card">
         <div class="text-center py-6 print-treasury-card-inner">
-            <div class="text-4xl print-treasury-balance font-bold {{ $treasury->current_balance > 0 ? 'text-emerald-600' : 'text-red-600' }}">{{ number_format($treasury->current_balance, 2) }} {{ $treasury->currency->code ?? 'ج.م' }}</div>
-            <div class="text-sm print-treasury-label text-gray-500 mt-2">الرصيد الحالي</div>
+@php
+    $hasFilter = !empty($dateFrom) || !empty($dateTo);
+    $balance = $hasFilter ? ($displayBalance ?? $treasury->current_balance) : $treasury->current_balance;
+@endphp
+            <div class="text-4xl print-treasury-balance font-bold {{ $balance > 0 ? 'text-emerald-600' : 'text-red-600' }}">{{ number_format($balance, 2) }} {{ $treasury->currency->code ?? 'ج.م' }}</div>
+            <div class="text-sm print-treasury-label text-gray-500 mt-2">{{ $hasFilter ? 'الرصيد في الفترة' : 'الرصيد الحالي' }}</div>
             <div class="mt-2 text-lg print-treasury-name font-bold text-gray-700 print-only">{{ $treasury->name }}</div>
-            @if($treasury->whatsapp_number)
-                @php
-                    $currencyCode = $treasury->currency->code ?? 'ج.م';
-                    $waMsg = $treasury->whatsapp_message
-                        ? str_replace(['{name}', '{balance}', '{currency}'], [$treasury->name, number_format($treasury->current_balance, 2), $currencyCode], $treasury->whatsapp_message)
-                        : 'السلام عليكم رصيد الخزينة ' . $treasury->name . ' الحالي هو ' . number_format($treasury->current_balance, 2) . ' ' . $currencyCode;
-                @endphp
-                <div class="mt-4 no-print">
-                    <a href="https://api.whatsapp.com/send?phone={{ $treasury->whatsapp_number }}&amp;text={{ urlencode($waMsg) }}" target="_blank" class="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition">
-                        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                        إرسال عبر واتساب
-                    </a>
-                    <button onclick="var msg=this.getAttribute('data-msg');navigator.clipboard.writeText(msg);this.innerText='تم النسخ!'" data-msg="{{ $waMsg }}" class="mr-2 rounded-lg bg-gray-200 px-4 py-2 text-sm text-gray-700 hover:bg-gray-300 transition">
-                        نسخ الرسالة
+            <div class="mt-4 no-print">
+                <div class="flex flex-col sm:flex-row sm:items-center gap-2 max-w-xl mx-auto">
+                    <input id="waTreasuryPhone" type="text" inputmode="tel" value="{{ $treasury->whatsapp_number ?? '' }}" placeholder="رقم الواتساب الدولي (مثال: 9665xxxxxxxx)" class="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                    <button type="button" onclick="sendTreasuryBalanceWhatsapp()" class="inline-flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition whitespace-nowrap">
+                        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163a11.867 11.867 0 01-1.744-6.307C.001 5.322 5.323 0 11.85 0a11.85 11.85 0 018.385 3.458c2.296 2.296 3.465 5.345 3.465 8.385 0 6.527-5.322 11.85-11.85 11.85a11.8 11.8 0 01-6.306-1.743L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.886-9.885 0-2.654-1.035-5.149-2.914-7.028A9.825 9.825 0 0011.85 1.86C6.402 1.86 1.964 6.298 1.964 11.745c0 1.98.534 3.581 1.509 5.094l-1.016 3.729 3.7-1.77z"/></svg>
+                        إرسال بالواتساب
                     </button>
-                    <p class="mt-3 text-xs text-gray-500 bg-gray-50 rounded-lg p-2 border border-gray-100">{{ $waMsg }}</p>
                 </div>
-            @endif
+            </div>
         </div>
     </div>
 
     <!-- Transactions -->
     <div class="rounded-xl bg-white shadow-sm border border-gray-200 mt-6">
         <div class="border-b border-gray-200 px-6 py-4">
-            <h3 class="text-lg font-bold text-gray-800">الحركات على الخزينة</h3>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <h3 class="text-lg font-bold text-gray-800">الحركات على الخزينة</h3>
+                <form method="GET" action="{{ route('cash-treasuries.show', $treasury) }}" class="flex flex-wrap items-end gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">من تاريخ</label>
+                        <input type="date" name="date_from" value="{{ $dateFrom ?? '' }}" class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">إلى تاريخ</label>
+                        <input type="date" name="date_to" value="{{ $dateTo ?? '' }}" class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                    </div>
+                    <button type="submit" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition">بحث</button>
+                    @if($dateFrom || $dateTo)
+                        <a href="{{ route('cash-treasuries.show', $treasury) }}" class="rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 transition">مسح الفلتر</a>
+                    @endif
+                </form>
+            </div>
         </div>
         <div class="overflow-x-auto">
             <table class="w-full text-right text-sm">
@@ -83,5 +94,48 @@
                 </tbody>
             </table>
         </div>
+        @if($dateFrom || $dateTo)
+            <div class="border-t border-gray-200 px-6 py-3 bg-gray-50 text-sm text-gray-600">
+                عدد النتائج: {{ count($transactions) }} حركة
+                @php
+                    $totalIn = $transactions->filter(fn($t) => in_array($t->type, ['receipt', 'in', 'opening', 'transfer']))->sum('amount');
+                    $totalOut = $transactions->filter(fn($t) => !in_array($t->type, ['receipt', 'in', 'opening', 'transfer']))->sum('amount');
+                @endphp
+                | قبض: <span class="font-bold text-emerald-600">{{ number_format($totalIn, 2) }}</span>
+                | صرف: <span class="font-bold text-red-600">{{ number_format($totalOut, 2) }}</span>
+                @if($startBalance !== null)
+                    | رصيد الفترة: <span class="font-bold text-blue-600">{{ number_format($startBalance, 2) }} → {{ number_format($displayBalance, 2) }}</span>
+                @endif
+            </div>
+        @endif
     </div>
+
+    @php
+        $treasuryWa = [
+            'name' => $treasury->name,
+            'balance' => (float) $treasury->current_balance,
+            'currency' => $treasury->currency->code ?? 'ج.م',
+        ];
+    @endphp
+
+    <script>
+        const waTreasuryPhone = document.getElementById('waTreasuryPhone');
+        if (waTreasuryPhone && localStorage.getItem('waTreasuryPhone')) {
+            waTreasuryPhone.value = localStorage.getItem('waTreasuryPhone');
+        } else if (waTreasuryPhone && waTreasuryPhone.value) {
+            localStorage.setItem('waTreasuryPhone', waTreasuryPhone.value);
+        }
+        if (waTreasuryPhone) {
+            waTreasuryPhone.addEventListener('input', () => localStorage.setItem('waTreasuryPhone', waTreasuryPhone.value));
+        }
+
+        const treasuryWa = @json($treasuryWa);
+
+        function sendTreasuryBalanceWhatsapp() {
+            const phone = document.getElementById('waTreasuryPhone').value.replace(/[^0-9]/g, '');
+            if (!phone) { alert('يرجى إدخال رقم الواتساب'); return; }
+            const msg = 'السلام عليكم\nرصيد الخزينة ' + treasuryWa.name + ' الحالي هو ' + Number(treasuryWa.balance).toFixed(2) + ' ' + treasuryWa.currency;
+            window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(msg), '_blank');
+        }
+    </script>
 </x-app-layout>

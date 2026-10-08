@@ -38,9 +38,17 @@ class PayrollController extends TenantAwareController
             'notes' => 'nullable|string',
         ]);
 
-        $lastPayroll = Payroll::where('tenant_id', $this->getTenantId())->latest('id')->first();
-        $nextNumber = $lastPayroll ? (int) substr($lastPayroll->payroll_number, -4) + 1 : 1;
+        $lastNumber = Payroll::withTrashed()->max('payroll_number');
+        $nextNumber = $lastNumber ? (int) substr($lastNumber, -4) + 1 : 1;
         $payrollNumber = 'PAY-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+
+        $existingPayroll = Payroll::where('tenant_id', $this->getTenantId())
+            ->where('month', $validated['month'])
+            ->where('year', $validated['year'])
+            ->first();
+        if ($existingPayroll) {
+            return back()->withErrors(['month' => 'كشف رواتب لهذا الشهر موجود بالفعل (#' . $existingPayroll->payroll_number . ')'])->withInput();
+        }
 
         $employees = Employee::where('tenant_id', $this->getTenantId())->active()->get();
         $totalBasic = 0;
@@ -175,7 +183,10 @@ class PayrollController extends TenantAwareController
 
     protected function deductFromTreasury(Payroll $payroll): void
     {
-        if (Payment::where('tenant_id', $this->getTenantId())->where('reference', $payroll->payroll_number)->exists()) {
+        if (TreasuryTransaction::where('tenant_id', $this->getTenantId())
+            ->where('reference_type', 'payroll')
+            ->where('reference_id', $payroll->id)
+            ->exists()) {
             return;
         }
 
@@ -233,10 +244,33 @@ class PayrollController extends TenantAwareController
     {
         if ($payroll->tenant_id !== $this->getTenantId()) abort(403);
 
+        $this->reverseTreasuryDeduction($payroll);
+
         $payroll->payslips()->delete();
         $payroll->delete();
 
         return redirect()->route('payroll.index')->with('success', 'تم حذف كشف الرواتب بنجاح');
+    }
+
+    protected function reverseTreasuryDeduction(Payroll $payroll): void
+    {
+        $payment = Payment::where('tenant_id', $this->getTenantId())
+            ->where('reference', $payroll->payroll_number)
+            ->first();
+
+        if (!$payment) return;
+
+        $treasury = CashTreasury::where('id', $payment->treasury_id)->first();
+        if ($treasury) {
+            $treasury->increment('current_balance', $payment->amount);
+        }
+
+        TreasuryTransaction::where('tenant_id', $this->getTenantId())
+            ->where('reference_type', 'payroll')
+            ->where('reference_id', $payroll->id)
+            ->delete();
+
+        $payment->delete();
     }
 
     public function confirm(Payroll $payroll)

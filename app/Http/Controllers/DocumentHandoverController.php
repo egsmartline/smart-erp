@@ -45,7 +45,8 @@ class DocumentHandoverController extends TenantAwareController
         'أصل الفاتورة التجارية (Commercial Invoice)',
         'أصل قائمة التعبئة (Packing List)',
         'أصل شهادة المنشأ (Certificate of Origin)',
-        'أصل شهادة اليورو',
+        'أصل شهادة اليورو EUR.1',
+        'أصل نموذج الواردات 4',
     ];
 
     public function create()

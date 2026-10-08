@@ -3,6 +3,7 @@
         <div class="flex items-center justify-between">
             <h2 class="text-xl font-bold text-gray-800">بيانات الصنف: {{ $item->name }}</h2>
             <div class="flex items-center gap-2">
+                <a href="{{ route('items.card', $item) }}" class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition">كارت الصنف</a>
                 <a href="{{ route('items.edit', $item) }}" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition">تعديل</a>
                 <a href="{{ route('items.index') }}" class="inline-flex items-center gap-2 rounded-lg bg-gray-600 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition">العودة للقائمة</a>
             </div>

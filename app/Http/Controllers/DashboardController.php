@@ -12,11 +12,13 @@ use App\Models\Customer;
 use App\Models\Supplier;
 use App\Models\Item;
 use App\Models\Payment;
+use App\Traits\ComputesReceivableBalances;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class DashboardController extends TenantAwareController
 {
+    use ComputesReceivableBalances;
     public function index()
     {
         $tenantId = $this->getTenantId();
@@ -62,39 +64,37 @@ class DashboardController extends TenantAwareController
             $salesChartData[] = $salesByMonth[$m] ?? 0;
         }
 
+        $currencyCodes = $this->currencyCodeMap($tenantId);
+        $baseCurrencyCode = $this->baseCurrencyCode($tenantId);
+
         $receivableCustomers = Customer::where('tenant_id', $tenantId)
             ->where('is_active', true)
-            ->with(['salesInvoices' => fn($q) => $q->where('status', 'posted')
-                    ->where('due_amount', '>', 0)
-                    ->select('id', 'tenant_id', 'customer_id', 'due_amount')])
+            ->with(['openingBalanceCurrency',
+                    'salesInvoices' => fn($q) => $q->where('status', '!=', 'voided')
+                    ->select('id', 'tenant_id', 'customer_id', 'total', 'currency_id', 'status'),
+                    'payments' => fn($q) => $q->select('id', 'tenant_id', 'customer_id', 'type', 'amount', 'currency_id'),
+                    'discountNotes' => fn($q) => $q->select('id', 'tenant_id', 'customer_id', 'amount')])
             ->get()
-            ->map(function ($c) {
-                $openingBal = (float) ($c->opening_balance ?? 0);
-                $balance = $c->opening_balance_type === 'credit' ? -$openingBal : $openingBal;
-                foreach ($c->salesInvoices as $inv) { $balance += (float) $inv->due_amount; }
-                $c->real_balance = $balance;
+            ->map(function ($c) use ($currencyCodes, $baseCurrencyCode) {
+                $byCurrency = $this->receivableByCurrency($c, $currencyCodes, $baseCurrencyCode);
+                $c->currency_balances = $byCurrency;
+                $c->real_balance = $byCurrency[$baseCurrencyCode] ?? 0.0;
+                $c->positive_balance = collect($byCurrency)->filter(fn($v) => $v > 0)->sum();
                 return $c;
             })
-            ->filter(fn($c) => $c->real_balance > 0)
-            ->sortByDesc('real_balance')
-            ->take(10)
+            ->filter(fn($c) => $c->positive_balance > 0.009)
+            ->sortByDesc('positive_balance')
             ->values();
 
         $balanceChartLabels = $receivableCustomers->pluck('name')->toArray();
         $balanceChartData = $receivableCustomers->pluck('real_balance')->toArray();
 
-        $monthDues = SalesInvoice::where('tenant_id', $tenantId)
-            ->where('status', 'posted')
-            ->where('due_amount', '>', 0)
-            ->whereYear('due_date', Carbon::now()->year)
-            ->whereMonth('due_date', Carbon::now()->month)
-            ->with('customer')
-            ->orderBy('due_date')
-            ->get();
+        $debtors = $receivableCustomers;
 
-        $monthDueTotal = $monthDues->sum(function ($inv) {
-            return (float) $inv->due_amount;
-        });
+        $debtorTotals = $this->totalByCurrency($debtors);
+        $debtorTotal = $debtorTotals[$baseCurrencyCode] ?? 0.0;
+
+        $monthDues = collect();
 
         $purchaseMonthDues = PurchaseInvoiceInstallment::query()
             ->whereColumn('amount', '>', 'paid_amount')
@@ -126,9 +126,10 @@ class DashboardController extends TenantAwareController
             'stats', 'recentSales', 'recentPurchases',
             'accountsCount', 'salesChartLabels', 'salesChartData',
             'balanceChartLabels', 'balanceChartData',
-            'monthDues', 'monthDueTotal',
+            'monthDues',
             'purchaseMonthDues', 'purchaseMonthDueTotal',
-            'customerMonthDues', 'customerMonthDueTotal'
+            'customerMonthDues', 'customerMonthDueTotal',
+            'debtors', 'debtorTotal', 'debtorTotals', 'baseCurrencyCode', 'currencyCodes'
         ));
     }
 

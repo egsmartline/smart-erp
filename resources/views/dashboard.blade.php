@@ -71,30 +71,37 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6">
-            <h3 class="text-lg font-bold text-gray-800 mb-4">استحقاقات هذا الشهر ({{ now()->format('m/Y') }})</h3>
+            <h3 class="text-lg font-bold text-gray-800 mb-4">العملاء المدينون</h3>
             <div class="flex items-center justify-between rounded-lg bg-blue-50 border border-blue-200 p-4 mb-4">
-                <span class="text-sm font-medium text-blue-700">إجمالي المستحق غير المحصل</span>
-                <span class="text-xl font-bold text-blue-800">{{ number_format($monthDueTotal, 2) }}</span>
+                <span class="text-sm font-medium text-blue-700">إجمالي أرصدة المدينين</span>
+                <div class="text-left space-y-0.5">
+                    @foreach($debtorTotals as $curCode => $amount)
+                        <div class="text-xl font-bold text-blue-800">
+                            {{ number_format($amount, 2) }} <span class="text-sm font-semibold">{{ $curCode }}</span>
+                        </div>
+                    @endforeach
+                </div>
             </div>
             <div class="space-y-3">
-                @forelse($monthDues as $due)
-                    <a href="{{ route('sales-invoices.show', $due) }}" class="flex items-center justify-between rounded-lg border border-gray-200 p-3 hover:bg-blue-50 transition">
+                @forelse($debtors as $debtor)
+                    <a href="{{ route('reports.customer-statement', ['customer_id' => $debtor->id, 'date_from' => now()->startOfYear()->toDateString(), 'date_to' => now()->toDateString()]) }}" class="flex items-center justify-between rounded-lg border border-gray-200 p-3 hover:bg-blue-50 transition">
                         <div>
-                            <div class="font-mono text-xs text-gray-500">{{ $due->invoice_number }}</div>
-                            <div class="font-medium text-gray-900">{{ $due->customer->name ?? '-' }}</div>
-                            <div class="text-xs text-gray-500">مستحق: {{ $due->due_date?->format('Y/m/d') }}</div>
+                            <div class="font-medium text-gray-900">{{ $debtor->name }}</div>
+                            <div class="text-xs text-gray-500">{{ $debtor->phone ?? '' }}</div>
                         </div>
                         <div class="text-left">
-                            <div class="font-bold text-red-600">{{ number_format($due->due_amount, 2) }}</div>
-                            @if($due->payment_status === 'partial')
-                                <span class="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800">جزئي</span>
-                            @else
-                                <span class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">غير مدفوع</span>
-                            @endif
+                            @foreach($debtor->currency_balances as $curCode => $amount)
+                                @if($amount > 0.009)
+                                    <div class="font-bold text-red-600">
+                                        {{ number_format($amount, 2) }} <span class="text-xs font-semibold">{{ $curCode }}</span>
+                                    </div>
+                                @endif
+                            @endforeach
+                            <span class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">مدين</span>
                         </div>
                     </a>
                 @empty
-                    <div class="text-center text-gray-500 py-4">لا توجد مستحقات لشهر هذا الشهر</div>
+                    <div class="text-center text-gray-500 py-4">لا يوجد عملاء مدينون</div>
                 @endforelse
             </div>
         </div>
@@ -110,7 +117,10 @@
                             <div class="text-xs text-gray-500">{{ $sale->date?->format('Y/m/d') }}</div>
                         </div>
                         <div class="text-left">
-                            <div class="font-bold text-gray-900">{{ number_format($sale->total, 2) }}</div>
+                            <div class="font-bold text-gray-900">
+                                {{ number_format($sale->total, 2) }}
+                                <span class="text-xs font-semibold text-gray-500">{{ $currencyCodes[$sale->currency_id] ?? '—' }}</span>
+                            </div>
                             @if($sale->payment_status === 'paid')
                                 <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">مدفوع</span>
                             @elseif($sale->payment_status === 'partial')
@@ -187,7 +197,10 @@
                             <div class="text-xs text-gray-500">{{ $purchase->date?->format('Y/m/d') }}</div>
                         </div>
                         <div class="text-left">
-                            <div class="font-bold text-gray-900">{{ number_format($purchase->total, 2) }}</div>
+                            <div class="font-bold text-gray-900">
+                                {{ number_format($purchase->total, 2) }}
+                                <span class="text-xs font-semibold text-gray-500">{{ $currencyCodes[$purchase->currency_id] ?? '—' }}</span>
+                            </div>
                             @if($purchase->payment_status === 'paid')
                                 <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">مدفوع</span>
                             @elseif($purchase->payment_status === 'partial')
