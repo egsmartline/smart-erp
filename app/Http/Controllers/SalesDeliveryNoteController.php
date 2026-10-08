@@ -99,14 +99,16 @@ class SalesDeliveryNoteController extends TenantAwareController
 
                 $itemWarehouse->decrement('quantity', $line['quantity']);
 
+                $unitCost = Item::find($line['item_id'])?->cost_price ?? 0;
+
                 StockMovement::create([
                     'tenant_id' => $tenantId,
                     'item_id' => $line['item_id'],
                     'warehouse_id' => $validated['warehouse_id'],
                     'type' => 'sale',
                     'quantity' => $line['quantity'],
-                    'unit_cost' => $line['unit_price'],
-                    'total_cost' => $line['total'],
+                    'unit_cost' => $unitCost,
+                    'total_cost' => $unitCost * $line['quantity'],
                     'reference_type' => SalesDeliveryNote::class,
                     'reference_id' => $deliveryNote->id,
                     'description' => 'تسليم مبيعات - ' . $deliveryNote->delivery_number,
@@ -231,14 +233,16 @@ class SalesDeliveryNoteController extends TenantAwareController
 
                 $itemWarehouse->decrement('quantity', $line['quantity']);
 
+                $unitCost = Item::find($line['item_id'])?->cost_price ?? 0;
+
                 StockMovement::create([
                     'tenant_id' => $tenantId,
                     'item_id' => $line['item_id'],
                     'warehouse_id' => $validated['warehouse_id'],
                     'type' => 'sale',
                     'quantity' => $line['quantity'],
-                    'unit_cost' => $line['unit_price'],
-                    'total_cost' => $line['total'],
+                    'unit_cost' => $unitCost,
+                    'total_cost' => $unitCost * $line['quantity'],
                     'reference_type' => SalesDeliveryNote::class,
                     'reference_id' => $salesDeliveryNote->id,
                     'description' => 'تسليم مبيعات - ' . $salesDeliveryNote->delivery_number,
