@@ -21,6 +21,7 @@
                 <option value="">كل الحالات</option>
                 <option value="draft" {{ request('state') == 'draft' ? 'selected' : '' }}>مسودة</option>
                 <option value="done" {{ request('state') == 'done' ? 'selected' : '' }}>مؤكدة</option>
+                <option value="reversed" {{ request('state') == 'reversed' ? 'selected' : '' }}>معكوسة</option>
                 <option value="cancelled" {{ request('state') == 'cancelled' ? 'selected' : '' }}>ملغاة</option>
             </select>
             <button type="submit" class="rounded-lg bg-gray-600 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition">بحث</button>
@@ -48,6 +49,8 @@
                                     <span class="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">مسودة</span>
                                 @elseif($adj->state == 'done')
                                     <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">مؤكدة</span>
+                                @elseif($adj->state == 'reversed')
+                                    <span class="inline-flex items-center rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-medium text-orange-800">معكوسة</span>
                                 @else
                                     <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">ملغاة</span>
                                 @endif

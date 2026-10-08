@@ -170,14 +170,16 @@ class SalesReturnController extends TenantAwareController
                     $itemWarehouse->increment('quantity', $line->quantity);
                 }
 
+                $unitCost = $this->effectiveUnitCost($line->item_id, $salesReturn->warehouse_id);
+
                 StockMovement::create([
                     'tenant_id' => $this->getTenantId(),
                     'item_id' => $line->item_id,
                     'warehouse_id' => $salesReturn->warehouse_id,
                     'type' => 'return_in',
                     'quantity' => $line->quantity,
-                    'unit_cost' => $line->item?->cost_price ?? 0,
-                    'total_cost' => ($line->item?->cost_price ?? 0) * $line->quantity,
+                    'unit_cost' => $unitCost,
+                    'total_cost' => $unitCost * $line->quantity,
                     'reference_type' => SalesReturn::class,
                     'reference_id' => $salesReturn->id,
                     'description' => 'إدخال مخزون - مرتجع مبيعات',

@@ -245,6 +245,7 @@ Route::middleware(['auth', 'tenant', 'permission'])->group(function () {
     Route::resource('inventory-adjustments', InventoryAdjustmentController::class);
     Route::post('inventory-adjustments/{adj}/confirm', [InventoryAdjustmentController::class, 'confirm'])->name('inventory-adjustments.confirm');
     Route::post('inventory-adjustments/{adj}/cancel', [InventoryAdjustmentController::class, 'cancel'])->name('inventory-adjustments.cancel');
+    Route::post('inventory-adjustments/{adj}/reverse', [InventoryAdjustmentController::class, 'reverse'])->name('inventory-adjustments.reverse');
 
     // Stock Transfers
     Route::resource('stock-transfers', StockTransferController::class);

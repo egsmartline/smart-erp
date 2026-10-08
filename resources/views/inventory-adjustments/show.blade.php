@@ -13,6 +13,12 @@
                         <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 transition">إلغاء</button>
                     </form>
                 @endif
+                @if($adj->state == 'done')
+                    <form action="{{ route('inventory-adjustments.reverse', $adj) }}" method="POST" class="inline" onsubmit="return confirm('سيتم عكس أثر التسوية على الكميات والحركات. هل أنت متأكد؟')">
+                        @csrf
+                        <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 transition">عكس التسوية</button>
+                    </form>
+                @endif
                 <a href="{{ route('inventory-adjustments.index') }}" class="inline-flex items-center gap-2 rounded-lg bg-gray-600 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition">العودة</a>
             </div>
         </div>
@@ -30,6 +36,8 @@
                         <span class="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">مسودة</span>
                     @elseif($adj->state == 'done')
                         <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">مؤكدة</span>
+                    @elseif($adj->state == 'reversed')
+                        <span class="inline-flex items-center rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-medium text-orange-800">معكوسة</span>
                     @else
                         <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">ملغاة</span>
                     @endif

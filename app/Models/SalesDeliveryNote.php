@@ -17,6 +17,7 @@ class SalesDeliveryNote extends Model
         'delivery_number',
         'date',
         'sales_order_id',
+        'sales_invoice_id',
         'customer_id',
         'warehouse_id',
         'user_id',
@@ -54,5 +55,10 @@ class SalesDeliveryNote extends Model
     public function lines(): HasMany
     {
         return $this->hasMany(SalesDeliveryNoteLine::class);
+    }
+
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(SalesInvoice::class, 'sales_invoice_id');
     }
 }

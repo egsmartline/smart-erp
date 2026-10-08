@@ -445,7 +445,9 @@ class ReportController extends TenantAwareController
             ->orderBy('name')
             ->get();
 
-        $totalValue = $items->sum(fn($item) => $item->warehouses->sum('quantity') * ($item->cost_price ?? 0));
+        $totalValue = $items->sum(fn($item) => $item->warehouses->sum(
+            fn($wh) => $wh->quantity * ($wh->average_cost > 0 ? (float) $wh->average_cost : ($item->cost_price ?? 0))
+        ));
 
         $totalSales = SalesInvoice::where('tenant_id', $this->getTenantId())
             ->where('status', 'posted')

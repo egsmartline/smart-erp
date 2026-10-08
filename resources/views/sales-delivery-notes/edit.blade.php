@@ -51,6 +51,19 @@
                     <input type="date" name="date" id="date" value="{{ old('date', $salesDeliveryNote->date->format('Y-m-d')) }}" required
                         class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                 </div>
+                <div>
+                    <label for="sales_invoice_id" class="mb-1 block text-sm font-medium text-gray-700">فاتورة مبيعات مرتبطة</label>
+                    <select name="sales_invoice_id" id="sales_invoice_id"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <option value="">بدون ربط</option>
+                        @foreach($invoices as $invoice)
+                            <option value="{{ $invoice->id }}" {{ old('sales_invoice_id', $salesDeliveryNote->sales_invoice_id) == $invoice->id ? 'selected' : '' }}>
+                                {{ $invoice->invoice_number }} - {{ $invoice->customer->name ?? '-' }} ({{ $invoice->status == 'posted' ? 'مرحّلة' : 'مسودة' }})
+                            </option>
+                        @endforeach
+                    </select>
+                    <p class="mt-1 text-xs text-gray-500">عند الربط تُحسب حركة المخزون مرة واحدة فقط بين الفاتورة والإذن.</p>
+                </div>
             </div>
 
             <div class="mb-6">

@@ -40,6 +40,8 @@
             </span>
             <br>
             <span class="text-gray-900 text-sm"><strong>المخزن:</strong> {{ $salesDeliveryNote->warehouse->name ?? '-' }}</span>
+            <span class="mx-3 text-gray-300">|</span>
+            <span class="text-gray-900 text-sm"><strong>الفاتورة المرتبطة:</strong> {{ $salesDeliveryNote->invoice->invoice_number ?? 'بدون' }}</span>
         </div>
 
         <div class="border-t border-gray-200 pt-6">

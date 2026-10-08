@@ -40,7 +40,12 @@
                 </thead>
                 <tbody>
                     @forelse($items as $item)
-                        @php $stock = $item->warehouses->sum('quantity'); @endphp
+                        @php
+                            $stock = $item->warehouses->sum('quantity');
+                            $stockValue = $item->warehouses->sum(
+                                fn($wh) => $wh->quantity * ($wh->average_cost > 0 ? (float) $wh->average_cost : ($item->cost_price ?? 0))
+                            );
+                        @endphp
                         <tr class="border-b border-gray-100 hover:bg-gray-50">
                             <td class="px-1 py-1 font-mono text-[10px] w-[60px]">{{ $item->sku ?? '-' }}</td>
                             <td class="px-1 py-1 font-medium w-auto min-w-[280px]">{{ $item->name }}</td>
@@ -52,7 +57,7 @@
                                     {{ $stock }}
                                 </span>
                             </td>
-                            <td class="px-1 py-1 text-left font-mono font-bold text-xs w-[80px]">{{ number_format($stock * $item->cost_price, 2) }}</td>
+                            <td class="px-1 py-1 text-left font-mono font-bold text-xs w-[80px]">{{ number_format($stockValue, 2) }}</td>
                             <td class="px-1 py-1 text-left font-mono text-gray-500 text-xs w-[60px]">{{ $item->minimum_stock ?? 0 }}</td>
                         </tr>
                     @empty

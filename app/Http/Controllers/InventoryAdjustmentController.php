@@ -74,9 +74,10 @@ class InventoryAdjustmentController extends TenantAwareController
                 'theoretical_qty' => $line['theoretical_qty'],
                 'actual_qty' => $line['actual_qty'],
                 'difference' => $line['actual_qty'] - $line['theoretical_qty'],
-                'unit_cost' => Item::where('tenant_id', $this->getTenantId())
-                    ->where('id', $line['item_id'])
-                    ->value('cost_price') ?? 0,
+                'unit_cost' => $this->effectiveUnitCost(
+                    (int) $line['item_id'],
+                    (int) $validated['warehouse_id']
+                ),
                 'reason' => $line['reason'] ?? null,
             ]);
         }
@@ -141,11 +142,60 @@ class InventoryAdjustmentController extends TenantAwareController
         return redirect()->route('inventory-adjustments.show', $adj)->with('success', 'تم تأكيد التسوية بنجاح');
     }
 
+    public function reverse(InventoryAdjustment $adj)
+    {
+        if ($adj->tenant_id !== $this->getTenantId()) abort(403);
+        if ($adj->state !== 'done') {
+            return redirect()->back()->with('error', 'لا يمكن عكس تسوية غير مؤكدة');
+        }
+
+        DB::transaction(function () use ($adj) {
+            foreach ($adj->lines as $line) {
+                $difference = (float) $line->difference;
+                if ($difference == 0.0) {
+                    continue;
+                }
+
+                $iw = ItemWarehouse::where('tenant_id', $this->getTenantId())
+                    ->where('item_id', $line->item_id)
+                    ->where('warehouse_id', $adj->warehouse_id)
+                    ->first();
+
+                if (!$iw) {
+                    continue;
+                }
+
+                $iw->quantity = (float) $iw->quantity - $difference;
+                $iw->save();
+
+                $unitCost = (float) ($line->unit_cost ?? 0);
+
+                StockMovement::create([
+                    'tenant_id' => $this->getTenantId(),
+                    'item_id' => $line->item_id,
+                    'warehouse_id' => $adj->warehouse_id,
+                    'type' => $difference > 0 ? 'adjustment_out' : 'adjustment_in',
+                    'quantity' => abs($difference),
+                    'unit_cost' => $unitCost,
+                    'total_cost' => abs($difference) * $unitCost,
+                    'reference_type' => InventoryAdjustment::class,
+                    'reference_id' => $adj->id,
+                    'description' => 'عكس تسوية مخزنية - ' . $adj->reference,
+                    'user_id' => auth()->id(),
+                ]);
+            }
+
+            $adj->update(['state' => 'reversed']);
+        });
+
+        return redirect()->route('inventory-adjustments.show', $adj)->with('success', 'تم عكس التسوية بنجاح');
+    }
+
     public function cancel(InventoryAdjustment $adj)
     {
         if ($adj->tenant_id !== $this->getTenantId()) abort(403);
         if ($adj->state === 'done') {
-            return redirect()->back()->with('error', 'لا يمكن إلغاء تسوية مؤكدة');
+            return redirect()->back()->with('error', 'لا يمكن إلغاء تسوية مؤكدة، استخدم عكس التسوية');
         }
         $adj->update(['state' => 'cancelled']);
 

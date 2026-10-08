@@ -61,7 +61,7 @@ class PurchaseReceiptNoteController extends TenantAwareController
         return DB::transaction(function () use ($validated, $purchaseOrder, $tenantId) {
             $receiptNote = PurchaseReceiptNote::create([
                 'tenant_id' => $tenantId,
-                'receipt_number' => 'RN-' . now()->format('Ymd') . '-' . str_pad(PurchaseReceiptNote::where('tenant_id', $tenantId)->count() + 1, 4, '0', STR_PAD_LEFT),
+                'receipt_number' => $this->nextSequentialNumber('purchase_receipt_notes', 'receipt_number', $tenantId, 'RN'),
                 'date' => $validated['date'],
                 'purchase_order_id' => $purchaseOrder->id,
                 'supplier_id' => $purchaseOrder->supplier_id,
