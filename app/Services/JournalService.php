@@ -16,8 +16,21 @@ class JournalService
     public function createEntry(array $data): JournalEntry
     {
         return DB::transaction(function () use ($data) {
-            $totalDebit = collect($data['lines'])->sum('debit');
-            $totalCredit = collect($data['lines'])->sum('credit');
+            $totalDebit = round(collect($data['lines'] ?? [])->sum('debit'), 2);
+            $totalCredit = round(collect($data['lines'] ?? [])->sum('credit'), 2);
+
+            if (empty($data['lines'])) {
+                throw new \RuntimeException('لا يمكن إنشاء قيد بدون سطور');
+            }
+
+            if (abs($totalDebit - $totalCredit) > 0.009) {
+                throw new \RuntimeException(sprintf(
+                    'القيد غير متوازن (مدين %.2f / دائن %.2f) - %s',
+                    $totalDebit,
+                    $totalCredit,
+                    $data['description'] ?? ''
+                ));
+            }
 
             $entry = JournalEntry::create([
                 'tenant_id' => $data['tenant_id'],
@@ -153,8 +166,10 @@ class JournalService
 
         $netAmount = $invoiceData['subtotal'] - ($invoiceData['discount_amount'] ?? 0);
 
+        $shippingCost = $invoiceData['shipping_cost'] ?? 0;
+
         if ($inventoryAccount) {
-            $lines[] = ['account_id' => $inventoryAccount->id, 'debit' => $netAmount, 'credit' => 0];
+            $lines[] = ['account_id' => $inventoryAccount->id, 'debit' => $netAmount + $shippingCost, 'credit' => 0];
         }
 
         if ($taxAccount && ($invoiceData['tax_amount'] ?? 0) > 0) {

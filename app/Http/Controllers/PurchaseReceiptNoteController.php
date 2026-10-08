@@ -90,7 +90,12 @@ class PurchaseReceiptNoteController extends TenantAwareController
                     ['quantity' => 0, 'reserved_quantity' => 0, 'average_cost' => 0]
                 );
 
-                $itemWarehouse->increment('quantity', $line['quantity']);
+                $newQty = $itemWarehouse->quantity + $line['quantity'];
+                if ($newQty > 0) {
+                    $itemWarehouse->average_cost = ($itemWarehouse->quantity * $itemWarehouse->average_cost + $line['quantity'] * $line['unit_price']) / $newQty;
+                }
+                $itemWarehouse->quantity = $newQty;
+                $itemWarehouse->save();
 
                 StockMovement::create([
                     'tenant_id' => $this->getTenantId(),

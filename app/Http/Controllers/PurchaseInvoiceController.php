@@ -400,6 +400,7 @@ class PurchaseInvoiceController extends TenantAwareController
                 if ($itemWarehouse->quantity > 0) {
                     $totalCost = ($itemWarehouse->quantity - $line->quantity) * $itemWarehouse->average_cost + $line->quantity * $line->unit_cost;
                     $itemWarehouse->average_cost = $totalCost / $itemWarehouse->quantity;
+                    $itemWarehouse->save();
                 }
 
                 StockMovement::create([

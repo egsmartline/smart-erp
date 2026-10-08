@@ -115,7 +115,12 @@ class StockTransferController extends TenantAwareController
                 'warehouse_id' => $transfer->destination_warehouse_id,
             ], ['quantity' => 0, 'reserved_quantity' => 0, 'average_cost' => 0]);
 
-            $destIw->quantity += $line->quantity;
+            $newQty = $destIw->quantity + $line->quantity;
+            if ($newQty > 0) {
+                $sourceAvg = $sourceIw ? $sourceIw->average_cost : 0;
+                $destIw->average_cost = ($destIw->quantity * $destIw->average_cost + $line->quantity * $sourceAvg) / $newQty;
+            }
+            $destIw->quantity = $newQty;
             $destIw->save();
         }
 
