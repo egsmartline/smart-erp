@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -12,9 +13,13 @@ return new class extends Migration
             $table->date('due_date')->nullable()->after('date');
         });
 
-        DB::table('sales_invoices')
-            ->whereNull('due_date')
-            ->update(['due_date' => DB::raw('DATE_ADD(`date`, INTERVAL 30 DAY)')]);
+        $rows = DB::table('sales_invoices')->whereNull('due_date')->get(['id', 'date']);
+
+        foreach ($rows as $row) {
+            DB::table('sales_invoices')->where('id', $row->id)->update([
+                'due_date' => date('Y-m-d', strtotime($row->date . ' +30 days')),
+            ]);
+        }
     }
 
     public function down(): void

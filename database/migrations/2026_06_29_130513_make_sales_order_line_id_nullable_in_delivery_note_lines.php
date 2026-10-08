@@ -1,17 +1,22 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement('ALTER TABLE sales_delivery_note_lines MODIFY sales_order_line_id BIGINT(20) UNSIGNED NULL');
+        Schema::table('sales_delivery_note_lines', function (Blueprint $table) {
+            $table->unsignedBigInteger('sales_order_line_id')->nullable()->change();
+        });
     }
 
     public function down(): void
     {
-        DB::statement('ALTER TABLE sales_delivery_note_lines MODIFY sales_order_line_id BIGINT(20) UNSIGNED NOT NULL');
+        Schema::table('sales_delivery_note_lines', function (Blueprint $table) {
+            $table->unsignedBigInteger('sales_order_line_id')->nullable(false)->change();
+        });
     }
 };

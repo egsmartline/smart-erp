@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Livewire\InvoiceForm;
 use App\Models\Item;
 use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -13,9 +14,27 @@ class InvoiceFormSelectionTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function seedTenantAndUser(): Tenant
+    {
+        $tenant = Tenant::create(['name' => 'Test Tenant', 'slug' => 'test-tenant']);
+
+        $user = User::create([
+            'tenant_id' => $tenant->id,
+            'name' => 'Test User',
+            'email' => 'invoice-test@example.com',
+            'password' => 'secret',
+            'role' => 'admin',
+        ]);
+
+        $this->actingAs($user);
+        session(['current_tenant_id' => $tenant->id]);
+
+        return $tenant;
+    }
+
     public function test_selecting_an_item_sets_default_quantity_and_price(): void
     {
-        $tenant = Tenant::create(['name' => 'Test Tenant']);
+        $tenant = $this->seedTenantAndUser();
 
         $item = Item::create([
             'tenant_id' => $tenant->id,
@@ -38,9 +57,9 @@ class InvoiceFormSelectionTest extends TestCase
 
     public function test_invoice_form_renders_selected_price_for_the_line(): void
     {
-        $tenant = Tenant::create(['name' => 'Test Tenant']);
+        $tenant = $this->seedTenantAndUser();
 
-        Item::create([
+        $item = Item::create([
             'tenant_id' => $tenant->id,
             'name' => 'ماتور',
             'name_ar' => 'ماتور',
@@ -52,8 +71,8 @@ class InvoiceFormSelectionTest extends TestCase
         ]);
 
         $component = Livewire::test(InvoiceForm::class, ['type' => 'sale', 'showItemSelect' => true])
-            ->set('lines.0.item_id', 1)
-            ->call('selectItem', 1, 0);
+            ->set('lines.0.item_id', $item->id)
+            ->call('selectItem', $item->id, 0);
 
         $component->assertSet('lines.0.quantity', 1);
         $component->assertSet('lines.0.unit_price', 1500.0);

@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -10,15 +9,15 @@ return new class extends Migration
     {
         Schema::table('job_positions', function ($table) {
             $table->string('description')->nullable()->after('name');
+            $table->string('code')->nullable()->change();
         });
-        DB::statement('ALTER TABLE job_positions MODIFY code VARCHAR(255) NULL');
     }
 
     public function down(): void
     {
         Schema::table('job_positions', function ($table) {
             $table->dropColumn('description');
+            $table->string('code')->nullable(false)->change();
         });
-        DB::statement('ALTER TABLE job_positions MODIFY code VARCHAR(255) NOT NULL');
     }
 };

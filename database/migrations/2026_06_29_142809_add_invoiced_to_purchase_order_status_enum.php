@@ -1,17 +1,26 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement("ALTER TABLE purchase_orders MODIFY COLUMN status ENUM('draft','sent','confirmed','received','invoiced','cancelled') NOT NULL DEFAULT 'draft'");
+        Schema::table('purchase_orders', function (Blueprint $table) {
+            $table->enum('status', ['draft', 'sent', 'confirmed', 'received', 'invoiced', 'cancelled'])
+                ->default('draft')
+                ->change();
+        });
     }
 
     public function down(): void
     {
-        DB::statement("ALTER TABLE purchase_orders MODIFY COLUMN status ENUM('draft','sent','confirmed','received','cancelled') NOT NULL DEFAULT 'draft'");
+        Schema::table('purchase_orders', function (Blueprint $table) {
+            $table->enum('status', ['draft', 'sent', 'confirmed', 'received', 'cancelled'])
+                ->default('draft')
+                ->change();
+        });
     }
 };
