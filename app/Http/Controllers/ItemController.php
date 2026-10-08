@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Controllers\Concerns\AuthorizesTenantAccess;
 
 use App\Models\Item;
 use App\Models\ItemCategory;
@@ -11,6 +12,8 @@ use Illuminate\Http\Request;
 
 class ItemController extends TenantAwareController
 {
+    use AuthorizesTenantAccess;
+
     public function index(Request $request)
     {
         $query = $this->tenantQuery(Item::class)->with('category', 'unit', 'purchaseCurrency', 'salesCurrency', 'warehouses');
@@ -149,12 +152,14 @@ class ItemController extends TenantAwareController
 
     public function show(Item $item)
     {
+        $this->authorizeTenant($item);
         $item->load('category', 'unit', 'warehouses.warehouse');
         return view('items.show', compact('item'));
     }
 
     public function card(Request $request, Item $item)
     {
+        $this->authorizeTenant($item);
         $item->load('category', 'unit', 'warehouses.warehouse');
 
         $all = $item->stockMovements()
@@ -439,6 +444,7 @@ class ItemController extends TenantAwareController
 
     public function destroy(Item $item)
     {
+        $this->authorizeTenant($item);
         $item->delete();
         return redirect()->route('items.index')->with('success', 'تم حذف الصنف بنجاح');
     }

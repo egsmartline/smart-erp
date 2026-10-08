@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Controllers\Concerns\AuthorizesTenantAccess;
 
 use App\Models\SalesReturn;
 use App\Models\SalesReturnLine;
@@ -15,6 +16,8 @@ use Illuminate\Support\Facades\DB;
 
 class SalesReturnController extends TenantAwareController
 {
+    use AuthorizesTenantAccess;
+
     public function index(Request $request)
     {
         $query = $this->tenantQuery(SalesReturn::class)
@@ -142,6 +145,7 @@ class SalesReturnController extends TenantAwareController
 
     public function show(SalesReturn $salesReturn)
     {
+        $this->authorizeTenant($salesReturn);
         $salesReturn->load(['customer', 'salesInvoice', 'warehouse', 'lines.item', 'creator']);
         return view('sales-returns.show', compact('salesReturn'));
     }

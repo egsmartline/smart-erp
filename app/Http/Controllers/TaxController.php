@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Controllers\Concerns\AuthorizesTenantAccess;
 
 use App\Models\Account;
 use App\Models\Tax;
@@ -9,6 +10,8 @@ use Illuminate\Support\Facades\Auth;
 
 class TaxController extends Controller
 {
+    use AuthorizesTenantAccess;
+
     public function index(Request $request)
     {
         $query = Tax::where('tenant_id', Auth::user()->tenant_id);
@@ -68,6 +71,7 @@ class TaxController extends Controller
 
     public function show(Tax $tax)
     {
+        $this->authorizeTenant($tax);
         $tax->load('account', 'purchaseAccount', 'taxGroup', 'childTaxes');
 
         return view('taxes.show', compact('tax'));
@@ -119,6 +123,7 @@ class TaxController extends Controller
 
     public function destroy(Tax $tax)
     {
+        $this->authorizeTenant($tax);
         $tax->delete();
 
         return redirect()->route('taxes.index')

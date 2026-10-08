@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Controllers\Concerns\AuthorizesTenantAccess;
 
 use App\Models\Company;
 use App\Models\Tenant;
@@ -13,6 +14,8 @@ use Illuminate\Support\Facades\DB;
 
 class CompanyController extends TenantAwareController
 {
+    use AuthorizesTenantAccess;
+
     public function index()
     {
         $tenants = auth()->user()->getAccessibleTenants();
@@ -108,6 +111,7 @@ class CompanyController extends TenantAwareController
 
     public function show(Company $company)
     {
+        $this->authorizeTenant($company);
         $company->load('secondaryCurrency');
         return view('companies.show', compact('company'));
     }
@@ -120,6 +124,7 @@ class CompanyController extends TenantAwareController
 
     public function update(Request $request, Company $company)
     {
+        $this->authorizeTenant($company);
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'name_en' => 'nullable|string|max:255',

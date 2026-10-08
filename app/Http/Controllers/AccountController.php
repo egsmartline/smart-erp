@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Controllers\Concerns\AuthorizesTenantAccess;
 
 use App\Models\Account;
 use App\Models\JournalEntryLine;
@@ -9,6 +10,8 @@ use Illuminate\Support\Facades\Auth;
 
 class AccountController extends Controller
 {
+    use AuthorizesTenantAccess;
+
     public function index(Request $request)
     {
         $query = Account::where('tenant_id', Auth::user()->tenant_id);
@@ -82,6 +85,7 @@ class AccountController extends Controller
 
     public function show(Account $account)
     {
+        $this->authorizeTenant($account);
         $this->authorizeAccount($account);
 
         $allLines = JournalEntryLine::where('account_id', $account->id)
@@ -163,6 +167,7 @@ class AccountController extends Controller
 
     public function destroy(Account $account)
     {
+        $this->authorizeTenant($account);
         $this->authorizeAccount($account);
 
         $hasLines = JournalEntryLine::where('account_id', $account->id)->exists();

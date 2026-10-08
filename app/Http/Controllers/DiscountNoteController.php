@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Controllers\Concerns\AuthorizesTenantAccess;
 
 use App\Models\DiscountNote;
 use App\Models\Customer;
@@ -12,6 +13,8 @@ use Illuminate\Support\Facades\DB;
 
 class DiscountNoteController extends TenantAwareController
 {
+    use AuthorizesTenantAccess;
+
     public function index(Request $request)
     {
         $query = $this->tenantQuery(DiscountNote::class)
@@ -98,6 +101,7 @@ class DiscountNoteController extends TenantAwareController
 
     public function show(DiscountNote $discountNote)
     {
+        $this->authorizeTenant($discountNote);
         $discountNote->load(['customer', 'salesInvoice', 'creator']);
         return view('discount-notes.show', compact('discountNote'));
     }
@@ -116,6 +120,7 @@ class DiscountNoteController extends TenantAwareController
 
     public function update(Request $request, DiscountNote $discountNote)
     {
+        $this->authorizeTenant($discountNote);
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'date' => 'required|date',
@@ -157,6 +162,7 @@ class DiscountNoteController extends TenantAwareController
 
     public function destroy(DiscountNote $discountNote)
     {
+        $this->authorizeTenant($discountNote);
         DB::beginTransaction();
 
         try {

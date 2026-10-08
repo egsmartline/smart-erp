@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Controllers\Concerns\AuthorizesTenantAccess;
 
 use App\Models\SalesInvoice;
 use App\Models\SalesInvoiceLine;
@@ -24,6 +25,8 @@ use Illuminate\Support\Facades\DB;
 
 class SalesInvoiceController extends TenantAwareController
 {
+    use AuthorizesTenantAccess;
+
     public function index(Request $request)
     {
         $query = $this->tenantQuery(SalesInvoice::class)
@@ -420,6 +423,7 @@ class SalesInvoiceController extends TenantAwareController
 
     public function destroy(SalesInvoice $salesInvoice)
     {
+        $this->authorizeTenant($salesInvoice);
         DB::beginTransaction();
 
         try {

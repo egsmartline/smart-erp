@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Controllers\Concerns\AuthorizesTenantAccess;
 
 use App\Models\PurchaseReturn;
 use App\Models\PurchaseReturnLine;
@@ -16,6 +17,8 @@ use Illuminate\Support\Facades\DB;
 
 class PurchaseReturnController extends TenantAwareController
 {
+    use AuthorizesTenantAccess;
+
     public function index(Request $request)
     {
         $query = $this->tenantQuery(PurchaseReturn::class)
@@ -160,6 +163,7 @@ class PurchaseReturnController extends TenantAwareController
 
     public function show(PurchaseReturn $purchaseReturn)
     {
+        $this->authorizeTenant($purchaseReturn);
         $purchaseReturn->load(['supplier', 'purchaseInvoice', 'warehouse', 'lines.item', 'creator']);
         return view('purchase-returns.show', compact('purchaseReturn'));
     }

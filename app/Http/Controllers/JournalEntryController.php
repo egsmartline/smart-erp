@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Controllers\Concerns\AuthorizesTenantAccess;
 
 use App\Models\Account;
 use App\Models\JournalEntry;
@@ -11,6 +12,8 @@ use Illuminate\Support\Facades\DB;
 
 class JournalEntryController extends TenantAwareController
 {
+    use AuthorizesTenantAccess;
+
     public function index(Request $request)
     {
         $query = JournalEntry::where('tenant_id', Auth::user()->tenant_id)
@@ -127,6 +130,7 @@ class JournalEntryController extends TenantAwareController
 
     public function show(JournalEntry $journalEntry)
     {
+        $this->authorizeTenant($journalEntry);
         $this->authorizeEntry($journalEntry);
 
         $journalEntry->load(['lines.account', 'creator']);
@@ -220,6 +224,7 @@ class JournalEntryController extends TenantAwareController
 
     public function destroy(JournalEntry $journalEntry)
     {
+        $this->authorizeTenant($journalEntry);
         $this->authorizeEntry($journalEntry);
 
         if ($journalEntry->is_posted) {

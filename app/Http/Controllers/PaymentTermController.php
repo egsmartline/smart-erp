@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Controllers\Concerns\AuthorizesTenantAccess;
 
 use App\Models\PaymentTerm;
 use Illuminate\Http\Request;
@@ -8,6 +9,8 @@ use Illuminate\Support\Facades\Auth;
 
 class PaymentTermController extends Controller
 {
+    use AuthorizesTenantAccess;
+
     public function index()
     {
         $paymentTerms = PaymentTerm::where('tenant_id', Auth::user()->tenant_id)
@@ -46,16 +49,19 @@ class PaymentTermController extends Controller
 
     public function show(PaymentTerm $paymentTerm)
     {
+        $this->authorizeTenant($paymentTerm);
         return view('payment-terms.show', compact('paymentTerm'));
     }
 
     public function edit(PaymentTerm $paymentTerm)
     {
+        $this->authorizeTenant($paymentTerm);
         return view('payment-terms.edit', compact('paymentTerm'));
     }
 
     public function update(Request $request, PaymentTerm $paymentTerm)
     {
+        $this->authorizeTenant($paymentTerm);
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'name_en' => 'nullable|string|max:255',
@@ -77,6 +83,7 @@ class PaymentTermController extends Controller
 
     public function destroy(PaymentTerm $paymentTerm)
     {
+        $this->authorizeTenant($paymentTerm);
         $paymentTerm->delete();
 
         return redirect()->route('payment-terms.index')

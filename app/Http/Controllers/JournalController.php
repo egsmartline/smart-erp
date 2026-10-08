@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Controllers\Concerns\AuthorizesTenantAccess;
 
 use App\Models\Account;
 use App\Models\Currency;
@@ -10,6 +11,8 @@ use Illuminate\Support\Facades\Auth;
 
 class JournalController extends Controller
 {
+    use AuthorizesTenantAccess;
+
     public function index(Request $request)
     {
         $query = Journal::where('tenant_id', Auth::user()->tenant_id)->with('defaultAccount', 'currency');
@@ -59,6 +62,7 @@ class JournalController extends Controller
 
     public function show(Journal $journal)
     {
+        $this->authorizeTenant($journal);
         $journal->load('defaultAccount', 'currency');
 
         return view('journals.show', compact('journal'));
@@ -99,6 +103,7 @@ class JournalController extends Controller
 
     public function destroy(Journal $journal)
     {
+        $this->authorizeTenant($journal);
         $journal->delete();
 
         return redirect()->route('journals.index')

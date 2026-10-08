@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Controllers\Concerns\AuthorizesTenantAccess;
 
 use App\Models\Quotation;
 use App\Models\QuotationLine;
@@ -16,6 +17,8 @@ use Illuminate\Support\Facades\DB;
 
 class QuotationController extends TenantAwareController
 {
+    use AuthorizesTenantAccess;
+
     public function index(Request $request)
     {
         $query = $this->tenantQuery(Quotation::class)
@@ -144,6 +147,7 @@ class QuotationController extends TenantAwareController
 
     public function show(Quotation $quotation)
     {
+        $this->authorizeTenant($quotation);
         $quotation->load(['customer', 'lines.item']);
         return view('quotations.show', compact('quotation'));
     }
@@ -252,6 +256,7 @@ class QuotationController extends TenantAwareController
 
     public function destroy(Quotation $quotation)
     {
+        $this->authorizeTenant($quotation);
         if (in_array($quotation->status, ['accepted', 'converted'])) {
             return back()->with('error', 'لا يمكن حذف عرض أسعار تم قبوله أو تحويله');
         }
@@ -346,6 +351,7 @@ class QuotationController extends TenantAwareController
 
     public function send(Quotation $quotation)
     {
+        $this->authorizeTenant($quotation);
         if ($quotation->status !== 'draft') {
             return back()->with('error', 'لا يمكن إرسال عرض أسعار غير مسودة');
         }
@@ -357,6 +363,7 @@ class QuotationController extends TenantAwareController
 
     public function accept(Quotation $quotation)
     {
+        $this->authorizeTenant($quotation);
         if (!in_array($quotation->status, ['draft', 'sent'])) {
             return back()->with('error', 'لا يمكن قبول عرض أسعار في هذه الحالة');
         }

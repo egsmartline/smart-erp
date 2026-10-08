@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Controllers\Concerns\AuthorizesTenantAccess;
 
 use App\Models\PurchaseInvoice;
 use App\Models\PurchaseInvoiceLine;
@@ -23,6 +24,8 @@ use Illuminate\Support\Facades\DB;
 
 class PurchaseInvoiceController extends TenantAwareController
 {
+    use AuthorizesTenantAccess;
+
     public function index(Request $request)
     {
         $query = $this->tenantQuery(PurchaseInvoice::class)
@@ -350,6 +353,7 @@ class PurchaseInvoiceController extends TenantAwareController
 
     public function destroy(PurchaseInvoice $purchaseInvoice)
     {
+        $this->authorizeTenant($purchaseInvoice);
         if ($purchaseInvoice->status !== 'draft') {
             return back()->with('error', 'لا يمكن حذف فاتورة غير مسودة');
         }

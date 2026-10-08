@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Controllers\Concerns\AuthorizesTenantAccess;
 
 use App\Models\Account;
 use App\Models\Budget;
@@ -12,6 +13,8 @@ use Illuminate\Support\Facades\DB;
 
 class BudgetController extends Controller
 {
+    use AuthorizesTenantAccess;
+
     public function index()
     {
         $budgets = Budget::where('tenant_id', Auth::user()->tenant_id)
@@ -95,6 +98,7 @@ class BudgetController extends Controller
 
     public function show(Budget $budget)
     {
+        $this->authorizeTenant($budget);
         $this->authorizeBudget($budget);
 
         $budget->load('fiscalYear', 'lines.account');
@@ -178,6 +182,7 @@ class BudgetController extends Controller
 
     public function confirm(Budget $budget)
     {
+        $this->authorizeTenant($budget);
         $this->authorizeBudget($budget);
 
         if ($budget->state !== 'draft') {
@@ -193,6 +198,7 @@ class BudgetController extends Controller
 
     public function cancel(Budget $budget)
     {
+        $this->authorizeTenant($budget);
         $this->authorizeBudget($budget);
 
         if ($budget->state !== 'draft') {

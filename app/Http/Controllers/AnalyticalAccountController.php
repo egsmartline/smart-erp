@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Controllers\Concerns\AuthorizesTenantAccess;
 
 use App\Models\AnalyticalAccount;
 use Illuminate\Http\Request;
@@ -8,6 +9,8 @@ use Illuminate\Support\Facades\Auth;
 
 class AnalyticalAccountController extends Controller
 {
+    use AuthorizesTenantAccess;
+
     public function index(Request $request)
     {
         $query = AnalyticalAccount::where('tenant_id', Auth::user()->tenant_id);
@@ -76,6 +79,7 @@ class AnalyticalAccountController extends Controller
 
     public function show(AnalyticalAccount $analyticalAccount)
     {
+        $this->authorizeTenant($analyticalAccount);
         $this->authorizeAccount($analyticalAccount);
 
         $utilization = $analyticalAccount->budget_amount > 0

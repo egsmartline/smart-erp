@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Controllers\Concerns\AuthorizesTenantAccess;
 
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderLine;
@@ -18,6 +19,8 @@ use Illuminate\Support\Facades\DB;
 
 class PurchaseOrderController extends TenantAwareController
 {
+    use AuthorizesTenantAccess;
+
     public function index(Request $request)
     {
         $query = $this->tenantQuery(PurchaseOrder::class)
@@ -154,6 +157,7 @@ class PurchaseOrderController extends TenantAwareController
 
     public function show(PurchaseOrder $purchaseOrder)
     {
+        $this->authorizeTenant($purchaseOrder);
         $purchaseOrder->load(['supplier', 'warehouse', 'user', 'lines.item', 'currency']);
         return view('purchase-orders.show', compact('purchaseOrder'));
     }
@@ -269,6 +273,7 @@ class PurchaseOrderController extends TenantAwareController
 
     public function confirm(PurchaseOrder $purchaseOrder)
     {
+        $this->authorizeTenant($purchaseOrder);
         if ($purchaseOrder->status !== 'draft') {
             return back()->with('error', 'لا يمكن تأكيد أمر شراء غير مسودة');
         }
@@ -421,6 +426,7 @@ class PurchaseOrderController extends TenantAwareController
 
     public function cancel(PurchaseOrder $purchaseOrder)
     {
+        $this->authorizeTenant($purchaseOrder);
         if ($purchaseOrder->status === 'cancelled') {
             return back()->with('error', 'أمر الشراء已经被إلغاء بالفعل');
         }

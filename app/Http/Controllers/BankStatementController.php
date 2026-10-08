@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Http\Controllers\Concerns\AuthorizesTenantAccess;
 
 use App\Models\BankAccount;
 use App\Models\BankStatement;
@@ -10,6 +11,8 @@ use Illuminate\Support\Facades\Auth;
 
 class BankStatementController extends TenantAwareController
 {
+    use AuthorizesTenantAccess;
+
     public function index(Request $request)
     {
         $query = $this->tenantQuery(BankStatement::class);
@@ -59,6 +62,7 @@ class BankStatementController extends TenantAwareController
 
     public function show(BankStatement $bankStatement)
     {
+        $this->authorizeTenant($bankStatement);
         $bankStatement->load('bankAccount', 'journal', 'lines');
 
         return view('bank-statements.show', compact('bankStatement'));
@@ -66,6 +70,7 @@ class BankStatementController extends TenantAwareController
 
     public function post(BankStatement $bankStatement)
     {
+        $this->authorizeTenant($bankStatement);
         if ($bankStatement->state !== 'draft') {
             return redirect()->back()->with('error', 'لا يمكن ترحيل كشف الحساب إلا إذا كان في حالة مسودة');
         }
@@ -81,6 +86,7 @@ class BankStatementController extends TenantAwareController
 
     public function destroy(BankStatement $bankStatement)
     {
+        $this->authorizeTenant($bankStatement);
         if ($bankStatement->state !== 'draft') {
             return redirect()->back()->with('error', 'لا يمكن حذف كشف الحساب إلا إذا كان في حالة مسودة');
         }
