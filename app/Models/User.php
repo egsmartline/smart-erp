@@ -93,18 +93,28 @@ class User extends Authenticatable
 
     public function roleModel()
     {
-        return $this->belongsTo(UserRole::class, 'role', 'slug');
+        $relation = $this->belongsTo(UserRole::class, 'role', 'slug');
+
+        if ($this->tenant_id) {
+            $relation->where('tenant_id', $this->tenant_id);
+        }
+
+        return $relation;
     }
 
     public function hasPermission(string $permissionSlug): bool
     {
-        if ($this->isSuperAdmin()) {
+        if ($this->isAdmin()) {
             return true;
         }
-        return $this->roleModel()
-            ?->permissions()
-            ->where('slug', $permissionSlug)
-            ->exists() ?? false;
+
+        $role = $this->roleModel()->first();
+
+        if (!$role) {
+            return false;
+        }
+
+        return $role->permissions()->where('slug', $permissionSlug)->exists();
     }
 
     public function isSuperAdmin(): bool
