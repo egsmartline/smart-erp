@@ -296,7 +296,7 @@ class PurchaseOrderController extends TenantAwareController
                 $line->update(['received_qty' => $line->quantity]);
 
                 $itemWarehouse = ItemWarehouse::firstOrCreate(
-                    ['item_id' => $line->item_id, 'warehouse_id' => $purchaseOrder->warehouse_id],
+                    ['tenant_id' => $this->getTenantId(), 'item_id' => $line->item_id, 'warehouse_id' => $purchaseOrder->warehouse_id],
                     ['quantity' => 0, 'reserved_quantity' => 0, 'average_cost' => 0]
                 );
 

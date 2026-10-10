@@ -6,6 +6,7 @@ use App\Models\StockTransfer;
 use App\Models\StockTransferLine;
 use App\Models\Item;
 use App\Models\ItemWarehouse;
+use App\Models\StockMovement;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
 
@@ -42,7 +43,7 @@ class StockTransferController extends TenantAwareController
         $validated = $request->validate([
             'source_warehouse_id' => 'required|exists:warehouses,id',
             'destination_warehouse_id' => 'required|exists:warehouses,id|different:source_warehouse_id',
-            'transfer_date' => 'required|date',
+            'date' => 'required|date',
             'notes' => 'nullable|string',
             'lines' => 'required|array|min:1',
             'lines.*.item_id' => 'required|exists:items,id',
@@ -50,28 +51,23 @@ class StockTransferController extends TenantAwareController
             'lines.*.notes' => 'nullable|string|max:500',
         ]);
 
-        $lastTransfer = StockTransfer::where('tenant_id', $this->getTenantId())->latest('id')->first();
-        $nextNumber = $lastTransfer ? (int) substr($lastTransfer->reference, -4) + 1 : 1;
-        $reference = 'ST-' . date('Y') . '-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
-
         $transfer = StockTransfer::create([
             'tenant_id' => $this->getTenantId(),
-            'reference' => $reference,
+            'reference' => $this->nextSequentialNumber('stock_transfers', 'reference', null, 'ST', 'Y'),
             'source_warehouse_id' => $validated['source_warehouse_id'],
             'destination_warehouse_id' => $validated['destination_warehouse_id'],
-            'transfer_date' => $validated['transfer_date'],
+            'date' => $validated['date'],
             'state' => 'draft',
             'notes' => $validated['notes'] ?? null,
-            'created_by' => auth()->id(),
+            'user_id' => auth()->id(),
         ]);
 
         foreach ($validated['lines'] as $line) {
             StockTransferLine::create([
                 'tenant_id' => $this->getTenantId(),
-                'transfer_id' => $transfer->id,
+                'stock_transfer_id' => $transfer->id,
                 'item_id' => $line['item_id'],
                 'quantity' => $line['quantity'],
-                'notes' => $line['notes'] ?? null,
             ]);
         }
 
@@ -98,33 +94,83 @@ class StockTransferController extends TenantAwareController
     {
         if ($transfer->tenant_id !== $this->getTenantId()) abort(403);
 
-        foreach ($transfer->lines as $line) {
-            $sourceIw = ItemWarehouse::where('tenant_id', $this->getTenantId())
+        $tenantId = $this->getTenantId();
+        $lines = $transfer->lines()->with('item')->get();
+
+        // Validate everything first: a transfer that only partly applies would
+        // create stock at the destination out of thin air.
+        $sources = [];
+        foreach ($lines as $line) {
+            $sourceIw = ItemWarehouse::where('tenant_id', $tenantId)
                 ->where('item_id', $line->item_id)
                 ->where('warehouse_id', $transfer->source_warehouse_id)
                 ->first();
 
-            if ($sourceIw && $sourceIw->quantity >= $line->quantity) {
-                $sourceIw->quantity -= $line->quantity;
-                $sourceIw->save();
+            if (!$sourceIw || (float) $sourceIw->quantity < (float) $line->quantity) {
+                return redirect()->route('stock-transfers.show', $transfer)
+                    ->with('error', 'الرصيد غير كافٍ في المستودع المصدر للصنف: ' . $line->item->name);
             }
-
-            $destIw = ItemWarehouse::firstOrCreate([
-                'tenant_id' => $this->getTenantId(),
-                'item_id' => $line->item_id,
-                'warehouse_id' => $transfer->destination_warehouse_id,
-            ], ['quantity' => 0, 'reserved_quantity' => 0, 'average_cost' => 0]);
-
-            $newQty = $destIw->quantity + $line->quantity;
-            if ($newQty > 0) {
-                $sourceAvg = $sourceIw ? $sourceIw->average_cost : 0;
-                $destIw->average_cost = ($destIw->quantity * $destIw->average_cost + $line->quantity * $sourceAvg) / $newQty;
-            }
-            $destIw->quantity = $newQty;
-            $destIw->save();
+            $sources[$line->id] = $sourceIw;
         }
 
-        $transfer->update(['state' => 'done']);
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        try {
+            foreach ($lines as $line) {
+                $sourceIw = $sources[$line->id];
+                $unitCost = (float) $sourceIw->average_cost;
+
+                $sourceIw->quantity = (float) $sourceIw->quantity - (float) $line->quantity;
+                $sourceIw->save();
+
+                StockMovement::create([
+                    'tenant_id' => $tenantId,
+                    'item_id' => $line->item_id,
+                    'warehouse_id' => $transfer->source_warehouse_id,
+                    'type' => 'transfer_out',
+                    'quantity' => $line->quantity,
+                    'unit_cost' => $unitCost,
+                    'total_cost' => $unitCost * (float) $line->quantity,
+                    'reference_type' => StockTransfer::class,
+                    'reference_id' => $transfer->id,
+                    'description' => 'تحويل صادر - ' . ($transfer->reference ?? ''),
+                    'user_id' => auth()->id(),
+                ]);
+
+                $destIw = ItemWarehouse::firstOrCreate([
+                    'tenant_id' => $tenantId,
+                    'item_id' => $line->item_id,
+                    'warehouse_id' => $transfer->destination_warehouse_id,
+                ], ['quantity' => 0, 'reserved_quantity' => 0, 'average_cost' => 0]);
+
+                $newQty = (float) $destIw->quantity + (float) $line->quantity;
+                if ($newQty > 0) {
+                    $destIw->average_cost = ((float) $destIw->quantity * (float) $destIw->average_cost + (float) $line->quantity * $unitCost) / $newQty;
+                }
+                $destIw->quantity = $newQty;
+                $destIw->save();
+
+                StockMovement::create([
+                    'tenant_id' => $tenantId,
+                    'item_id' => $line->item_id,
+                    'warehouse_id' => $transfer->destination_warehouse_id,
+                    'type' => 'transfer_in',
+                    'quantity' => $line->quantity,
+                    'unit_cost' => $unitCost,
+                    'total_cost' => $unitCost * (float) $line->quantity,
+                    'reference_type' => StockTransfer::class,
+                    'reference_id' => $transfer->id,
+                    'description' => 'تحويل وارد - ' . ($transfer->reference ?? ''),
+                    'user_id' => auth()->id(),
+                ]);
+            }
+
+            $transfer->update(['state' => 'done']);
+            \Illuminate\Support\Facades\DB::commit();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return redirect()->route('stock-transfers.show', $transfer)
+                ->with('error', 'تعذر إتمام التحويل: ' . $e->getMessage());
+        }
 
         return redirect()->route('stock-transfers.show', $transfer)->with('success', 'تم إتمام التحويل بنجاح');
     }

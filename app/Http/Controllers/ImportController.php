@@ -142,9 +142,20 @@ class ImportController extends TenantAwareController
                     $newOpening = (float) $item->opening_stock;
                     $diff = $newOpening - $oldOpening;
                     if ($diff != 0) {
-                        $iw = ItemWarehouse::where('item_id', $item->id)->first();
+                        $iw = ItemWarehouse::where('tenant_id', $tenantId)->where('item_id', $item->id)->first();
                         if ($iw) {
-                            $iw->increment('quantity', $diff);
+                            $oldQty = (float) $iw->quantity;
+                            $oldAvg = (float) $iw->average_cost;
+                            $newQty = $oldQty + $diff;
+                            $cost = (float) ($item->cost_price ?? 0);
+
+                            if ($newQty > 0) {
+                                $iw->average_cost = max($oldQty * $oldAvg + $diff * $cost, 0) / $newQty;
+                            } else {
+                                $iw->average_cost = 0;
+                            }
+                            $iw->quantity = $newQty;
+                            $iw->save();
                         } elseif ($diff > 0) {
                             $whId = $this->findDefaultWarehouse($tenantId);
                             if ($whId) {
@@ -153,6 +164,7 @@ class ImportController extends TenantAwareController
                                     'item_id' => $item->id,
                                     'warehouse_id' => $whId,
                                     'quantity' => $newOpening,
+                                    'average_cost' => (float) ($item->cost_price ?? 0),
                                 ]);
                             }
                         }
@@ -169,6 +181,7 @@ class ImportController extends TenantAwareController
                                 'item_id' => $item->id,
                                 'warehouse_id' => $whId,
                                 'quantity' => $opening,
+                                'average_cost' => (float) ($item->cost_price ?? 0),
                             ]);
                         }
                     }

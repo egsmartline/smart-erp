@@ -180,7 +180,8 @@ class PurchaseReturnController extends TenantAwareController
             $purchaseReturn->update(['status' => 'posted']);
 
             foreach ($purchaseReturn->lines as $line) {
-                $itemWarehouse = ItemWarehouse::where('item_id', $line->item_id)
+                $itemWarehouse = ItemWarehouse::where('tenant_id', $this->getTenantId())
+                    ->where('item_id', $line->item_id)
                     ->where('warehouse_id', $purchaseReturn->warehouse_id)
                     ->first();
 

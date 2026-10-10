@@ -71,7 +71,7 @@ class SalesDeliveryNoteController extends TenantAwareController
                 continue;
             }
 
-            $itemWarehouse = ItemWarehouse::where('item_id', $line['item_id'])
+            $itemWarehouse = ItemWarehouse::where('tenant_id', $this->getTenantId())->where('item_id', $line['item_id'])
                 ->where('warehouse_id', $warehouseId)
                 ->first();
             $available = $itemWarehouse ? $itemWarehouse->quantity : 0;
@@ -207,7 +207,7 @@ class SalesDeliveryNoteController extends TenantAwareController
                 continue;
             }
 
-            $itemWarehouse = ItemWarehouse::where('item_id', $line['item_id'])
+            $itemWarehouse = ItemWarehouse::where('tenant_id', $this->getTenantId())->where('item_id', $line['item_id'])
                 ->where('warehouse_id', $warehouseId)
                 ->first();
 
@@ -225,7 +225,7 @@ class SalesDeliveryNoteController extends TenantAwareController
         DB::transaction(function () use ($salesDeliveryNote, $validated, $tenantId, $request, $invoiceId, $warehouseId) {
             foreach ($salesDeliveryNote->lines as $oldLine) {
                 if ($this->noteMovedStock($salesDeliveryNote, (int) $oldLine->item_id)) {
-                    $itemWarehouse = ItemWarehouse::where('item_id', $oldLine->item_id)
+                    $itemWarehouse = ItemWarehouse::where('tenant_id', $this->getTenantId())->where('item_id', $oldLine->item_id)
                         ->where('warehouse_id', $salesDeliveryNote->warehouse_id)
                         ->first();
                     if ($itemWarehouse) {
@@ -304,7 +304,7 @@ class SalesDeliveryNoteController extends TenantAwareController
             if ($salesDeliveryNote->status === 'confirmed') {
                 foreach ($salesDeliveryNote->lines as $line) {
                     if ($this->noteMovedStock($salesDeliveryNote, (int) $line->item_id)) {
-                        $itemWarehouse = ItemWarehouse::where('item_id', $line->item_id)
+                        $itemWarehouse = ItemWarehouse::where('tenant_id', $this->getTenantId())->where('item_id', $line->item_id)
                             ->where('warehouse_id', $salesDeliveryNote->warehouse_id)
                             ->first();
                         if ($itemWarehouse) {

@@ -39,8 +39,8 @@
                     </select>
                 </div>
                 <div>
-                    <label for="transfer_date" class="mb-1 block text-sm font-medium text-gray-700">التاريخ <span class="text-red-500">*</span></label>
-                    <input type="date" name="transfer_date" id="transfer_date" value="{{ old('transfer_date', date('Y-m-d')) }}" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                    <label for="date" class="mb-1 block text-sm font-medium text-gray-700">التاريخ <span class="text-red-500">*</span></label>
+                    <input type="date" name="date" id="date" value="{{ old('date', date('Y-m-d')) }}" required class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
                 </div>
                 <div class="md:col-span-3">
                     <label for="notes" class="mb-1 block text-sm font-medium text-gray-700">ملاحظات</label>

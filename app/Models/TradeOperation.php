@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class TradeOperation extends Model
 {
@@ -84,11 +85,17 @@ class TradeOperation extends Model
     public static function generateNumber($type)
     {
         $prefix = $type === 'import' ? 'IMP' : 'EXP';
-        $lastOp = self::where('type', $type)
-            ->where('tenant_id', session('current_tenant_id') ?? auth()->user()->tenant_id)
-            ->orderBy('id', 'desc')
-            ->first();
-        $nextNumber = $lastOp ? intval(substr($lastOp->operation_number, -4)) + 1 : 1;
+        $tenantId = session('current_tenant_id') ?? auth()->user()->tenant_id;
+
+        // Soft-deleted rows still hold their operation_number under the unique
+        // key, so ordering by id (which skips them) reuses a taken number.
+        $maxNum = self::withTrashed()
+            ->where('type', $type)
+            ->where('tenant_id', $tenantId)
+            ->max(DB::raw('CAST(SUBSTRING(operation_number, -4) AS UNSIGNED)'));
+
+        $nextNumber = ($maxNum ?: 0) + 1;
+
         return $prefix . '-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
     }
 

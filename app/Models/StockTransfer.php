@@ -15,18 +15,18 @@ class StockTransfer extends Model
     protected $fillable = [
         'tenant_id',
         'reference',
+        'date',
         'source_warehouse_id',
         'destination_warehouse_id',
-        'transfer_date',
         'state',
         'notes',
-        'created_by',
+        'user_id',
     ];
 
     protected function casts(): array
     {
         return [
-            'transfer_date' => 'date',
+            'date' => 'date',
         ];
     }
 
@@ -47,11 +47,11 @@ class StockTransfer extends Model
 
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function lines(): HasMany
     {
-        return $this->hasMany(StockTransferLine::class, 'transfer_id');
+        return $this->hasMany(StockTransferLine::class, 'stock_transfer_id');
     }
 }

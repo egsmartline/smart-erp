@@ -36,7 +36,7 @@
                     @forelse($transfers as $t)
                         <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
                             <td class="px-4 py-3 font-medium text-gray-900"><a href="{{ route('stock-transfers.show', $t) }}" class="hover:text-blue-600">{{ $t->reference }}</a></td>
-                            <td class="px-4 py-3 text-gray-600">{{ $t->transfer_date->format('Y/m/d') }}</td>
+                            <td class="px-4 py-3 text-gray-600">{{ $t->date->format('Y/m/d') }}</td>
                             <td class="px-4 py-3 text-gray-600">{{ $t->sourceWarehouse->name ?? '-' }}</td>
                             <td class="px-4 py-3 text-gray-600">{{ $t->destinationWarehouse->name ?? '-' }}</td>
                             <td class="px-4 py-3 text-center">

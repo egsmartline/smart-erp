@@ -452,12 +452,28 @@ class PurchaseInvoiceController extends TenantAwareController
 
         try {
             foreach ($purchaseInvoice->lines as $line) {
-                $itemWarehouse = ItemWarehouse::where('item_id', $line->item_id)
+                $itemWarehouse = ItemWarehouse::where('tenant_id', $this->getTenantId())->where('item_id', $line->item_id)
                     ->where('warehouse_id', $purchaseInvoice->warehouse_id)
                     ->first();
 
                 if ($itemWarehouse) {
-                    $itemWarehouse->decrement('quantity', $line->quantity);
+                    $oldQty = (float) $itemWarehouse->quantity;
+                    $oldAvg = (float) $itemWarehouse->average_cost;
+                    $lineQty = (float) $line->quantity;
+                    $newQty = $oldQty - $lineQty;
+
+                    if ($newQty > 0) {
+                        // Voiding has to undo exactly what post() capitalized,
+                        // otherwise the invoice cost stays inside the average
+                        // and every later COGS is overstated.
+                        $newValue = max($oldQty * $oldAvg - $lineQty * (float) $line->unit_cost, 0);
+                        $itemWarehouse->average_cost = $newValue / $newQty;
+                    } else {
+                        $itemWarehouse->average_cost = 0;
+                    }
+
+                    $itemWarehouse->quantity = $newQty;
+                    $itemWarehouse->save();
                 }
 
                 StockMovement::create([

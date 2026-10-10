@@ -44,21 +44,26 @@ abstract class TenantAwareController extends Controller
     }
 
     /**
-     * Date-prefixed document number that cannot collide.
+     * Sequential document number that cannot collide.
      *
      * The unique key keeps soft-deleted rows in play while count() does not, so
      * the usual count()+1 breaks the first time a document is deleted. This
-     * probes the real table until it finds a free number.
+     * probes the real table until it finds a free number. Pass a null tenant
+     * when the column is unique across the whole table.
      */
-    protected function nextSequentialNumber(string $table, string $column, int $tenantId, string $prefix): string
+    protected function nextSequentialNumber(string $table, string $column, ?int $tenantId, string $prefix, string $dateFormat = 'Ymd'): string
     {
-        $datePrefix = $prefix . '-' . now()->format('Ymd') . '-';
-        $seq = (int) DB::table($table)->where('tenant_id', $tenantId)->count() + 1;
+        $datePrefix = $prefix . '-' . now()->format($dateFormat) . '-';
+
+        $scope = fn () => DB::table($table)
+            ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId));
+
+        $seq = (int) $scope()->count() + 1;
 
         do {
             $number = $datePrefix . str_pad($seq, 4, '0', STR_PAD_LEFT);
             $seq++;
-        } while (DB::table($table)->where('tenant_id', $tenantId)->where($column, $number)->exists());
+        } while ($scope()->where($column, $number)->exists());
 
         return $number;
     }

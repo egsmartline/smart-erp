@@ -369,7 +369,7 @@ class SalesInvoiceController extends TenantAwareController
                         continue;
                     }
 
-                    $itemWarehouse = ItemWarehouse::where('item_id', $line->item_id)
+                    $itemWarehouse = ItemWarehouse::where('tenant_id', $this->getTenantId())->where('item_id', $line->item_id)
                         ->where('warehouse_id', $line->warehouse_id)
                         ->first();
 
@@ -381,7 +381,7 @@ class SalesInvoiceController extends TenantAwareController
                 }
 
                 foreach ($salesInvoice->lines as $line) {
-                    $itemWarehouse = ItemWarehouse::where('item_id', $line->item_id)
+                    $itemWarehouse = ItemWarehouse::where('tenant_id', $this->getTenantId())->where('item_id', $line->item_id)
                         ->where('warehouse_id', $line->warehouse_id)
                         ->first();
 
@@ -473,7 +473,7 @@ class SalesInvoiceController extends TenantAwareController
             ]);
 
             foreach ($salesInvoice->lines as $line) {
-                $itemWarehouse = ItemWarehouse::where('item_id', $line->item_id)
+                $itemWarehouse = ItemWarehouse::where('tenant_id', $this->getTenantId())->where('item_id', $line->item_id)
                     ->where('warehouse_id', $line->warehouse_id)
                     ->first();
 

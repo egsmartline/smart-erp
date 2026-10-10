@@ -12,10 +12,9 @@ class StockTransferLine extends Model
 
     protected $fillable = [
         'tenant_id',
-        'transfer_id',
+        'stock_transfer_id',
         'item_id',
         'quantity',
-        'notes',
     ];
 
     protected function casts(): array
@@ -27,7 +26,7 @@ class StockTransferLine extends Model
 
     public function transfer(): BelongsTo
     {
-        return $this->belongsTo(StockTransfer::class, 'transfer_id');
+        return $this->belongsTo(StockTransfer::class, 'stock_transfer_id');
     }
 
     public function item(): BelongsTo

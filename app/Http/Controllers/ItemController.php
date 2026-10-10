@@ -130,6 +130,7 @@ class ItemController extends TenantAwareController
                     'item_id' => $item->id,
                     'warehouse_id' => $whId,
                     'quantity' => $quantity,
+                    'average_cost' => $quantity > 0 ? (float) ($item->cost_price ?? 0) : 0,
                 ]);
             }
         } elseif ($openingStock > 0) {
@@ -143,6 +144,7 @@ class ItemController extends TenantAwareController
                     'item_id' => $item->id,
                     'warehouse_id' => $warehouseId,
                     'quantity' => $openingStock,
+                    'average_cost' => (float) ($item->cost_price ?? 0),
                 ]);
             }
         }
@@ -395,9 +397,22 @@ class ItemController extends TenantAwareController
         $diff = $newOpening - $oldOpening;
 
         if ($diff != 0) {
-            $iw = ItemWarehouse::where('item_id', $item->id)->first();
+            $iw = ItemWarehouse::where('tenant_id', $this->getTenantId())
+                ->where('item_id', $item->id)
+                ->first();
             if ($iw) {
-                $iw->increment('quantity', $diff);
+                $oldQty = (float) $iw->quantity;
+                $oldAvg = (float) $iw->average_cost;
+                $newQty = $oldQty + $diff;
+                $cost = (float) ($item->cost_price ?? 0);
+
+                if ($newQty > 0) {
+                    $iw->average_cost = max($oldQty * $oldAvg + $diff * $cost, 0) / $newQty;
+                } else {
+                    $iw->average_cost = 0;
+                }
+                $iw->quantity = $newQty;
+                $iw->save();
             } elseif ($diff > 0) {
                 $warehouseId = $validated['default_warehouse'] ?? $this->tenantQuery(Warehouse::class)->where('is_default', true)->value('id')
                     ?? $this->tenantQuery(Warehouse::class)->value('id');
@@ -407,6 +422,7 @@ class ItemController extends TenantAwareController
                         'item_id' => $item->id,
                         'warehouse_id' => $warehouseId,
                         'quantity' => $newOpening,
+                        'average_cost' => (float) ($item->cost_price ?? 0),
                     ]);
                 }
             }
@@ -423,7 +439,7 @@ class ItemController extends TenantAwareController
             }
             foreach ($existingWhIds as $whId) {
                 if (!in_array($whId, $selectedWarehouses)) {
-                    $iw = ItemWarehouse::where('item_id', $item->id)->where('warehouse_id', $whId)->first();
+                    $iw = ItemWarehouse::where('tenant_id', $this->getTenantId())->where('item_id', $item->id)->where('warehouse_id', $whId)->first();
                     if ($iw && $iw->quantity == 0) {
                         $iw->delete();
                     }

@@ -162,7 +162,7 @@ class SalesReturnController extends TenantAwareController
             $salesReturn->update(['status' => 'posted']);
 
             foreach ($salesReturn->lines as $line) {
-                $itemWarehouse = ItemWarehouse::where('item_id', $line->item_id)
+                $itemWarehouse = ItemWarehouse::where('tenant_id', $this->getTenantId())->where('item_id', $line->item_id)
                     ->where('warehouse_id', $salesReturn->warehouse_id)
                     ->first();
 

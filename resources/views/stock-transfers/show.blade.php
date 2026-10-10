@@ -31,7 +31,7 @@
             <h3 class="text-lg font-bold text-gray-800 mb-4">بيانات التحويل</h3>
             <div class="space-y-3 text-sm">
                 <div class="flex justify-between"><span class="text-gray-500">المرجع:</span><span class="font-medium font-mono">{{ $transfer->reference }}</span></div>
-                <div class="flex justify-between"><span class="text-gray-500">التاريخ:</span><span class="font-medium">{{ $transfer->transfer_date->format('Y/m/d') }}</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">التاريخ:</span><span class="font-medium">{{ $transfer->date->format('Y/m/d') }}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">من مخزن:</span><span class="font-medium">{{ $transfer->sourceWarehouse->name ?? '-' }}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">إلى مخزن:</span><span class="font-medium">{{ $transfer->destinationWarehouse->name ?? '-' }}</span></div>
                 <div class="flex justify-between"><span class="text-gray-500">الحالة:</span>
