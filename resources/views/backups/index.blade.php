@@ -16,13 +16,17 @@
         <div class="mb-4 flex items-center gap-4">
             <form action="{{ route('backups.upload') }}" method="POST" enctype="multipart/form-data" class="flex items-center gap-2">
                 @csrf
-                <input type="file" name="backup_file" accept=".sqlite,.db,.sql" required class="block w-60 text-xs text-gray-700 file:mr-2 file:rounded file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-blue-700 hover:file:bg-blue-100">
+                <input type="file" name="backup_file" accept=".sqlite,.db,.sql,.zip" required class="block w-60 text-xs text-gray-700 file:mr-2 file:rounded file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-blue-700 hover:file:bg-blue-100">
                 <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-medium text-white hover:bg-emerald-700 transition">
                     <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
                     رفع واستعادة
                 </button>
             </form>
         </div>
+
+        <p class="mb-4 rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-700">
+            النسخة الاحتياطية الكاملة (ZIP) تشمل بيانات الشركة وقاعدة البيانات وملفات الكود و vendor و .env و public والملفات المرفوعة. قد يستغرق الإنشاء بعض الوقت.
+        </p>
 
         <div class="overflow-x-auto">
             <table class="w-full text-right text-sm">
