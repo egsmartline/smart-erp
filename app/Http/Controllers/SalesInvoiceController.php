@@ -614,21 +614,11 @@ class SalesInvoiceController extends TenantAwareController
         return response()->json($items);
     }
 
-    private function alreadyDeliveredQty(int $itemId, int $warehouseId): float
-    {
-        return (float) StockMovement::where('tenant_id', $this->getTenantId())
-            ->where('item_id', $itemId)
-            ->where('warehouse_id', $warehouseId)
-            ->where('reference_type', 'App\\Models\\SalesDeliveryNote')
-            ->whereNull('deleted_at')
-            ->sum('quantity');
-    }
-
     /**
      * Has the stock behind this invoice line already been relieved?
-     * When delivery notes are linked to the invoice we ask only about them, so a
-     * note that shipped this exact line decides it and unrelated notes do not.
-     * An unlinked invoice keeps the legacy "any note for this item" fallback.
+     * Only delivery notes linked to THIS invoice claim the relief. Notes for the
+     * same item that are not linked to this invoice never exempt it, so the
+     * invoice always relieves stock unless a linked note shipped the exact line.
      */
     private function stockAlreadyRelievedFor(SalesInvoice $salesInvoice, SalesInvoiceLine $line): bool
     {
@@ -636,17 +626,17 @@ class SalesInvoiceController extends TenantAwareController
             ->where('sales_invoice_id', $salesInvoice->id)
             ->pluck('id');
 
-        if ($linkedNoteIds->isNotEmpty()) {
-            return StockMovement::where('tenant_id', $this->getTenantId())
-                ->where('reference_type', SalesDeliveryNote::class)
-                ->whereIn('reference_id', $linkedNoteIds)
-                ->where('item_id', $line->item_id)
-                ->where('warehouse_id', $line->warehouse_id)
-                ->whereNull('deleted_at')
-                ->exists();
+        if ($linkedNoteIds->isEmpty()) {
+            return false;
         }
 
-        return $this->alreadyDeliveredQty($line->item_id, $line->warehouse_id) > 0;
+        return StockMovement::where('tenant_id', $this->getTenantId())
+            ->where('reference_type', SalesDeliveryNote::class)
+            ->whereIn('reference_id', $linkedNoteIds)
+            ->where('item_id', $line->item_id)
+            ->where('warehouse_id', $line->warehouse_id)
+            ->whereNull('deleted_at')
+            ->exists();
     }
 
     private function invoiceMovedStock(SalesInvoice $salesInvoice, SalesInvoiceLine $line): bool
