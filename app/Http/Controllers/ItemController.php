@@ -98,10 +98,12 @@ class ItemController extends TenantAwareController
             'warehouses.*' => 'exists:warehouses,id',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
+            'is_inventory' => 'boolean',
         ]);
 
         $validated['tenant_id'] = $this->getTenantId();
         $validated['is_active'] = $request->boolean('is_active', true);
+        $validated['is_inventory'] = $request->boolean('is_inventory', true);
 
         // Auto-set barcode from SKU if not provided
         if (empty($validated['barcode']) && !empty($validated['sku'])) {
@@ -117,23 +119,24 @@ class ItemController extends TenantAwareController
 
         $item = Item::create($validated);
 
-        $openingStock = (float) ($validated['opening_stock'] ?? 0);
-        $selectedWarehouses = $request->input('warehouses', []);
-        if (!empty($selectedWarehouses)) {
-            foreach ($selectedWarehouses as $whId) {
-                $quantity = 0;
-                if ($openingStock > 0 && $whId === ($selectedWarehouses[0] ?? null)) {
-                    $quantity = $openingStock;
+        if ($request->boolean('is_inventory', true)) {
+            $openingStock = (float) ($validated['opening_stock'] ?? 0);
+            $selectedWarehouses = $request->input('warehouses', []);
+            if (!empty($selectedWarehouses)) {
+                foreach ($selectedWarehouses as $whId) {
+                    $quantity = 0;
+                    if ($openingStock > 0 && $whId === ($selectedWarehouses[0] ?? null)) {
+                        $quantity = $openingStock;
+                    }
+                    ItemWarehouse::create([
+                        'tenant_id' => $this->getTenantId(),
+                        'item_id' => $item->id,
+                        'warehouse_id' => $whId,
+                        'quantity' => $quantity,
+                        'average_cost' => $quantity > 0 ? (float) ($item->cost_price ?? 0) : 0,
+                    ]);
                 }
-                ItemWarehouse::create([
-                    'tenant_id' => $this->getTenantId(),
-                    'item_id' => $item->id,
-                    'warehouse_id' => $whId,
-                    'quantity' => $quantity,
-                    'average_cost' => $quantity > 0 ? (float) ($item->cost_price ?? 0) : 0,
-                ]);
-            }
-        } elseif ($openingStock > 0) {
+            } elseif ($openingStock > 0) {
             $warehouseId = $this->tenantQuery(\App\Models\Warehouse::class)->where('is_default', true)->value('id');
             if (!$warehouseId) {
                 $warehouseId = $this->tenantQuery(\App\Models\Warehouse::class)->value('id');
@@ -146,6 +149,7 @@ class ItemController extends TenantAwareController
                     'quantity' => $openingStock,
                     'average_cost' => (float) ($item->cost_price ?? 0),
                 ]);
+            }
             }
         }
 
@@ -372,9 +376,11 @@ class ItemController extends TenantAwareController
             'warehouses.*' => 'exists:warehouses,id',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
+            'is_inventory' => 'boolean',
         ]);
 
-        $validated['is_active'] = $request->boolean('is_active', true);
+        $validated['is_active'] = $request->boolean('is_active', $item->is_active !== false);
+        $validated['is_inventory'] = $request->boolean('is_inventory', $item->is_inventory !== false);
 
         // Auto-set barcode from SKU if not provided
         if (empty($validated['barcode']) && !empty($validated['sku'])) {
@@ -396,7 +402,7 @@ class ItemController extends TenantAwareController
         $newOpening = (float) $item->opening_stock;
         $diff = $newOpening - $oldOpening;
 
-        if ($diff != 0) {
+        if ($request->boolean('is_inventory', $item->is_inventory !== false) && $diff != 0) {
             $iw = ItemWarehouse::where('tenant_id', $this->getTenantId())
                 ->where('item_id', $item->id)
                 ->first();

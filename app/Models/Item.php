@@ -31,6 +31,7 @@ class Item extends Model
         'reorder_level',
         'tax_rate',
         'is_active',
+        'is_inventory',
         'has_serial_numbers',
         'has_expiry_date',
         'image',
@@ -48,6 +49,7 @@ class Item extends Model
             'tax_rate' => 'decimal:2',
             'opening_stock' => 'decimal:2',
             'is_active' => 'boolean',
+            'is_inventory' => 'boolean',
             'has_serial_numbers' => 'boolean',
             'has_expiry_date' => 'boolean',
         ];

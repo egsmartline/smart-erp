@@ -68,6 +68,10 @@ class SalesDeliveryNoteController extends TenantAwareController
         }
 
         foreach ($validated['lines'] as $line) {
+            if (!$this->itemIsInventory((int) $line['item_id'])) {
+                continue;
+            }
+
             $itemWarehouse = ItemWarehouse::where('tenant_id', $this->getTenantId())->where('item_id', $line['item_id'])
                 ->where('warehouse_id', $warehouseId)
                 ->first();
@@ -103,6 +107,10 @@ class SalesDeliveryNoteController extends TenantAwareController
                     'unit_price' => $line['unit_price'],
                     'total' => $line['total'],
                 ]);
+
+                if (!$this->itemIsInventory((int) $line['item_id'])) {
+                    continue;
+                }
 
                 $itemWarehouse = ItemWarehouse::firstOrCreate(
                     ['item_id' => $line['item_id'], 'warehouse_id' => $warehouseId],
@@ -213,6 +221,10 @@ class SalesDeliveryNoteController extends TenantAwareController
         $oldLines = $salesDeliveryNote->lines()->get()->keyBy('item_id');
 
         foreach ($validated['lines'] as $line) {
+            if (!$this->itemIsInventory((int) $line['item_id'])) {
+                continue;
+            }
+
             $itemWarehouse = ItemWarehouse::where('tenant_id', $this->getTenantId())->where('item_id', $line['item_id'])
                 ->where('warehouse_id', $warehouseId)
                 ->first();
@@ -268,6 +280,10 @@ class SalesDeliveryNoteController extends TenantAwareController
                     'unit_price' => $line['unit_price'],
                     'total' => $line['total'],
                 ]);
+
+                if (!$this->itemIsInventory((int) $line['item_id'])) {
+                    continue;
+                }
 
                 $itemWarehouse = ItemWarehouse::firstOrCreate(
                     ['item_id' => $line['item_id'], 'warehouse_id' => $warehouseId],
@@ -349,6 +365,11 @@ class SalesDeliveryNoteController extends TenantAwareController
 
         return redirect()->route('sales-delivery-notes.index')
             ->with('success', 'تم حذف إذن التسليم بنجاح');
+    }
+
+    private function itemIsInventory(int $itemId): bool
+    {
+        return (bool) Item::where('tenant_id', $this->getTenantId())->where('id', $itemId)->value('is_inventory');
     }
 
     /**

@@ -137,6 +137,30 @@
         </div>
 
         <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">إذنات تسليم بدون فاتورة</h3>
+            <div class="flex items-center justify-between rounded-lg bg-red-50 border border-red-200 p-4 mb-4">
+                <span class="text-sm font-medium text-red-700">عدد الأذون غير المرتبطة بفاتورة</span>
+                <span class="text-xl font-bold text-red-800">{{ $deliveryNotesWithoutInvoiceCount }}</span>
+            </div>
+            <div class="space-y-3">
+                @forelse($deliveryNotesWithoutInvoice as $dn)
+                    <a href="{{ route('sales-delivery-notes.show', $dn) }}" class="flex items-center justify-between rounded-lg border border-gray-200 p-3 hover:bg-red-50 transition">
+                        <div>
+                            <div class="font-mono text-xs text-gray-500">{{ $dn->delivery_number }}</div>
+                            <div class="font-medium text-gray-900">{{ $dn->customer->name ?? '-' }}</div>
+                            <div class="text-xs text-gray-500">{{ $dn->date?->format('Y/m/d') }}</div>
+                        </div>
+                        <div class="text-left">
+                            <span class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800">بدون فاتورة</span>
+                        </div>
+                    </a>
+                @empty
+                    <div class="text-center text-gray-500 py-4">لا توجد أذون تسليم بدون فاتورة</div>
+                @endforelse
+            </div>
+        </div>
+
+        <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6">
             <h3 class="text-lg font-bold text-gray-800 mb-4">استحقاقات الموردين هذا الشهر ({{ now()->format('m/Y') }})</h3>
             <div class="flex items-center justify-between rounded-lg bg-orange-50 border border-orange-200 p-4 mb-4">
                 <span class="text-sm font-medium text-orange-700">إجمالي الأقساط المستحقة غير المدفوعة</span>

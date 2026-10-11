@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Account;
 use App\Models\JournalEntry;
 use App\Models\SalesInvoice;
+use App\Models\SalesDeliveryNote;
 use App\Models\PurchaseInvoice;
 use App\Models\PurchaseInvoiceInstallment;
 use App\Models\SalesInvoiceInstallment;
@@ -122,6 +123,18 @@ class DashboardController extends TenantAwareController
             return (float) $inst->amount - (float) $inst->paid_amount;
         });
 
+        $deliveryNotesWithoutInvoiceQuery = SalesDeliveryNote::where('tenant_id', $tenantId)
+            ->where('status', 'confirmed')
+            ->whereNull('sales_invoice_id');
+
+        $deliveryNotesWithoutInvoiceCount = $deliveryNotesWithoutInvoiceQuery->count();
+
+        $deliveryNotesWithoutInvoice = $deliveryNotesWithoutInvoiceQuery
+            ->with('customer')
+            ->latest()
+            ->take(10)
+            ->get();
+
         return view('dashboard', compact(
             'stats', 'recentSales', 'recentPurchases',
             'accountsCount', 'salesChartLabels', 'salesChartData',
@@ -129,6 +142,7 @@ class DashboardController extends TenantAwareController
             'monthDues',
             'purchaseMonthDues', 'purchaseMonthDueTotal',
             'customerMonthDues', 'customerMonthDueTotal',
+            'deliveryNotesWithoutInvoice', 'deliveryNotesWithoutInvoiceCount',
             'debtors', 'debtorTotal', 'debtorTotals', 'baseCurrencyCode', 'currencyCodes'
         ));
     }
