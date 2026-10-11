@@ -103,8 +103,7 @@ class ItemController extends TenantAwareController
 
         $validated['tenant_id'] = $this->getTenantId();
         $validated['is_active'] = $request->boolean('is_active', true);
-        $validated['is_inventory'] = $request->boolean('is_inventory', true);
-
+        $validated['is_inventory'] = $request->boolean('is_inventory');
         // Auto-set barcode from SKU if not provided
         if (empty($validated['barcode']) && !empty($validated['sku'])) {
             $validated['barcode'] = $validated['sku'];
@@ -119,7 +118,7 @@ class ItemController extends TenantAwareController
 
         $item = Item::create($validated);
 
-        if ($request->boolean('is_inventory', true)) {
+        if ($validated['is_inventory']) {
             $openingStock = (float) ($validated['opening_stock'] ?? 0);
             $selectedWarehouses = $request->input('warehouses', []);
             if (!empty($selectedWarehouses)) {
@@ -379,8 +378,8 @@ class ItemController extends TenantAwareController
             'is_inventory' => 'boolean',
         ]);
 
-        $validated['is_active'] = $request->boolean('is_active', $item->is_active !== false);
-        $validated['is_inventory'] = $request->boolean('is_inventory', $item->is_inventory !== false);
+        $validated['is_active'] = $request->boolean('is_active');
+        $validated['is_inventory'] = $request->boolean('is_inventory');
 
         // Auto-set barcode from SKU if not provided
         if (empty($validated['barcode']) && !empty($validated['sku'])) {
@@ -402,7 +401,7 @@ class ItemController extends TenantAwareController
         $newOpening = (float) $item->opening_stock;
         $diff = $newOpening - $oldOpening;
 
-        if ($request->boolean('is_inventory', $item->is_inventory !== false) && $diff != 0) {
+        if ($validated['is_inventory'] && $diff != 0) {
             $iw = ItemWarehouse::where('tenant_id', $this->getTenantId())
                 ->where('item_id', $item->id)
                 ->first();
