@@ -56,7 +56,7 @@
                             <span class="text-xs text-gray-500">{{ $curName }}</span>
                         </div>
                         <div class="text-xs text-gray-500 mb-1">إجمالي {{ $curCode }}</div>
-                        <div class="text-2xl font-bold {{ $group['total'] > 0 ? 'text-red-600' : ($group['total'] < 0 ? 'text-emerald-600' : 'text-gray-700') }}">
+                        <div class="text-sm font-bold {{ $group['total'] > 0 ? 'text-red-600' : ($group['total'] < 0 ? 'text-emerald-600' : 'text-gray-700') }}">
                             {{ number_format($group['total'], 2) }}
                         </div>
                         <div class="mt-2 text-xs text-gray-600 space-y-0.5">
