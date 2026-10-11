@@ -41,13 +41,15 @@
                 $curSym = $group['currency']?->symbol ?? 'ج.م';
             @endphp
             <div class="rounded-xl bg-white shadow-sm border border-gray-200 p-6 mb-4">
-                <div class="mb-3 flex items-center gap-2">
+                <div class="mb-3 flex flex-wrap items-center gap-2">
                     <span class="rounded-lg bg-blue-100 px-3 py-1 text-sm font-bold text-blue-800">{{ $curCode }}</span>
                     <span class="text-sm text-gray-500">الرصيد الافتتاحي:</span>
                     <span class="font-semibold {{ $group['openingBalance'] >= 0 ? 'text-red-600' : 'text-emerald-600' }}">{{ number_format($group['openingBalance'], 2) }}</span>
+                    <span class="text-sm text-gray-500">إجمالي {{ $curCode }}:</span>
+                    <span class="font-bold {{ $group['total'] >= 0 ? 'text-red-600' : 'text-emerald-600' }}">{{ number_format($group['total'], 2) }}</span>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-right text-sm">
+                    <table class="w-full text-right text-sm statement-print">
                         <thead>
                             <tr class="border-b-2 border-gray-300 bg-gray-50">
                                 <th class="px-4 py-3 font-semibold">التاريخ</th>
@@ -98,4 +100,12 @@
             <p class="text-center text-gray-500 py-8">اختر مورداً لعرض البيانات</p>
         </div>
     @endif
+
+    @push('styles')
+    <style>
+        @media print {
+            .statement-print td { font-size: 12px; }
+        }
+    </style>
+    @endpush
 </x-app-layout>

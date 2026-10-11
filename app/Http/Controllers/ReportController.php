@@ -367,6 +367,9 @@ class ReportController extends TenantAwareController
                 $group['transactions'] = $group['transactions']->sortBy(function ($t) {
                     return ($t['date'] ? $t['date']->format('Y-m-d') : '0000-00-00');
                 })->values();
+
+                $total = $group['openingBalance'] + $group['transactions']->sum('amount');
+                $group['total'] = $total;
             }
             unset($group);
 
