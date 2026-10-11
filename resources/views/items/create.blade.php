@@ -132,6 +132,7 @@
                 </div>
                 <div class="flex items-center gap-6 pt-6">
                     <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="hidden" name="is_inventory" value="0">
                         <input type="checkbox" name="is_inventory" value="1" {{ old('is_inventory', true) ? 'checked' : '' }} class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
                         <span class="text-sm font-medium text-gray-700">صنف مخزني</span>
                     </label>

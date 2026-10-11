@@ -7,8 +7,11 @@ use App\Models\Item;
 use App\Models\ItemCategory;
 use App\Models\ItemUnit;
 use App\Models\ItemWarehouse;
+use App\Models\StockMovement;
 use App\Models\Currency;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ItemController extends TenantAwareController
 {
@@ -103,7 +106,7 @@ class ItemController extends TenantAwareController
 
         $validated['tenant_id'] = $this->getTenantId();
         $validated['is_active'] = $request->boolean('is_active', true);
-        $validated['is_inventory'] = $request->boolean('is_inventory');
+        $validated['is_inventory'] = $request->boolean('is_inventory', true);
         // Auto-set barcode from SKU if not provided
         if (empty($validated['barcode']) && !empty($validated['sku'])) {
             $validated['barcode'] = $validated['sku'];
@@ -378,8 +381,8 @@ class ItemController extends TenantAwareController
             'is_inventory' => 'boolean',
         ]);
 
-        $validated['is_active'] = $request->boolean('is_active');
-        $validated['is_inventory'] = $request->boolean('is_inventory');
+        $validated['is_active'] = $request->boolean('is_active', true);
+        $validated['is_inventory'] = $request->boolean('is_inventory', true);
 
         // Auto-set barcode from SKU if not provided
         if (empty($validated['barcode']) && !empty($validated['sku'])) {
@@ -434,7 +437,7 @@ class ItemController extends TenantAwareController
         }
 
         $selectedWarehouses = $request->input('warehouses', []);
-        if ($selectedWarehouses) {
+        if ($selectedWarehouses && $validated['is_inventory']) {
             $existingWhIds = $item->warehouses->pluck('warehouse_id')->toArray();
             foreach ($selectedWarehouses as $whId) {
                 $item->warehouses()->firstOrCreate(
@@ -452,7 +455,54 @@ class ItemController extends TenantAwareController
             }
         }
 
+        if (!$validated['is_inventory']) {
+            $this->clearInventoryBalances($item);
+        }
+
         return redirect()->route('items.index')->with('success', 'تم تحديث الصنف بنجاح');
+    }
+
+    /**
+     * When an item becomes non-inventory, zero every warehouse balance and record
+     * an adjustment_out movement for the removed quantity, matching how the
+     * inventory-adjustment screen treats stock changes (movement only, no journal).
+     */
+    private function clearInventoryBalances(Item $item): void
+    {
+        DB::transaction(function () use ($item) {
+            $rows = ItemWarehouse::where('tenant_id', $this->getTenantId())
+                ->where('item_id', $item->id)
+                ->get();
+
+            foreach ($rows as $iw) {
+                $qty = (float) $iw->quantity;
+
+                if ($qty != 0.0) {
+                    $unitCost = (float) $iw->average_cost;
+                    if ($unitCost <= 0) {
+                        $unitCost = (float) ($item->cost_price ?? 0);
+                    }
+
+                    StockMovement::create([
+                        'tenant_id' => $this->getTenantId(),
+                        'item_id' => $item->id,
+                        'warehouse_id' => $iw->warehouse_id,
+                        'type' => 'adjustment_out',
+                        'quantity' => $qty,
+                        'unit_cost' => $unitCost,
+                        'total_cost' => $qty * $unitCost,
+                        'reference_type' => Item::class,
+                        'reference_id' => $item->id,
+                        'description' => 'تحويل إلى صنف غير مخزني - ' . $item->name,
+                        'user_id' => Auth::id(),
+                    ]);
+                }
+
+                $iw->quantity = 0;
+                $iw->average_cost = 0;
+                $iw->save();
+            }
+        });
     }
 
     public function destroy(Item $item)
