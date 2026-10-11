@@ -55,13 +55,14 @@
                             <span class="rounded-lg bg-blue-100 px-2.5 py-1 text-xs font-bold text-blue-800">{{ $curCode }}</span>
                             <span class="text-xs text-gray-500">{{ $curName }}</span>
                         </div>
-                        <div class="text-xs text-gray-500 mb-1">إجمالي {{ $curCode }}</div>
-                        <div class="text-sm font-bold {{ $group['total'] > 0 ? 'text-red-600' : ($group['total'] < 0 ? 'text-emerald-600' : 'text-gray-700') }}">
-                            {{ number_format($group['total'], 2) }}
-                        </div>
-                        <div class="mt-2 text-xs text-gray-600 space-y-0.5">
-                            <div>الرصيد الافتتاحي: {{ number_format($group['openingBalance'], 2) }}</div>
-                            <div>
+                        <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                            <span class="text-gray-500">إجمالي {{ $curCode }}:</span>
+                            <span class="font-bold {{ $group['total'] > 0 ? 'text-red-600' : ($group['total'] < 0 ? 'text-emerald-600' : 'text-gray-700') }}">{{ number_format($group['total'], 2) }}</span>
+                            <span class="text-gray-300">|</span>
+                            <span class="text-gray-500">الرصيد الافتتاحي:</span>
+                            <span class="font-semibold text-gray-700">{{ number_format($group['openingBalance'], 2) }}</span>
+                            <span class="text-gray-300">|</span>
+                            <span class="font-semibold {{ $group['total'] > 0 ? 'text-red-600' : ($group['total'] < 0 ? 'text-emerald-600' : 'text-gray-700') }}">
                                 @if($group['total'] > 0)
                                     مدين بـ {{ number_format($group['total'], 2) }}
                                 @elseif($group['total'] < 0)
@@ -69,7 +70,7 @@
                                 @else
                                     الرصيد صفر
                                 @endif
-                            </div>
+                            </span>
                         </div>
                     </div>
                 @endforeach
