@@ -157,6 +157,21 @@ class JournalService
         return $lines;
     }
 
+    public function buildDeliveryNoteLines(int $tenantId, float $costAmount): array
+    {
+        $lines = [];
+        if ($costAmount && $costAmount > 0) {
+            $cogsAccount = $this->getAccountByCode($tenantId, '51');
+            $inventoryAccount = $this->getAccountByCode($tenantId, '1104');
+            if ($cogsAccount && $inventoryAccount) {
+                $lines[] = ['account_id' => $cogsAccount->id, 'debit' => $costAmount, 'credit' => 0];
+                $lines[] = ['account_id' => $inventoryAccount->id, 'debit' => 0, 'credit' => $costAmount];
+            }
+        }
+
+        return $lines;
+    }
+
     public function buildPurchaseInvoiceLines(array $invoiceData, int $tenantId): array
     {
         $lines = [];

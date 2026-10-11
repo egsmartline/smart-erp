@@ -10,6 +10,7 @@ use App\Models\ItemWarehouse;
 use App\Models\Customer;
 use App\Models\Warehouse;
 use App\Models\Item;
+use App\Services\JournalService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -67,10 +68,6 @@ class SalesDeliveryNoteController extends TenantAwareController
         }
 
         foreach ($validated['lines'] as $line) {
-            if ($this->invoiceHasSold($invoiceId, (int) $line['item_id'], $warehouseId)) {
-                continue;
-            }
-
             $itemWarehouse = ItemWarehouse::where('tenant_id', $this->getTenantId())->where('item_id', $line['item_id'])
                 ->where('warehouse_id', $warehouseId)
                 ->first();
@@ -107,10 +104,6 @@ class SalesDeliveryNoteController extends TenantAwareController
                     'total' => $line['total'],
                 ]);
 
-                if ($this->invoiceHasSold($invoiceId, (int) $line['item_id'], $warehouseId)) {
-                    continue;
-                }
-
                 $itemWarehouse = ItemWarehouse::firstOrCreate(
                     ['item_id' => $line['item_id'], 'warehouse_id' => $warehouseId],
                     ['tenant_id' => $tenantId, 'quantity' => 0, 'reserved_quantity' => 0, 'average_cost' => 0]
@@ -132,6 +125,23 @@ class SalesDeliveryNoteController extends TenantAwareController
                     'reference_id' => $deliveryNote->id,
                     'description' => 'تسليم مبيعات - ' . $deliveryNote->delivery_number,
                     'user_id' => Auth::id(),
+                ]);
+            }
+
+            $journalService = app(JournalService::class);
+            $totalCost = 0;
+            foreach ($validated['lines'] as $line) {
+                $totalCost += $this->effectiveUnitCost((int) $line['item_id'], $warehouseId) * $line['quantity'];
+            }
+            $journalLines = $journalService->buildDeliveryNoteLines($tenantId, $totalCost);
+            if (count($journalLines) >= 2) {
+                $journalService->createEntry([
+                    'tenant_id' => $tenantId,
+                    'date' => $validated['date'],
+                    'description' => 'تكلفة تسليم مبيعات - ' . $deliveryNote->delivery_number,
+                    'reference' => $deliveryNote->delivery_number,
+                    'type' => 'delivery',
+                    'lines' => $journalLines,
                 ]);
             }
 
@@ -203,10 +213,6 @@ class SalesDeliveryNoteController extends TenantAwareController
         $oldLines = $salesDeliveryNote->lines()->get()->keyBy('item_id');
 
         foreach ($validated['lines'] as $line) {
-            if ($this->invoiceHasSold($invoiceId, (int) $line['item_id'], $warehouseId)) {
-                continue;
-            }
-
             $itemWarehouse = ItemWarehouse::where('tenant_id', $this->getTenantId())->where('item_id', $line['item_id'])
                 ->where('warehouse_id', $warehouseId)
                 ->first();
@@ -223,6 +229,8 @@ class SalesDeliveryNoteController extends TenantAwareController
         }
 
         DB::transaction(function () use ($salesDeliveryNote, $validated, $tenantId, $request, $invoiceId, $warehouseId) {
+            app(JournalService::class)->reverseEntryByReference($salesDeliveryNote->delivery_number, 'delivery');
+
             foreach ($salesDeliveryNote->lines as $oldLine) {
                 if ($this->noteMovedStock($salesDeliveryNote, (int) $oldLine->item_id)) {
                     $itemWarehouse = ItemWarehouse::where('tenant_id', $this->getTenantId())->where('item_id', $oldLine->item_id)
@@ -261,10 +269,6 @@ class SalesDeliveryNoteController extends TenantAwareController
                     'total' => $line['total'],
                 ]);
 
-                if ($this->invoiceHasSold($invoiceId, (int) $line['item_id'], $warehouseId)) {
-                    continue;
-                }
-
                 $itemWarehouse = ItemWarehouse::firstOrCreate(
                     ['item_id' => $line['item_id'], 'warehouse_id' => $warehouseId],
                     ['tenant_id' => $tenantId, 'quantity' => 0, 'reserved_quantity' => 0, 'average_cost' => 0]
@@ -288,6 +292,23 @@ class SalesDeliveryNoteController extends TenantAwareController
                     'user_id' => Auth::id(),
                 ]);
             }
+
+            $journalService = app(JournalService::class);
+            $totalCost = 0;
+            foreach ($validated['lines'] as $line) {
+                $totalCost += $this->effectiveUnitCost((int) $line['item_id'], $warehouseId) * $line['quantity'];
+            }
+            $journalLines = $journalService->buildDeliveryNoteLines($tenantId, $totalCost);
+            if (count($journalLines) >= 2) {
+                $journalService->createEntry([
+                    'tenant_id' => $tenantId,
+                    'date' => $validated['date'],
+                    'description' => 'تكلفة تسليم مبيعات - ' . $salesDeliveryNote->delivery_number,
+                    'reference' => $salesDeliveryNote->delivery_number,
+                    'type' => 'delivery',
+                    'lines' => $journalLines,
+                ]);
+            }
         });
 
         return redirect()->route('sales-delivery-notes.show', $salesDeliveryNote)
@@ -301,6 +322,8 @@ class SalesDeliveryNoteController extends TenantAwareController
         }
 
         DB::transaction(function () use ($salesDeliveryNote) {
+            app(JournalService::class)->reverseEntryByReference($salesDeliveryNote->delivery_number, 'delivery');
+
             if ($salesDeliveryNote->status === 'confirmed') {
                 foreach ($salesDeliveryNote->lines as $line) {
                     if ($this->noteMovedStock($salesDeliveryNote, (int) $line->item_id)) {
@@ -326,27 +349,6 @@ class SalesDeliveryNoteController extends TenantAwareController
 
         return redirect()->route('sales-delivery-notes.index')
             ->with('success', 'تم حذف إذن التسليم بنجاح');
-    }
-
-    /**
-     * True only when the linked invoice exists and has already relieved this
-     * item from this warehouse, so the delivery note must not do it twice.
-     * No link means no claim, and the note moves stock as before.
-     */
-    private function invoiceHasSold(?int $invoiceId, int $itemId, int $warehouseId): bool
-    {
-        if (!$invoiceId) {
-            return false;
-        }
-
-        return StockMovement::where('tenant_id', $this->getTenantId())
-            ->where('reference_type', SalesInvoice::class)
-            ->where('reference_id', $invoiceId)
-            ->where('item_id', $itemId)
-            ->where('warehouse_id', $warehouseId)
-            ->where('type', 'sale')
-            ->whereNull('deleted_at')
-            ->exists();
     }
 
     /**

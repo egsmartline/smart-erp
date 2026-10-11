@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\AuthorizesTenantAccess;
 
 use App\Models\SalesInvoice;
-use App\Models\SalesDeliveryNote;
 use App\Models\SalesInvoiceLine;
 use App\Models\SalesInvoiceInstallment;
 use App\Models\Customer;
@@ -364,56 +363,8 @@ class SalesInvoiceController extends TenantAwareController
             if ($salesInvoice->status === 'posted') {
                 $salesInvoice->fresh()->load('lines.item');
 
-                foreach ($salesInvoice->lines as $line) {
-                    if ($this->stockAlreadyRelievedFor($salesInvoice, $line)) {
-                        continue;
-                    }
-
-                    $itemWarehouse = ItemWarehouse::where('tenant_id', $this->getTenantId())->where('item_id', $line->item_id)
-                        ->where('warehouse_id', $line->warehouse_id)
-                        ->first();
-
-                    $available = $itemWarehouse ? $itemWarehouse->quantity : 0;
-                    if ($available < $line->quantity) {
-                        $itemName = $line->item->name ?? '#' . $line->item_id;
-                        return back()->withInput()->with('error', "الرصيد غير كافٍ للصنف {$itemName} (المتوفر: {$available}، المطلوب: {$line->quantity})");
-                    }
-                }
-
-                foreach ($salesInvoice->lines as $line) {
-                    $itemWarehouse = ItemWarehouse::where('tenant_id', $this->getTenantId())->where('item_id', $line->item_id)
-                        ->where('warehouse_id', $line->warehouse_id)
-                        ->first();
-
-                    if ($this->stockAlreadyRelievedFor($salesInvoice, $line) || !$itemWarehouse) {
-                        continue;
-                    }
-
-                    $itemWarehouse->decrement('quantity', $line->quantity);
-
-                    $unitCost = $this->effectiveUnitCost($line->item_id, $line->warehouse_id);
-
-                    StockMovement::create([
-                        'tenant_id' => $this->getTenantId(),
-                        'item_id' => $line->item_id,
-                        'warehouse_id' => $line->warehouse_id,
-                        'type' => 'sale',
-                        'quantity' => $line->quantity,
-                        'unit_cost' => $unitCost,
-                        'total_cost' => $unitCost * $line->quantity,
-                        'reference_type' => SalesInvoice::class,
-                        'reference_id' => $salesInvoice->id,
-                        'description' => 'خروج مخزون - فاتورة مبيعات',
-                        'user_id' => auth()->id(),
-                    ]);
-                }
                 $journalService = app(JournalService::class);
-                $totalCost = 0;
-                foreach ($salesInvoice->lines as $line) {
-                    $costPrice = $this->effectiveUnitCost($line->item_id, $line->warehouse_id);
-                    $totalCost += $costPrice * $line->quantity;
-                }
-                $lines = $journalService->buildSalesInvoiceLines($salesInvoice->toArray(), $this->getTenantId(), $totalCost);
+                $lines = $journalService->buildSalesInvoiceLines($salesInvoice->toArray(), $this->getTenantId());
                 if (count($lines) >= 2) {
                     $journalService->createEntry([
                         'tenant_id' => $this->getTenantId(),
@@ -472,41 +423,8 @@ class SalesInvoiceController extends TenantAwareController
                 'payment_status' => $salesInvoice->paid_amount > 0 ? 'partial' : 'unpaid',
             ]);
 
-            foreach ($salesInvoice->lines as $line) {
-                $itemWarehouse = ItemWarehouse::where('tenant_id', $this->getTenantId())->where('item_id', $line->item_id)
-                    ->where('warehouse_id', $line->warehouse_id)
-                    ->first();
-
-                if ($this->stockAlreadyRelievedFor($salesInvoice, $line) || !$itemWarehouse) {
-                    continue;
-                }
-
-                $itemWarehouse->decrement('quantity', $line->quantity);
-
-                $unitCost = $this->effectiveUnitCost($line->item_id, $line->warehouse_id);
-
-                StockMovement::create([
-                    'tenant_id' => $this->getTenantId(),
-                    'item_id' => $line->item_id,
-                    'warehouse_id' => $line->warehouse_id,
-                    'type' => 'sale',
-                    'quantity' => $line->quantity,
-                    'unit_cost' => $unitCost,
-                    'total_cost' => $unitCost * $line->quantity,
-                    'reference_type' => SalesInvoice::class,
-                    'reference_id' => $salesInvoice->id,
-                    'description' => 'خروج مخزون - فاتورة مبيعات',
-                    'user_id' => auth()->id(),
-                ]);
-            }
-
             $journalService = app(JournalService::class);
-            $totalCost = 0;
-            foreach ($salesInvoice->lines as $line) {
-                $costPrice = $this->effectiveUnitCost($line->item_id, $line->warehouse_id);
-                $totalCost += $costPrice * $line->quantity;
-            }
-            $lines = $journalService->buildSalesInvoiceLines($salesInvoice->toArray(), $this->getTenantId(), $totalCost);
+            $lines = $journalService->buildSalesInvoiceLines($salesInvoice->toArray(), $this->getTenantId());
             if (count($lines) >= 2) {
                 $journalService->createEntry([
                     'tenant_id' => $this->getTenantId(),
@@ -612,31 +530,6 @@ class SalesInvoiceController extends TenantAwareController
             ->get(['id', 'name', 'name_ar', 'sku', 'barcode', 'selling_price', 'cost_price', 'tax_rate']);
 
         return response()->json($items);
-    }
-
-    /**
-     * Has the stock behind this invoice line already been relieved?
-     * Only delivery notes linked to THIS invoice claim the relief. Notes for the
-     * same item that are not linked to this invoice never exempt it, so the
-     * invoice always relieves stock unless a linked note shipped the exact line.
-     */
-    private function stockAlreadyRelievedFor(SalesInvoice $salesInvoice, SalesInvoiceLine $line): bool
-    {
-        $linkedNoteIds = SalesDeliveryNote::where('tenant_id', $this->getTenantId())
-            ->where('sales_invoice_id', $salesInvoice->id)
-            ->pluck('id');
-
-        if ($linkedNoteIds->isEmpty()) {
-            return false;
-        }
-
-        return StockMovement::where('tenant_id', $this->getTenantId())
-            ->where('reference_type', SalesDeliveryNote::class)
-            ->whereIn('reference_id', $linkedNoteIds)
-            ->where('item_id', $line->item_id)
-            ->where('warehouse_id', $line->warehouse_id)
-            ->whereNull('deleted_at')
-            ->exists();
     }
 
     private function invoiceMovedStock(SalesInvoice $salesInvoice, SalesInvoiceLine $line): bool
