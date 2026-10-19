@@ -67,4 +67,36 @@ abstract class TenantAwareController extends Controller
 
         return $number;
     }
+
+    /**
+     * Sequential document number built from the highest sequence already used
+     * for one prefix and year.
+     *
+     * Matching the prefix in SQL matters: max() over a bare column is
+     * lexicographic, so an unrelated number in the same column (voided rows
+     * carrying a "VER-" prefix, say) sorts above every padded sequence and
+     * silently produces a number that is already taken.
+     */
+    protected function nextPrefixedNumber(string $table, string $column, ?int $tenantId, string $prefix, string $year): string
+    {
+        $fullPrefix = $prefix . '-' . $year . '-';
+
+        $scope = fn () => DB::table($table)
+            ->when($tenantId !== null, fn ($q) => $q->where('tenant_id', $tenantId))
+            ->where($column, 'like', $fullPrefix . '%');
+
+        $seq = 1;
+        foreach ($scope()->pluck($column) as $number) {
+            if (preg_match('/(\d+)$/', (string) $number, $matches)) {
+                $seq = max($seq, (int) $matches[1] + 1);
+            }
+        }
+
+        do {
+            $candidate = $fullPrefix . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
+            $seq++;
+        } while ($scope()->where($column, $candidate)->exists());
+
+        return $candidate;
+    }
 }

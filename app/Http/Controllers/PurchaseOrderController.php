@@ -468,37 +468,23 @@ class PurchaseOrderController extends TenantAwareController
 
     protected function generateOrderNumber(): string
     {
-        $year = date('Y');
-        $lastOrder = $this->tenantQuery(PurchaseOrder::class)
-            ->withTrashed()
-            ->whereYear('date', $year)
-            ->max('order_number');
-
-        if ($lastOrder) {
-            $lastSequence = (int) substr($lastOrder, -4);
-            $newSequence = $lastSequence + 1;
-        } else {
-            $newSequence = 1;
-        }
-
-        return 'PO-' . $year . '-' . str_pad($newSequence, 4, '0', STR_PAD_LEFT);
+        return $this->nextPrefixedNumber(
+            'purchase_orders',
+            'order_number',
+            $this->getTenantId(),
+            'PO',
+            date('Y')
+        );
     }
 
     protected function generateInvoiceNumber(): string
     {
-        $year = date('Y');
-        $lastInvoice = $this->tenantQuery(PurchaseInvoice::class)
-            ->withTrashed()
-            ->whereYear('date', $year)
-            ->max('invoice_number');
-
-        if ($lastInvoice) {
-            $lastSequence = (int) substr($lastInvoice, -4);
-            $newSequence = $lastSequence + 1;
-        } else {
-            $newSequence = 1;
-        }
-
-        return 'INV-P-' . $year . '-' . str_pad($newSequence, 4, '0', STR_PAD_LEFT);
+        return $this->nextPrefixedNumber(
+            'purchase_invoices',
+            'invoice_number',
+            $this->getTenantId(),
+            'INV-P',
+            date('Y')
+        );
     }
 }

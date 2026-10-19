@@ -553,20 +553,13 @@ class SalesInvoiceController extends TenantAwareController
 
     protected function generateInvoiceNumber(): string
     {
-        $year = date('Y');
-        $lastInvoice = $this->tenantQuery(SalesInvoice::class)
-            ->withTrashed()
-            ->whereYear('date', $year)
-            ->max('invoice_number');
-
-        if ($lastInvoice) {
-            $lastSequence = (int) substr($lastInvoice, -4);
-            $newSequence = $lastSequence + 1;
-        } else {
-            $newSequence = 1;
-        }
-
-        return 'INV-S-' . $year . '-' . str_pad($newSequence, 4, '0', STR_PAD_LEFT);
+        return $this->nextPrefixedNumber(
+            'sales_invoices',
+            'invoice_number',
+            $this->getTenantId(),
+            'INV-S',
+            date('Y')
+        );
     }
 
     public function settleInstallment(Request $request, SalesInvoice $salesInvoice)

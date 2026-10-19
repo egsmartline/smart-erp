@@ -215,19 +215,12 @@ class PurchaseReturnController extends TenantAwareController
 
     protected function generateReturnNumber(): string
     {
-        $year = date('Y');
-        $lastReturn = $this->tenantQuery(PurchaseReturn::class)
-            ->withTrashed()
-            ->whereYear('date', $year)
-            ->max('return_number');
-
-        if ($lastReturn) {
-            $lastSequence = (int) substr($lastReturn, -4);
-            $newSequence = $lastSequence + 1;
-        } else {
-            $newSequence = 1;
-        }
-
-        return 'PR-' . $year . '-' . str_pad($newSequence, 4, '0', STR_PAD_LEFT);
+        return $this->nextPrefixedNumber(
+            'purchase_returns',
+            'return_number',
+            $this->getTenantId(),
+            'PR',
+            date('Y')
+        );
     }
 }

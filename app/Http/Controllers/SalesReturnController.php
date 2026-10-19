@@ -198,19 +198,12 @@ class SalesReturnController extends TenantAwareController
 
     protected function generateReturnNumber(): string
     {
-        $year = date('Y');
-        $lastReturn = $this->tenantQuery(SalesReturn::class)
-            ->withTrashed()
-            ->whereYear('date', $year)
-            ->max('return_number');
-
-        if ($lastReturn) {
-            $lastSequence = (int) substr($lastReturn, -4);
-            $newSequence = $lastSequence + 1;
-        } else {
-            $newSequence = 1;
-        }
-
-        return 'SR-' . $year . '-' . str_pad($newSequence, 4, '0', STR_PAD_LEFT);
+        return $this->nextPrefixedNumber(
+            'sales_returns',
+            'return_number',
+            $this->getTenantId(),
+            'SR',
+            date('Y')
+        );
     }
 }

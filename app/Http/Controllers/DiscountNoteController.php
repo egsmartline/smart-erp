@@ -274,19 +274,12 @@ class DiscountNoteController extends TenantAwareController
 
     protected function generateNoteNumber(): string
     {
-        $year = date('Y');
-        $lastNote = $this->tenantQuery(DiscountNote::class)
-            ->withTrashed()
-            ->whereYear('date', $year)
-            ->max('note_number');
-
-        if ($lastNote) {
-            $lastSequence = (int) substr($lastNote, -4);
-            $newSequence = $lastSequence + 1;
-        } else {
-            $newSequence = 1;
-        }
-
-        return 'CDN-' . $year . '-' . str_pad($newSequence, 4, '0', STR_PAD_LEFT);
+        return $this->nextPrefixedNumber(
+            'discount_notes',
+            'note_number',
+            $this->getTenantId(),
+            'CDN',
+            date('Y')
+        );
     }
 }
