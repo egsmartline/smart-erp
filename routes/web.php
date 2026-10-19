@@ -242,19 +242,19 @@ Route::middleware(['auth', 'tenant', 'permission'])->group(function () {
     Route::post('budgets/{budget}/cancel', [BudgetController::class, 'cancel'])->name('budgets.cancel');
 
     // Inventory Adjustments
-    Route::resource('inventory-adjustments', InventoryAdjustmentController::class);
+    Route::resource('inventory-adjustments', InventoryAdjustmentController::class)->parameters(['inventory-adjustments' => 'adj']);
     Route::post('inventory-adjustments/{adj}/confirm', [InventoryAdjustmentController::class, 'confirm'])->name('inventory-adjustments.confirm');
     Route::post('inventory-adjustments/{adj}/cancel', [InventoryAdjustmentController::class, 'cancel'])->name('inventory-adjustments.cancel');
     Route::post('inventory-adjustments/{adj}/reverse', [InventoryAdjustmentController::class, 'reverse'])->name('inventory-adjustments.reverse');
 
     // Stock Transfers
-    Route::resource('stock-transfers', StockTransferController::class);
+    Route::resource('stock-transfers', StockTransferController::class)->parameters(['stock-transfers' => 'transfer']);
     Route::post('stock-transfers/{transfer}/confirm', [StockTransferController::class, 'confirm'])->name('stock-transfers.confirm');
     Route::post('stock-transfers/{transfer}/done', [StockTransferController::class, 'done'])->name('stock-transfers.done');
     Route::post('stock-transfers/{transfer}/cancel', [StockTransferController::class, 'cancel'])->name('stock-transfers.cancel');
 
     // Reordering Rules
-    Route::resource('reordering-rules', ReorderingRuleController::class)->except(['show', 'edit', 'update']);
+    Route::resource('reordering-rules', ReorderingRuleController::class)->parameters(['reordering-rules' => 'rule'])->except(['show', 'edit', 'update']);
 
     // HR - Employees
     Route::resource('employees', EmployeeController::class);
@@ -263,10 +263,10 @@ Route::middleware(['auth', 'tenant', 'permission'])->group(function () {
     Route::resource('departments', DepartmentController::class);
 
     // HR - Job Positions
-    Route::resource('job-positions', JobPositionController::class);
+    Route::resource('job-positions', JobPositionController::class)->parameters(['job-positions' => 'position']);
 
     // HR - Attendance
-    Route::resource('attendance', AttendanceController::class)->only(['index', 'create', 'store', 'show']);
+    Route::resource('attendance', AttendanceController::class)->parameters(['attendance' => 'employee'])->only(['index', 'create', 'store', 'show']);
     Route::post('attendance/{att}/check-out', [AttendanceController::class, 'checkOut'])->name('attendance.check-out');
 
     // HR - Leaves
@@ -319,7 +319,7 @@ Route::middleware(['auth', 'tenant', 'permission'])->group(function () {
     Route::get('export/{type}', [ImportController::class, 'export'])->name('import.export');
 
     // Trade Operations
-    Route::resource('trade', TradeController::class);
+    Route::resource('trade', TradeController::class)->parameters(['trade' => 'tradeOperation']);
     Route::post('trade/{tradeOperation}/status', [TradeController::class, 'updateStatus'])->name('trade.update-status');
 
     // PDF
