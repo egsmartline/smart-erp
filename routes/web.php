@@ -103,6 +103,7 @@ Route::middleware(['auth', 'tenant', 'permission'])->group(function () {
     Route::resource('items', ItemController::class);
     Route::get('items/{item}/card', [ItemController::class, 'card'])->name('items.card');
     Route::get('items/{item}/print-card', [ItemController::class, 'printCard'])->name('items.print-card');
+    Route::get('items/{item}/stock-card', [ItemController::class, 'stockCard'])->name('items.stock-card');
     Route::resource('item-categories', ItemCategoryController::class);
     Route::resource('item-units', ItemUnitController::class);
     Route::resource('warehouses', WarehouseController::class);

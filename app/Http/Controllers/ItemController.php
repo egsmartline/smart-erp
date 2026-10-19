@@ -347,6 +347,189 @@ class ItemController extends TenantAwareController
         return view('items.print-card', compact('item', 'all', 'typeLabels', 'totals', 'opening', 'currentBalance', 'company'));
     }
 
+    public function stockCard(Request $request, Item $item)
+    {
+        $this->authorizeTenant($item);
+        $item->load('category', 'unit');
+
+        $movements = $item->stockMovements()
+            ->when($request->filled('from'), fn ($q) => $q->whereDate('created_at', '>=', $request->from))
+            ->when($request->filled('to'), fn ($q) => $q->whereDate('created_at', '<=', $request->to))
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->get();
+
+        $typeLabels = [
+            'purchase'        => 'فاتورة مشتريات',
+            'sale'            => 'فاتورة بيع',
+            'return_in'       => 'مرتجع - إدخال',
+            'return_out'      => 'مرتجع - إخراج',
+            'transfer_in'     => 'تحويل وارد',
+            'transfer_out'    => 'تحويل صادر',
+            'adjustment_in'   => 'تسوية إضافة',
+            'adjustment_out'  => 'تسوية خصم',
+            'opening'         => 'رصيد أول المدة',
+        ];
+
+        $outTypes = ['sale', 'return_out', 'transfer_out', 'adjustment_out'];
+
+        $referenceMap = [
+            'App\Models\PurchaseInvoice'           => ['route' => 'purchase-invoices.show', 'label' => 'فاتورة مشتريات', 'number' => 'invoice_number'],
+            'App\Models\PurchaseOrder'             => ['route' => 'purchase-orders.show', 'label' => 'أمر شراء', 'number' => 'order_number'],
+            'App\Models\PurchaseReceiptNote'       => ['route' => 'purchase-receipt-notes.show', 'label' => 'إذن استلام', 'number' => 'receipt_number'],
+            'App\Models\PurchaseReturn'            => ['route' => 'purchase-returns.show', 'label' => 'مرتجع مشتريات', 'number' => 'return_number'],
+            'App\Models\SalesInvoice'              => ['route' => 'sales-invoices.show', 'label' => 'فاتورة مبيعات', 'number' => 'invoice_number'],
+            'App\Models\SalesReturn'               => ['route' => 'sales-returns.show', 'label' => 'مرتجع بيع', 'number' => 'return_number'],
+            'App\Models\SalesDeliveryNote'         => ['route' => 'sales-delivery-notes.show', 'label' => 'إذن تسليم', 'number' => 'delivery_number'],
+            'App\Models\InventoryAdjustment'       => ['route' => 'inventory-adjustments.show', 'label' => 'تسوية مخزنية', 'number' => null],
+            'App\Models\StockTransfer'             => ['route' => 'stock-transfers.show', 'label' => 'تحويل مخزني', 'number' => null],
+            'App\Models\Sales\SalesInvoice'        => ['route' => 'sales-invoices.show', 'label' => 'فاتورة مبيعات', 'number' => 'invoice_number'],
+            'App\Models\Purchases\PurchaseInvoice' => ['route' => 'purchase-invoices.show', 'label' => 'فاتورة مشتريات', 'number' => 'invoice_number'],
+            'App\Models\Sales\SalesReturn'         => ['route' => 'sales-returns.show', 'label' => 'مرتجع بيع', 'number' => 'return_number'],
+            'App\Models\Purchases\PurchaseReturn'  => ['route' => 'purchase-returns.show', 'label' => 'مرتجع مشتريات', 'number' => 'return_number'],
+        ];
+
+        $priceMap = [
+            'App\Models\SalesDeliveryNote'         => ['sales_delivery_note_lines', 'sales_delivery_note_id', ['unit_price']],
+            'App\Models\SalesInvoice'              => ['sales_invoice_lines', 'sales_invoice_id', ['unit_price']],
+            'App\Models\SalesReturn'               => ['sales_return_lines', 'sales_return_id', ['unit_price']],
+            'App\Models\PurchaseInvoice'           => ['purchase_invoice_lines', 'purchase_invoice_id', ['unit_cost', 'unit_price']],
+            'App\Models\PurchaseOrder'             => ['purchase_order_lines', 'purchase_order_id', ['unit_price']],
+            'App\Models\PurchaseReceiptNote'       => ['purchase_receipt_note_lines', 'purchase_receipt_note_id', ['unit_price']],
+            'App\Models\PurchaseReturn'            => ['purchase_return_lines', 'purchase_return_id', ['unit_price']],
+            'App\Models\Sales\SalesInvoice'        => ['sales_invoice_lines', 'sales_invoice_id', ['unit_price']],
+            'App\Models\Purchases\PurchaseInvoice' => ['purchase_invoice_lines', 'purchase_invoice_id', ['unit_cost', 'unit_price']],
+            'App\Models\Sales\SalesReturn'         => ['sales_return_lines', 'sales_return_id', ['unit_price']],
+            'App\Models\Purchases\PurchaseReturn'  => ['purchase_return_lines', 'purchase_return_id', ['unit_price']],
+            'App\Models\Purchases\ReceiptNote'     => ['purchase_receipt_note_lines', 'purchase_receipt_note_id', ['unit_price']],
+        ];
+
+        $priceCache = [];
+        $resolvePrice = function ($m) use ($priceMap, &$priceCache, $item) {
+            if (!$m->reference_type || !$m->reference_id) {
+                return null;
+            }
+            $cfg = $priceMap[$m->reference_type] ?? null;
+            if (!$cfg) {
+                return null;
+            }
+            [$table, $fk, $cols] = $cfg;
+            $key = $table . '|' . $m->reference_id . '|' . $item->id;
+            if (!array_key_exists($key, $priceCache)) {
+                $found = null;
+                try {
+                    $line = DB::table($table)
+                        ->where($fk, $m->reference_id)
+                        ->where('item_id', $item->id)
+                        ->first();
+                    if ($line) {
+                        foreach ($cols as $col) {
+                            if (isset($line->{$col}) && (float) $line->{$col} > 0) {
+                                $found = (float) $line->{$col};
+                                break;
+                            }
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    $found = null;
+                }
+                $priceCache[$key] = $found;
+            }
+            return $priceCache[$key];
+        };
+
+        $openingQty = (float) ($item->opening_stock ?? 0);
+        $openingCost = (float) ($item->cost_price ?? 0);
+
+        $balance = $openingQty;
+        $value = $openingQty * $openingCost;
+        $totalIn = 0.0;
+        $totalOut = 0.0;
+
+        $rows = [];
+        $rows[] = [
+            'date' => null,
+            'label' => 'رصيد أول المدة',
+            'qty' => $openingQty,
+            'dir' => 'open',
+            'price' => $openingCost,
+            'balance' => $balance,
+            'value' => $value,
+            'avg' => $balance > 0 ? $value / $balance : 0,
+            'doc_label' => null,
+            'doc_number' => null,
+            'doc_url' => null,
+        ];
+
+        foreach ($movements as $m) {
+            $qty = (float) $m->quantity;
+            $isOut = in_array($m->type, $outTypes, true);
+            $unitCost = (float) ($m->unit_cost ?? 0);
+
+            if ($isOut) {
+                $cost = $balance > 0 ? $value / $balance : $unitCost;
+                $value -= $qty * $cost;
+                $balance -= $qty;
+                $totalOut += $qty;
+            } else {
+                $value += $qty * $unitCost;
+                $balance += $qty;
+                $totalIn += $qty;
+            }
+
+            $docLabel = null;
+            $docNumber = null;
+            $docUrl = null;
+            $cfg = $m->reference_type ? ($referenceMap[$m->reference_type] ?? null) : null;
+            if ($cfg) {
+                $docLabel = $cfg['label'];
+                $modelClass = $m->reference_type;
+                if (class_exists($modelClass)) {
+                    $ref = $modelClass::find($m->reference_id);
+                    if ($ref) {
+                        $docNumber = $cfg['number'] ? ($ref->{$cfg['number']} ?? null) : ('#' . $ref->id);
+                        try {
+                            $docUrl = route($cfg['route'], $ref->id);
+                        } catch (\Throwable $e) {
+                            $docUrl = null;
+                        }
+                    }
+                }
+            }
+
+            $rows[] = [
+                'date' => $m->created_at,
+                'label' => $typeLabels[$m->type] ?? $m->type,
+                'qty' => $qty,
+                'dir' => $isOut ? 'out' : 'in',
+                'price' => $resolvePrice($m),
+                'balance' => $balance,
+                'value' => $value,
+                'avg' => $balance > 0 ? $value / $balance : 0,
+                'doc_label' => $docLabel,
+                'doc_number' => $docNumber,
+                'doc_url' => $docUrl,
+            ];
+        }
+
+        $rows = collect($rows)->map(function ($r) {
+            $fmt = fn ($n) => rtrim(rtrim(number_format((float) $n, 2, '.', ''), '0'), '.');
+            $r['qty_display'] = $r['dir'] === 'out' ? '-' . $fmt($r['qty']) : ($r['dir'] === 'in' ? '+' . $fmt($r['qty']) : $fmt($r['qty']));
+            $r['balance_display'] = $fmt($r['balance']);
+            return $r;
+        });
+
+        return view('items.stock-card', [
+            'item' => $item,
+            'rows' => $rows,
+            'totalIn' => $totalIn,
+            'totalOut' => $totalOut,
+            'currentBalance' => $balance,
+            'currentValue' => $value,
+            'currentAvg' => $balance > 0 ? $value / $balance : 0,
+        ])->with('from', $request->input('from'))->with('to', $request->input('to'));
+    }
+
     public function edit(Item $item)
     {
         $categories = $this->tenantQuery(ItemCategory::class)->get();
