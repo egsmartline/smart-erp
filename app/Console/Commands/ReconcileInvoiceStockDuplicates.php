@@ -27,6 +27,12 @@ class ReconcileInvoiceStockDuplicates extends Command
 
     private const INVOICE_TYPE = 'App\\Models\\SalesInvoice';
 
+    /**
+     * An invoice and its duplicate delivery note must be close in date;
+     * anything further apart is treated as unrelated so re-runs stay safe.
+     */
+    private const MAX_PAIR_DAYS = 45;
+
     public function handle(): int
     {
         $apply = (bool) $this->option('apply');
@@ -174,6 +180,9 @@ class ReconcileInvoiceStockDuplicates extends Command
             }
 
             $diff = abs(strtotime($note['date']) - strtotime($invoice['date']));
+            if ($diff > self::MAX_PAIR_DAYS * 86400) {
+                continue;
+            }
             if ($bestDiff === null || $diff < $bestDiff) {
                 $bestDiff = $diff;
                 $best = $invoice;
