@@ -169,8 +169,8 @@
                                     <tr class="border-b border-gray-100">
                                         <td class="px-4 py-2">{{ $ps->payroll->month }}/{{ $ps->payroll->year }}</td>
                                         <td class="px-4 py-2 text-center font-mono">{{ number_format($ps->basic_salary, 2) }}</td>
-                                        <td class="px-4 py-2 text-center font-mono text-green-600">{{ number_format($ps->allowances, 2) }}</td>
-                                        <td class="px-4 py-2 text-center font-mono text-red-600">{{ number_format($ps->deductions, 2) }}</td>
+                                        <td class="px-4 py-2 text-center font-mono text-green-600">{{ number_format((float) ($ps->total_allowances ?? 0), 2) }}</td>
+                                        <td class="px-4 py-2 text-center font-mono text-red-600">{{ number_format((float) ($ps->total_deductions ?? 0), 2) }}</td>
                                         <td class="px-4 py-2 text-center font-mono font-bold">{{ number_format($ps->net_salary, 2) }}</td>
                                     </tr>
                                 @empty
