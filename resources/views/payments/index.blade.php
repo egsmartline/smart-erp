@@ -88,6 +88,7 @@
                         <th class="px-4 py-3 font-semibold text-gray-700">الشخص</th>
                         <th class="px-4 py-3 font-semibold text-gray-700">الخزينة</th>
                         <th class="px-4 py-3 font-semibold text-gray-700">المبلغ</th>
+                        <th class="px-4 py-3 font-semibold text-gray-700" title="الرصيد التراكمي للخزينة/الحساب بعد هذه الحركة">الرصيد</th>
                         <th class="px-4 py-3 font-semibold text-gray-700">البيان</th>
                         <th class="px-4 py-3 font-semibold text-gray-700">طريقة الدفع</th>
                         <th class="px-4 py-3 font-semibold text-gray-700">الحالة</th>
@@ -107,6 +108,7 @@
                             <td class="px-4 py-3 font-medium text-gray-900">{{ $payment->customer->name ?? $payment->supplier->name ?? '-' }}</td>
                             <td class="px-4 py-3 text-gray-600">{{ $payment->treasury->name ?? $payment->bankAccount->account_name ?? '-' }}</td>
                             <td class="px-4 py-3 text-left font-mono text-sm font-bold text-gray-900">{{ number_format($payment->amount, 2) }}</td>
+                            <td class="px-4 py-3 text-left font-mono text-sm font-bold {{ ($payment->running_balance ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-600' }}">{{ $payment->running_balance === null ? '—' : number_format($payment->running_balance, 2) }}</td>
                             <td class="px-4 py-3 text-gray-600 max-w-xs truncate">{{ $payment->notes ?? '-' }}</td>
                             <td class="px-4 py-3 text-gray-600">
                                 @if($payment->payment_method === 'cash') نقداً
@@ -146,7 +148,7 @@
                         </tr>
                     @empty
                         @if($discountNotes->isEmpty() && $payrolls->isEmpty() && $transfers->isEmpty())
-                            <tr><td colspan="10" class="px-4 py-8 text-center text-gray-500">لا توجد مدفوعات</td></tr>
+                            <tr><td colspan="11" class="px-4 py-8 text-center text-gray-500">لا توجد مدفوعات</td></tr>
                         @endif
                     @endforelse
                     @foreach($discountNotes as $dn)
@@ -158,6 +160,7 @@
                             </td>
                             <td class="px-4 py-3 font-medium text-gray-900">{{ $dn->customer->name ?? '-' }}</td>
                             <td class="px-4 py-3 text-left font-mono text-sm font-bold text-red-600">{{ number_format($dn->amount, 2) }}</td>
+                            <td class="px-4 py-3 text-center text-gray-400">—</td>
                             <td class="px-4 py-3 text-gray-600 max-w-xs truncate">{{ $dn->reason ?? $dn->notes ?? '-' }}</td>
                             <td class="px-4 py-3 text-gray-600">—</td>
                             <td class="px-4 py-3">
@@ -188,6 +191,7 @@
                             </td>
                             <td class="px-4 py-3 font-medium text-gray-900">الموظفين</td>
                             <td class="px-4 py-3 text-left font-mono text-sm font-bold text-red-600">{{ number_format($pr->total_net, 2) }}</td>
+                            <td class="px-4 py-3 text-center text-gray-400">—</td>
                             <td class="px-4 py-3 text-gray-600 max-w-xs truncate">{{ $pr->notes ?? 'مرتبات ' . $pr->month . '/' . $pr->year }}</td>
                             <td class="px-4 py-3 text-gray-600">—</td>
                             <td class="px-4 py-3">
@@ -240,6 +244,7 @@
                             <td class="px-4 py-3 font-medium text-gray-900">من {{ $sourceName }} إلى {{ $targetName }}</td>
                             <td class="px-4 py-3 text-gray-600">{{ $treasuryName }}</td>
                             <td class="px-4 py-3 text-left font-mono text-sm font-bold text-indigo-600">{{ number_format($t->amount, 2) }}</td>
+                            <td class="px-4 py-3 text-center text-gray-400">—</td>
                             <td class="px-4 py-3 text-gray-600 max-w-xs truncate">{{ $t->description ?? '-' }}</td>
                             <td class="px-4 py-3 text-gray-600">تحويل داخلي</td>
                             <td class="px-4 py-3">

@@ -62,9 +62,23 @@ class PaymentController extends TenantAwareController
         }
 
         $totalReceipts = (clone $totalsQuery)->where('type', 'receipt')->sum('amount');
-        $totalPayments = (clone $query)->where('type', 'payment')->sum('amount');
+        $totalPayments = (clone $totalsQuery)->where('type', 'payment')->sum('amount');
+
+        /* Running balance for every payment/receipt, computed chronologically over
+           the same scope as the totals (treasury/account + date range), so the
+           newest row's balance matches the summary figure at the top. */
+        $runningBalance = 0.0;
+        $paymentBalances = [];
+        foreach ((clone $totalsQuery)->orderBy('date')->orderBy('id')->get(['id', 'type', 'amount']) as $ledgerRow) {
+            $runningBalance += ($ledgerRow->type === 'receipt' ? 1 : -1) * (float) $ledgerRow->amount;
+            $paymentBalances[$ledgerRow->id] = $runningBalance;
+        }
 
         $payments = $query->orderBy('date', 'desc')->paginate(20);
+        $payments->getCollection()->transform(function ($payment) use ($paymentBalances) {
+            $payment->running_balance = $paymentBalances[$payment->id] ?? null;
+            return $payment;
+        });
 
         $discountQuery = $this->tenantQuery(DiscountNote::class)
             ->when($request->date_from, fn($q, $d) => $q->whereDate('date', '>=', $d))
