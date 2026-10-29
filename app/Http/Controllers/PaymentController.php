@@ -64,14 +64,77 @@ class PaymentController extends TenantAwareController
         $totalReceipts = (clone $totalsQuery)->where('type', 'receipt')->sum('amount');
         $totalPayments = (clone $totalsQuery)->where('type', 'payment')->sum('amount');
 
-        /* Running balance for every payment/receipt, computed chronologically over
-           the same scope as the totals (treasury/account + date range), so the
-           newest row's balance matches the summary figure at the top. */
-        $runningBalance = 0.0;
+        /* Running balance of "الخزينة الرئيسية" only. It is rebuilt chronologically
+           from the treasury's own ledger — its cash receipts/payments plus its
+           transfers, loans and other non-payment treasury transactions — so the
+           last movement's balance equals the treasury's recorded current_balance. */
+        $mainTreasury = CashTreasury::where('tenant_id', $this->getTenantId())
+            ->whereNull('deleted_at')
+            ->orderByRaw("CASE WHEN name LIKE '%الرئيسية%' THEN 0 ELSE 1 END")
+            ->orderBy('id')
+            ->first();
+
+        $mainTreasuryBalance = $mainTreasury ? (float) $mainTreasury->current_balance : null;
         $paymentBalances = [];
-        foreach ((clone $totalsQuery)->orderBy('date')->orderBy('id')->get(['id', 'type', 'amount']) as $ledgerRow) {
-            $runningBalance += ($ledgerRow->type === 'receipt' ? 1 : -1) * (float) $ledgerRow->amount;
-            $paymentBalances[$ledgerRow->id] = $runningBalance;
+
+        if ($mainTreasury) {
+            $events = [];
+
+            foreach (Payment::where('tenant_id', $this->getTenantId())
+                ->whereNull('deleted_at')
+                ->where('treasury_id', $mainTreasury->id)
+                ->where('payment_method', 'cash')
+                ->where('status', 'completed')
+                ->get(['id', 'date', 'type', 'amount']) as $cashPayment) {
+                $events[] = [
+                    'date' => substr((string) $cashPayment->date, 0, 10),
+                    'order' => 1,
+                    'id' => (int) $cashPayment->id,
+                    'payment_id' => (int) $cashPayment->id,
+                    'delta' => ($cashPayment->type === 'receipt' ? 1 : -1) * (float) $cashPayment->amount,
+                ];
+            }
+
+            foreach (TreasuryTransaction::where('tenant_id', $this->getTenantId())
+                ->where('treasury_id', $mainTreasury->id)
+                ->where(function ($q) {
+                    $q->whereNull('reference_type')
+                      ->orWhereNotIn('reference_type', ['payment', 'payroll']);
+                })
+                ->get(['id', 'date', 'type', 'amount', 'description']) as $txn) {
+                $amount = (float) $txn->amount;
+                $description = (string) $txn->description;
+
+                if ($txn->type === 'out') {
+                    $delta = -$amount;
+                } elseif ($txn->type === 'in' || $txn->type === 'opening') {
+                    $delta = $amount;
+                } elseif ($txn->type === 'transfer') {
+                    $delta = str_contains($description, 'صادر') ? -$amount : $amount;
+                } else {
+                    $delta = 0.0;
+                }
+
+                $events[] = [
+                    'date' => substr((string) $txn->date, 0, 10),
+                    'order' => 0,
+                    'id' => (int) $txn->id,
+                    'payment_id' => null,
+                    'delta' => $delta,
+                ];
+            }
+
+            usort($events, fn ($a, $b) => [$a['date'], $a['order'], $a['id']] <=> [$b['date'], $b['order'], $b['id']]);
+
+            $runningBalance = (float) $mainTreasury->opening_balance;
+            foreach ($events as $event) {
+                $runningBalance += $event['delta'];
+                if ($event['payment_id'] !== null) {
+                    $paymentBalances[$event['payment_id']] = $runningBalance;
+                }
+            }
+
+            $mainTreasuryBalance = $runningBalance;
         }
 
         $payments = $query->orderBy('date', 'desc')->paginate(20);
@@ -156,7 +219,7 @@ class PaymentController extends TenantAwareController
             ->sortByDesc('created_at')
             ->values();
 
-        return view('payments.index', compact('payments', 'totalReceipts', 'totalPayments', 'discountNotes', 'payrolls', 'treasuries', 'bankAccounts', 'transfers'));
+        return view('payments.index', compact('payments', 'totalReceipts', 'totalPayments', 'discountNotes', 'payrolls', 'treasuries', 'bankAccounts', 'transfers', 'mainTreasury', 'mainTreasuryBalance'));
     }
 
     public function create()

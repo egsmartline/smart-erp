@@ -70,8 +70,11 @@
                     <span class="text-lg font-bold text-red-600">{{ number_format($totalPayments, 2) }}</span>
                 </div>
                 <div class="rounded-lg bg-blue-50 border border-blue-200 px-4 py-2 text-center">
-                    <span class="text-sm font-medium text-blue-700">الرصيد: </span>
-                    <span class="text-lg font-bold {{ $totalReceipts - $totalPayments >= 0 ? 'text-emerald-600' : 'text-red-600' }}">{{ number_format($totalReceipts - $totalPayments, 2) }}</span>
+                    <span class="text-sm font-medium text-blue-700">رصيد الخزينة الرئيسية: </span>
+                    <span class="text-lg font-bold {{ ($mainTreasuryBalance ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-600' }}">{{ $mainTreasuryBalance === null ? '—' : number_format($mainTreasuryBalance, 2) }}</span>
+                    @if($mainTreasury)
+                        <span class="block text-xs text-gray-500">{{ $mainTreasury->name }}</span>
+                    @endif
                 </div>
             </div>
         </form>
@@ -88,7 +91,7 @@
                         <th class="px-4 py-3 font-semibold text-gray-700">الشخص</th>
                         <th class="px-4 py-3 font-semibold text-gray-700">الخزينة</th>
                         <th class="px-4 py-3 font-semibold text-gray-700">المبلغ</th>
-                        <th class="px-4 py-3 font-semibold text-gray-700" title="الرصيد التراكمي للخزينة/الحساب بعد هذه الحركة">الرصيد</th>
+                        <th class="px-4 py-3 font-semibold text-gray-700" title="رصيد الخزينة الرئيسية بعد هذه الحركة">الرصيد</th>
                         <th class="px-4 py-3 font-semibold text-gray-700">البيان</th>
                         <th class="px-4 py-3 font-semibold text-gray-700">طريقة الدفع</th>
                         <th class="px-4 py-3 font-semibold text-gray-700">الحالة</th>
@@ -108,7 +111,7 @@
                             <td class="px-4 py-3 font-medium text-gray-900">{{ $payment->customer->name ?? $payment->supplier->name ?? '-' }}</td>
                             <td class="px-4 py-3 text-gray-600">{{ $payment->treasury->name ?? $payment->bankAccount->account_name ?? '-' }}</td>
                             <td class="px-4 py-3 text-left font-mono text-sm font-bold text-gray-900">{{ number_format($payment->amount, 2) }}</td>
-                            <td class="px-4 py-3 text-left font-mono text-sm font-bold {{ ($payment->running_balance ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-600' }}">{{ $payment->running_balance === null ? '—' : number_format($payment->running_balance, 2) }}</td>
+                            <td class="px-4 py-3 text-left font-mono text-sm font-bold {{ $payment->running_balance === null ? 'text-gray-400' : ($payment->running_balance >= 0 ? 'text-emerald-600' : 'text-red-600') }}">{{ $payment->running_balance === null ? '—' : number_format($payment->running_balance, 2) }}</td>
                             <td class="px-4 py-3 text-gray-600 max-w-xs truncate">{{ $payment->notes ?? '-' }}</td>
                             <td class="px-4 py-3 text-gray-600">
                                 @if($payment->payment_method === 'cash') نقداً
