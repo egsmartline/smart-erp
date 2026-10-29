@@ -39,8 +39,8 @@
                     <option value="return_out" {{ request('type') == 'return_out' ? 'selected' : '' }}>إخراج مرتجع</option>
                     <option value="transfer_in" {{ request('type') == 'transfer_in' ? 'selected' : '' }}>تحويل وارد</option>
                     <option value="transfer_out" {{ request('type') == 'transfer_out' ? 'selected' : '' }}>تحويل صادر</option>
-                    <option value="adjustment_in" {{ request('type') == 'adjustment_in' ? 'selected' : '' }}>تسديد</option>
-                    <option value="adjustment_out" {{ request('type') == 'adjustment_out' ? 'selected' : '' }}>حسم</option>
+                    <option value="adjustment_in" {{ request('type') == 'adjustment_in' ? 'selected' : '' }}>تسوية إضافة</option>
+                    <option value="adjustment_out" {{ request('type') == 'adjustment_out' ? 'selected' : '' }}>تسوية خصم</option>
                     <option value="opening" {{ request('type') == 'opening' ? 'selected' : '' }}>رصيد افتتاحي</option>
                 </select>
             </div>
@@ -82,8 +82,8 @@
                             'return_out' => ['label' => 'إخراج مرتجع', 'color' => 'bg-amber-100 text-amber-800'],
                             'transfer_in' => ['label' => 'تحويل وارد', 'color' => 'bg-green-100 text-green-800'],
                             'transfer_out' => ['label' => 'تحويل صادر', 'color' => 'bg-orange-100 text-orange-800'],
-                            'adjustment_in' => ['label' => 'تسديد', 'color' => 'bg-emerald-100 text-emerald-800'],
-                            'adjustment_out' => ['label' => 'حسم', 'color' => 'bg-red-100 text-red-800'],
+                            'adjustment_in' => ['label' => 'تسوية إضافة', 'color' => 'bg-emerald-100 text-emerald-800'],
+                            'adjustment_out' => ['label' => 'تسوية خصم', 'color' => 'bg-red-100 text-red-800'],
                             'opening' => ['label' => 'رصيد افتتاحي', 'color' => 'bg-gray-100 text-gray-800'],
                         ];
                         $inTypes = ['purchase', 'return_in', 'transfer_in', 'adjustment_in', 'opening'];
