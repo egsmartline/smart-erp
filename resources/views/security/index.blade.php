@@ -138,9 +138,15 @@
                     <li>
                         <p class="mb-3 font-semibold text-gray-800">1) افتح تطبيق المصادقة وامسح رمز QR:</p>
                         <div class="flex flex-wrap items-center gap-6">
-                            <div id="qr-code" data-uri="{{ $provisioningUri }}"
-                                class="flex h-[200px] w-[200px] items-center justify-center rounded-xl border border-gray-200 bg-white p-2">
-                                <span class="p-2 text-center text-xs text-gray-400">جارٍ توليد رمز QR…</span>
+                            <div class="flex flex-col items-center gap-2">
+                                <div id="qr-code" data-uri="{{ $provisioningUri }}"
+                                    class="flex h-[210px] w-[210px] items-center justify-center rounded-xl border border-gray-200 bg-white p-2">
+                                    <span class="p-2 text-center text-xs text-gray-400">جارٍ توليد رمز QR…</span>
+                                </div>
+                                <a href="{{ $provisioningUri }}"
+                                    class="rounded-lg bg-emerald-600 px-3 py-2 text-center text-xs font-bold text-white hover:bg-emerald-700 transition">
+                                    فتح تطبيق المصادقة على هذا الهاتف
+                                </a>
                             </div>
                             <div class="flex-1 min-w-[220px]">
                                 <p class="mb-2 text-xs text-gray-500">أو أدخل المفتاح يدوياً في التطبيق:</p>
@@ -149,7 +155,12 @@
                                     <button type="button" id="copy-secret" data-secret="{{ $setupSecret }}"
                                         class="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition">نسخ</button>
                                 </div>
-                                <p class="mt-3 text-xs text-gray-500">النوع: TOTP — المدة: 30 ثانية — 6 أرقام.</p>
+                                <p class="mt-3 text-xs text-gray-500">
+                                    النوع: <strong>TOTP</strong> — الحساب: <span dir="ltr">{{ $user->email ?: $user->name }}</span> — المدة: 30 ثانية — 6 أرقام.
+                                </p>
+                                <p class="mt-2 text-xs leading-6 text-amber-700">
+                                    إن تعذّر مسح الرمز: اختر في التطبيق «إدخال مفتاح الإعداد» ثم الصق المفتاح أعلاه.
+                                </p>
                             </div>
                         </div>
                     </li>
@@ -200,13 +211,15 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="{{ asset('vendor/qrcode.min.js') }}?v=1"></script>
 <script>
     (function () {
         var qr = document.getElementById('qr-code');
         if (qr && typeof QRCode !== 'undefined') {
             qr.innerHTML = '';
-            new QRCode(qr, { text: qr.dataset.uri, width: 184, height: 184, correctLevel: QRCode.CorrectLevel.M });
+            new QRCode(qr, { text: qr.dataset.uri, width: 194, height: 194, correctLevel: QRCode.CorrectLevel.M });
+        } else if (qr) {
+            qr.innerHTML = '<span class="p-2 text-center text-xs leading-6 text-red-600">تعذّر رسم رمز QR.<br>استخدم المفتاح اليدوي أو زر «فتح تطبيق المصادقة».</span>';
         }
 
         function copy(text, button) {

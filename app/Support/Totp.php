@@ -70,17 +70,32 @@ class Totp
     /**
      * otpauth:// URI that authenticator apps understand (usually shown as QR).
      */
-    public static function provisioningUri(string $secret, string $account, string $issuer = 'Business ERP'): string
+    public static function provisioningUri(string $secret, string $account, string $issuer = 'BusinessERP'): string
     {
+        $issuer = trim($issuer) !== '' ? trim($issuer) : 'BusinessERP';
+        $account = trim($account) !== '' ? trim($account) : 'user';
+
+        // Authenticator apps (Google Authenticator in particular) are strict:
+        // the issuer in the label and the "issuer" parameter must be identical
+        // once decoded, and spaces must be encoded as %20 and never as "+".
+        // http_build_query() would produce "issuer=Business+ERP", which makes
+        // the app reject the QR with a generic "Something went wrong".
         $label = rawurlencode($issuer) . ':' . rawurlencode($account);
 
-        return 'otpauth://totp/' . $label . '?' . http_build_query([
+        $query = [
             'secret' => $secret,
             'issuer' => $issuer,
             'algorithm' => 'SHA1',
-            'digits' => 6,
-            'period' => 30,
-        ]);
+            'digits' => '6',
+            'period' => '30',
+        ];
+
+        $parts = [];
+        foreach ($query as $key => $value) {
+            $parts[] = $key . '=' . rawurlencode((string) $value);
+        }
+
+        return 'otpauth://totp/' . $label . '?' . implode('&', $parts);
     }
 
     public static function base32Encode(string $data): string
