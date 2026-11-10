@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\SecurityController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SetupController;
 use App\Http\Controllers\AccountController;
@@ -62,8 +63,26 @@ use App\Http\Controllers\PrintController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:20,1');
+Route::get('/two-factor-challenge', [AuthController::class, 'showTwoFactorChallenge'])->name('two-factor.login');
+Route::post('/two-factor-challenge', [AuthController::class, 'verifyTwoFactor'])
+    ->middleware('throttle:20,1')
+    ->name('two-factor.verify');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+Route::middleware(['auth', '2fa'])->group(function () {
+    Route::get('/security', [SecurityController::class, 'index'])->name('security.index');
+    Route::post('/security/enable', [SecurityController::class, 'enable'])->name('security.enable');
+    Route::post('/security/cancel', [SecurityController::class, 'cancelSetup'])->name('security.cancel');
+    Route::post('/security/confirm', [SecurityController::class, 'confirm'])->name('security.confirm');
+    Route::post('/security/recovery-codes', [SecurityController::class, 'regenerateRecoveryCodes'])
+        ->middleware('throttle:10,1')
+        ->name('security.recovery-codes');
+    Route::post('/security/reset-device', [SecurityController::class, 'resetDevice'])
+        ->middleware('throttle:10,1')
+        ->name('security.reset-device');
+});
+
 Route::get('/select-company', [AuthController::class, 'showSelectCompany'])->middleware('auth')->name('select-company');
 Route::post('/switch-company/{companyId}', [AuthController::class, 'switchCompany'])->middleware('auth')->name('switch-company');
 Route::get('/manage-companies', [CompanyController::class, 'manage'])->middleware('auth')->name('companies.manage');
@@ -84,7 +103,7 @@ Route::get('/', function () {
     return redirect()->route('login');
 })->name('home');
 
-Route::middleware(['auth', 'tenant', 'permission'])->group(function () {
+Route::middleware(['auth', '2fa', 'tenant', 'permission'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('switch-tenant/{tenantId}', [DashboardController::class, 'switchTenant'])->name('switch-tenant');
 
@@ -206,6 +225,7 @@ Route::middleware(['auth', 'tenant', 'permission'])->group(function () {
         Route::resource('roles', RoleController::class)->except(['show']);
         Route::post('roles/assign', [RoleController::class, 'assignRole'])->name('roles.assign');
         Route::resource('users', UserController::class)->except(['show']);
+        Route::post('users/{user}/reset-two-factor', [UserController::class, 'resetTwoFactor'])->name('users.reset-two-factor');
     });
 
     Route::get('/backups', [BackupController::class, 'index'])->name('backups.index');

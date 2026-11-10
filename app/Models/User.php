@@ -22,6 +22,7 @@ class User extends Authenticatable
         'is_system',
         'two_factor_secret',
         'two_factor_recovery_codes',
+        'two_factor_confirmed_at',
         'avatar',
         'locale',
         'timezone',
@@ -41,7 +42,28 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'is_system' => 'boolean',
+            'two_factor_confirmed_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Whether the user has completed two-factor setup.
+     */
+    public function hasTwoFactorEnabled(): bool
+    {
+        return filled($this->two_factor_secret) && filled($this->two_factor_confirmed_at);
+    }
+
+    /**
+     * Hashed recovery codes stored for this user.
+     *
+     * @return array<int, string>
+     */
+    public function twoFactorRecoveryCodes(): array
+    {
+        $codes = json_decode((string) $this->two_factor_recovery_codes, true);
+
+        return is_array($codes) ? array_values($codes) : [];
     }
 
     public function tenant()

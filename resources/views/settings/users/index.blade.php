@@ -26,6 +26,7 @@
                         <th class="px-4 py-3">رقم الجوال</th>
                         <th class="px-4 py-3">الدور</th>
                         <th class="px-4 py-3">الحالة</th>
+                        <th class="px-4 py-3">المصادقة الثنائية</th>
                         <th class="px-4 py-3"></th>
                     </tr>
                 </thead>
@@ -57,8 +58,21 @@
                                 @endif
                             </td>
                             <td class="px-4 py-3">
+                                @if($user->hasTwoFactorEnabled())
+                                    <span class="rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700">مفعّلة</span>
+                                @else
+                                    <span class="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600">غير مفعّلة</span>
+                                @endif
+                            </td>
+                            <td class="px-4 py-3">
                                 <div class="flex items-center gap-2">
                                     <a href="{{ route('settings.users.edit', $user) }}" class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition">تعديل</a>
+                                    @if($user->hasTwoFactorEnabled())
+                                        <form action="{{ route('settings.users.reset-two-factor', $user) }}" method="POST" onsubmit="return confirm('إعادة تعيين المصادقة الثنائية للمستخدم {{ $user->name }}؟ سيُطلب منه التفعيل من جديد عند الدخول.')">
+                                            @csrf
+                                            <button class="rounded-lg border border-amber-300 px-3 py-1.5 text-xs font-medium text-amber-700 hover:bg-amber-50 transition">إعادة تعيين المصادقة</button>
+                                        </form>
+                                    @endif
                                     @if(!$user->is_system)
                                         <form action="{{ route('settings.users.destroy', $user) }}" method="POST" onsubmit="return confirm('حذف المستخدم {{ $user->name }}؟')">
                                             @csrf @method('DELETE')
@@ -70,7 +84,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-8 text-center text-gray-500">لا يوجد مستخدمون</td>
+                            <td colspan="7" class="px-4 py-8 text-center text-gray-500">لا يوجد مستخدمون</td>
                         </tr>
                     @endforelse
                 </tbody>

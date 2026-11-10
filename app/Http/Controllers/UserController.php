@@ -104,6 +104,28 @@ class UserController extends TenantAwareController
             ->with('success', 'تم حذف المستخدم بنجاح');
     }
 
+    /**
+     * Clear two-factor settings so the user can link a new device.
+     */
+    public function resetTwoFactor(Request $request, User $user)
+    {
+        $this->authorizeTenant($user);
+
+        $user->forceFill([
+            'two_factor_secret' => null,
+            'two_factor_recovery_codes' => null,
+            'two_factor_confirmed_at' => null,
+        ])->save();
+
+        if ($request->user()->id === $user->id) {
+            return redirect()->route('security.index')
+                ->with('success', 'تمت إعادة تعيين المصادقة. ابدأ تفعيلاً جديداً.');
+        }
+
+        return redirect()->route('settings.users.index')
+            ->with('success', 'تمت إعادة تعيين المصادقة الثنائية للمستخدم ' . $user->name . '. سيُطلب منه التفعيل عند الدخول.');
+    }
+
     private function authorizeTenant(User $user)
     {
         if ($user->tenant_id !== $this->getTenantId()) {

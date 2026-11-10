@@ -484,6 +484,9 @@
                                     <a href="{{ route('settings.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                         الإعدادات
                                     </a>
+                                    <a href="{{ route('security.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        أمان الحساب (المصادقة الثنائية)
+                                    </a>
                                     <hr class="my-1">
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf

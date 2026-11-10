@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'tenant' => \App\Http\Middleware\EnsureTenant::class,
             'permission' => \App\Http\Middleware\CheckPermission::class,
+            '2fa' => \App\Http\Middleware\EnsureTwoFactor::class,
         ]);
 
 
