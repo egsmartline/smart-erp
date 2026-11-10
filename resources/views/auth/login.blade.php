@@ -36,6 +36,7 @@
                     <label for="name" class="block text-sm font-semibold text-gray-700 mb-2">اسم المستخدم</label>
                     <div class="relative">
                         <input type="text" id="name" name="name" value="{{ old('name') }}" required
+                            autocomplete="username" autocapitalize="none" spellcheck="false"
                             class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-gray-50 focus:bg-white"
                             placeholder="اسم المستخدم">
                         <svg class="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -48,7 +49,8 @@
                 <div class="mb-6">
                     <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">كلمة المرور</label>
                     <div class="relative" x-data="{ show: false }">
-                        <input :type="show ? 'text' : 'password'" id="password" name="password" required
+                        <input type="password" :type="show ? 'text' : 'password'" id="password" name="password" required
+                            autocomplete="current-password"
                             class="w-full px-4 py-3 pr-12 pl-12 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-gray-50 focus:bg-white"
                             placeholder="••••••••">
                         <svg class="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
